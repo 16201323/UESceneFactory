@@ -8,8 +8,10 @@ from datetime import datetime, timedelta
 
 class ExperienceBank:
     def __init__(self, db_path=None):
+        # 默认存到用户主目录 ~/.uescenefactory/，避免打包后 exe 目录只读
         if db_path is None:
             new_path = str(Path.home() / ".uescenefactory" / "experience.db")
+            # 一次性迁移: 旧库(~/.mapforge/experience.db)存在则重命名, 保留 AI 学习数据
             legacy_path = str(Path.home() / ".mapforge" / "experience.db")
             if not os.path.exists(new_path) and os.path.exists(legacy_path):
                 try:
@@ -43,6 +45,7 @@ class ExperienceBank:
                 fail_count      INTEGER DEFAULT 0
             )
         """)
+        # 旧库迁移: 若 keywords_text 列不存在则补加并回填
         try:
             self._conn.execute("SELECT keywords_text FROM experiences LIMIT 0")
         except Exception:
@@ -55,11 +58,14 @@ class ExperienceBank:
                 self._conn.execute(
                     "UPDATE experiences SET keywords_text=? WHERE id=?",
                     (" ".join(kw), row["id"]))
+        # FTS5 全文索引: 独立虚拟表 (非外部内容表), 手动在 save() 中同步
+        # 用 MATCH 快速筛选关键词有重叠的候选, 替代全表 Jaccard 扫描
         self._conn.execute("""
             CREATE VIRTUAL TABLE IF NOT EXISTS experiences_fts USING fts5(
                 keywords_text
             )
         """)
+        # 旧库回填: 已有记录但 FTS5 索引为空时, 从 keywords_text 回填
         fts_count = self._conn.execute(
             "SELECT COUNT(*) FROM experiences_fts"
         ).fetchone()[0]
@@ -73,9 +79,15 @@ class ExperienceBank:
         self._conn.commit()
 
     def _find_similar(self, intent, threshold=0.6):
+        """查找与当前 intent 关键词 Jaccard 相似度 >= threshold 的已有经验
+
+        优化: 先用 FTS5 MATCH 快速筛选关键词有重叠的候选 (O(k)),
+        再对候选集精确计算 Jaccard (避免全表扫描 O(n))。
+        """
         my_keywords = set(intent.get("keywords", []))
         if not my_keywords:
             return None
+        # FTS5 MATCH 查询: 关键词用双引号包裹以安全转义空格/特殊字符, 显式 OR 连接
         safe_tokens = ['"' + kw.replace('"', '""') + '"' for kw in my_keywords]
         query = " OR ".join(safe_tokens)
         try:
@@ -86,6 +98,7 @@ class ExperienceBank:
                 (query,)
             ).fetchall()
         except sqlite3.OperationalError:
+            # FTS5 不可用时回退全表扫描 (兼容旧数据库)
             candidate_rows = self._conn.execute(
                 "SELECT id, intent_json FROM experiences"
             ).fetchall()
@@ -96,10 +109,15 @@ class ExperienceBank:
                 continue
             jaccard = len(my_keywords & exp_kw) / len(my_keywords | exp_kw)
             if jaccard >= threshold:
-                return {"id": row["id"]}
+                return {"id": row["id"]}  # 仅返回 id, 避免额外 get_by_id 查询
         return None
 
     def search_by_keywords(self, keywords):
+        """FTS5 关键词搜索: 返回匹配的经验 dict 列表。
+
+        封装 FTS5 查询逻辑, 避免外部直接访问 _conn 私有属性。
+        关键词含特殊字符时自动转义; FTS5 不可用时回退全表查询。
+        """
         if not keywords:
             return self.get_all()
         safe_tokens = ['"' + kw.replace('"', '""') + '"' for kw in keywords]
@@ -116,7 +134,9 @@ class ExperienceBank:
             return self.get_all()
 
     def save(self, user_desc, intent, scene, rating=3, tags=""):
+        # 去重: 查找相似经验, 存在则更新而非新增
         similar = self._find_similar(intent)
+        # 将 keywords 列表转为空格分隔文本 (FTS5 索引和 MATCH 查询用)
         keywords_text = " ".join(intent.get("keywords", []))
         if similar:
             now = datetime.now().isoformat()
@@ -127,6 +147,7 @@ class ExperienceBank:
                  json.dumps(scene, ensure_ascii=False), rating, tags,
                  keywords_text, now, similar["id"])
             )
+            # 同步 FTS5: 先删旧索引再插新索引 (standalone 表用 DELETE)
             self._conn.execute(
                 "DELETE FROM experiences_fts WHERE rowid = ?", (similar["id"],))
             self._conn.execute(
@@ -143,6 +164,7 @@ class ExperienceBank:
              keywords_text, now)
         )
         exp_id = cursor.lastrowid
+        # 同步 FTS5: 插入新索引
         self._conn.execute(
             "INSERT INTO experiences_fts(rowid, keywords_text) VALUES (?, ?)",
             (exp_id, keywords_text))
