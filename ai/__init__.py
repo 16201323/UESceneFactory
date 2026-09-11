@@ -10,6 +10,7 @@ import os
 def get_resource_path(relative_path):
     """获取资源路径（兼容开发模式和 PyInstaller 打包模式）"""
     if getattr(sys, 'frozen', False):
+        # PyInstaller 打包后，资源在 sys._MEIPASS
         base = getattr(sys, '_MEIPASS', os.path.dirname(sys.executable))
         return os.path.join(base, relative_path)
     return relative_path
@@ -34,15 +35,18 @@ def run_pipeline(client, config, user_desc, feedback=None):
     from ai.experience_bank import ExperienceBank
     from ai.retriever import ExperienceRetriever
 
+    # Stage 1: 意图解析
     intent_parser = IntentParser(client, model=config.get("llm_intent_model"))
     intent = intent_parser.parse(user_desc)
 
+    # Stage 2: 知识注入 + 生成
+    # 传入 templates_dir 启用模板标杆注入, AI 初次生成即可参考已验证的高质量 JSON
     knowledge = KnowledgePack(
         get_resource_path("data/knowledge"),
         templates_dir=get_resource_path("data/templates"),
     )
     asset_index = AssetIndex(get_resource_path("asset_catalog.json"))
-    bank = ExperienceBank()
+    bank = ExperienceBank()  # 默认 ~/.uescenefactory/experience.db
     retriever = ExperienceRetriever(bank)
 
     few_shots = retriever.retrieve(intent, top_k=3)
@@ -50,14 +54,17 @@ def run_pipeline(client, config, user_desc, feedback=None):
     generator = SceneGenerator(client, knowledge, asset_index, model=config.get("llm_strong_model"))
     scene = generator.generate(user_desc, intent, few_shots)
 
+    # Stage 3: 验证-修复（注入知识包 system_prompt）
     loop = ValidationRepairLoop(client, knowledge=knowledge, model=config.get("llm_strong_model"))
     final_scene, history = loop.validate_and_repair(scene, user_desc, intent=intent)
 
     success = not history[-1]["errors"] if history else False
 
+    # 管线末尾：更新经验使用统计（成功才标记 success，不污染 fail_count）
     if few_shots:
         for exp in few_shots:
             bank.update_usage(exp["id"], success=success)
 
+    # 显式关闭 SQLite 连接，避免连接泄漏
     bank.close()
     return final_scene, intent, history, success
