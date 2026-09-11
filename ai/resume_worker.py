@@ -96,7 +96,8 @@ class ResumeWorker(QThread):
                     get_resource_path("data/knowledge"),
                     templates_dir=get_resource_path("data/templates"),
                 )
-                asset_index = AssetIndex(get_resource_path("asset_catalog.json"))
+                # asset_catalog.json 已移入 config/ 目录
+                asset_index = AssetIndex(get_resource_path("config/asset_catalog.json"))
                 bank = ExperienceBank()
                 retriever = ExperienceRetriever(bank)
                 few_shots = retriever.retrieve(intent, top_k=3)

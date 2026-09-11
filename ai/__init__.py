@@ -45,7 +45,8 @@ def run_pipeline(client, config, user_desc, feedback=None):
         get_resource_path("data/knowledge"),
         templates_dir=get_resource_path("data/templates"),
     )
-    asset_index = AssetIndex(get_resource_path("asset_catalog.json"))
+    # asset_catalog.json 已移入 config/ 目录
+    asset_index = AssetIndex(get_resource_path("config/asset_catalog.json"))
     bank = ExperienceBank()  # 默认 ~/.uescenefactory/experience.db
     retriever = ExperienceRetriever(bank)
 

@@ -10,7 +10,8 @@ def test_mock_pipeline():
     from ai.intent_parser import IntentParser
     from ai.generator import SceneGenerator
     from ai.validator import ValidationRepairLoop
-    from validate_scene_json import validate_scene
+    # validate_scene_json 已移入 scripts/
+    from scripts.validate_scene_json import validate_scene
 
     intent_resp = json.dumps({
         'terrain_type': 'features', 'has_river': True, 'has_grass': True,
@@ -27,7 +28,8 @@ def test_mock_pipeline():
 
     mock = MockLLMClient([intent_resp, scene_resp])
     kp = KnowledgePack('data/knowledge')
-    ai = AssetIndex('asset_catalog.json')
+    # asset_catalog.json 已移入 config/ 目录
+    ai = AssetIndex('config/asset_catalog.json')
 
     # Stage 1
     parser = IntentParser(mock)

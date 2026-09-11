@@ -2,21 +2,22 @@
 
 
 a = Analysis(
-    ['mapforge_app.py'],
+    ['scripts/mapforge_app.py'],
     pathex=[],
     binaries=[],
     datas=[
-        ('build_umap.py', '.'),
-        ('build_scene.py', '.'),
-        ('build_umap.bat', '.'),
-        ('validate_scene_json.py', '.'),
-        ('validate_scene_assets.py', '.'),
-        ('asset_catalog.json', '.'),
+        # scripts/ 下的运行脚本和工具
+        ('scripts/build_umap.py', 'scripts'),
+        ('scripts/build_scene.py', 'scripts'),
+        ('scripts/validate_scene_json.py', 'scripts'),
+        ('scripts/__init__.py', 'scripts'),
+        # config/ 下的资源配置文件(资产目录/图标)
+        ('config/asset_catalog.json', 'config'),
+        ('config/mapforge.ico', 'config'),
+        # data/ 下的知识库和模板标杆
         ('data/knowledge', 'data/knowledge'),
         # 模板标杆库: 12个已验证场景JSON, KnowledgePack按意图匹配注入system prompt
         ('data/templates', 'data/templates'),
-        # 程序图标: 运行时窗口图标资源 (窗口标题栏/任务栏)
-        ('mapforge.ico', '.'),
     ],
     hiddenimports=[
         'tkinterdnd2',
@@ -30,7 +31,7 @@ a = Analysis(
         'ai.validator',
         'ai.experience_bank',
         'ai.retriever',
-        'validate_scene_json',
+        'scripts.validate_scene_json',
         'openai',
         # QScintilla: 专业 JSON 编辑器依赖, PyInstaller 默认无法自动发现
         'PyQt6.Qsci',
@@ -70,7 +71,8 @@ exe = EXE(
     runtime_tmpdir=None,
     console=False,
     # exe 文件图标 (资源管理器/任务栏显示), 与运行时窗口图标共用同一 ico
-    icon='mapforge.ico',
+    # mapforge.ico 已移入 config/ 目录
+    icon='config/mapforge.ico',
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,

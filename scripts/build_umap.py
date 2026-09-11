@@ -232,7 +232,8 @@ def main():
 
     # ========== 步骤1.5: 资产路径预校验 ==========
     write_step("资产路径预校验...")
-    validator = str(SCRIPT_DIR / "validate_scene_assets.py")
+    # validate_scene_assets.py 已移入 tools/check/ 目录
+    validator = str(SCRIPT_DIR.parent / "tools" / "check" / "validate_scene_assets.py")
     try:
         check_result = subprocess.run(
             [sys.executable, validator, scene_json_path],

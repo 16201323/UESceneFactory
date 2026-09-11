@@ -1,7 +1,8 @@
 import sys, os, time
 
 sys.stdout.reconfigure(encoding='utf-8')
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# tests/manual/ 向上三级到项目根目录
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from ai.client import OpenAILLMClient
 

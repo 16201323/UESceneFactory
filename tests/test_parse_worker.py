@@ -18,7 +18,7 @@ def test_parse_worker_success():
     json.dump(scene_data, tmp)
     tmp.close()
 
-    from mapforge_app import SceneParseWorker
+    from scripts.mapforge_app import SceneParseWorker
     worker = SceneParseWorker(tmp.name)
     results = {}
     def on_done(scene, info):
@@ -45,7 +45,7 @@ def test_parse_worker_error():
     from PyQt6.QtCore import QEventLoop, QTimer
     app = QApplication.instance() or QApplication(sys.argv)
 
-    from mapforge_app import SceneParseWorker
+    from scripts.mapforge_app import SceneParseWorker
     worker = SceneParseWorker("/nonexistent/path.json")
     results = {}
     def on_done(scene, info):

@@ -5,7 +5,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 def test_log_dir_created():
     """验证日志目录在 APPDATA 下自动创建。"""
     # 模拟: 调用 _setup_logging 后应存在日志文件
-    import mapforge_app
+    from scripts import mapforge_app
     # 日志目录应在 %APPDATA%/UESceneFactory/logs/ 或 ~/.uescenefactory/logs/
     log_dir = getattr(mapforge_app, '_LOG_DIR', None)
     assert log_dir is not None, '日志目录未设置'
@@ -17,7 +17,7 @@ def test_log_dir_created():
 
 def test_excepthook_installed():
     """验证 sys.excepthook 已被替换为自定义钩子。"""
-    import mapforge_app
+    from scripts import mapforge_app
     assert sys.excepthook is not sys.__excepthook__, 'sys.excepthook 未被替换'
     print('崩溃捕获钩子验证通过')
 

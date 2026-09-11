@@ -18,7 +18,8 @@ if exist ".venv\Scripts\python.exe" (
 )
 
 REM 启动主程序; 失败时暂停以便查看报错, 成功关闭则窗口自动退出
-"%PY_EXE%" mapforge_app.py
+rem mapforge_app.py 已移入 scripts/ 目录
+"%PY_EXE%" scripts\mapforge_app.py
 if errorlevel 1 (
     echo.
     echo [启动失败] 请检查依赖是否安装: pip install -r requirements.txt

@@ -49,10 +49,20 @@ except ImportError:
 # ============================================================================
 # 版本管理: 每次修改/新增功能后, 版本号递增 + VERSION_HISTORY 追加条目
 # ----------------------------------------------------------------------------
-APP_VERSION = "2.1.0"
+APP_VERSION = "2.2.0"
 
 # 版本更新记录: [(版本号, 日期, [更新条目]), ...] 最新在最前
 VERSION_HISTORY = [
+    ("2.2.0", "2026-09-11", [
+        "[重构] 二级目录重组: 所有脚本移入 scripts/ (含 __init__.py 使其成为 Python 包, from scripts.xxx import)",
+        "[重构] 资产文件移入 config/ (asset_catalog.json、mapforge.ico)",
+        "[重构] 手动测试脚本移入 tests/manual/ (test_ai_gen_rural.py、test_intent_debug.py、test_intent_full.py)",
+        "[重构] 校验工具移入 tools/check/ (validate_scene_assets.py)",
+        "[重构] 根目录精简为5个核心文件: requirements.txt、README.md、a_UESceneFactory_run.bat、.gitignore、UESceneFactory.spec",
+        "[修改] 12个文件的 import/path 引用适配新目录结构(ai/validator.py、ai/__init__.py、ai/resume_worker.py、scripts/mapforge_app.py、build_umap.py、build_scene.py、test_logging_setup.py、test_parse_worker.py、test_phase03_asset.py、test_phase05_generator.py、test_phase11_pipeline.py、a_UESceneFactory_run.bat)",
+        "[修改] UESceneFactory.spec PyInstaller打包配置适配新目录",
+        "[验证] 全部98个单元测试通过, 二级目录重组未引入功能性变更",
+    ]),
     ("2.1.0", "2026-09-11", [
         "[重构] 根目录结构整理: 原根目录约141个文件精简为14个核心文件(减幅90%+), 131个文件归入6个一级子目录",
         "[重构] scenes/ — 场景文件归档: examples/(8个示例场景)、production/(17个生产场景)、tests/(19个测试场景)",
@@ -403,14 +413,14 @@ def get_resource_path(filename):
     """
     获取打包资源的真实路径
     PyInstaller --onefile 模式下, 资源解压到 sys._MEIPASS 临时目录
-    开发环境下, 从脚本所在目录读取
+    开发环境下, 从项目根目录读取（scripts/ 的父目录）
     """
     if getattr(sys, "frozen", False):
         # PyInstaller 打包后：sys._MEIPASS 可能不存在（非 onefile 模式），用 getattr 安全回退
         base = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(sys.executable)))
     else:
-        # 开发环境
-        base = os.path.dirname(os.path.abspath(__file__))
+        # 开发环境: 从 scripts/ 回退一级到项目根目录
+        base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     return os.path.join(base, filename)
 
 
@@ -1031,7 +1041,8 @@ class AIWorker(QThread):
                 get_resource_path("data/knowledge"),
                 templates_dir=get_resource_path("data/templates"),
             )
-            asset_index = AssetIndex(get_resource_path("asset_catalog.json"))
+            # asset_catalog.json 已移入 config/ 目录
+            asset_index = AssetIndex(get_resource_path("config/asset_catalog.json"))
             bank = ExperienceBank()  # 默认 ~/.uescenefactory/
             retriever = ExperienceRetriever(bank)
 
@@ -3169,7 +3180,8 @@ class MainWindow(QMainWindow):
                 return
 
         # 获取 build_scene.py 路径
-        build_script = get_resource_path("build_scene.py")
+        # build_scene.py 已移入 scripts/ 目录, get_resource_path 以项目根为 base
+        build_script = get_resource_path("scripts/build_scene.py")
         if not os.path.isfile(build_script):
             QMessageBox.critical(self, "错误", "未找到 build_scene.py 脚本:\n" + build_script)
             return
@@ -3845,7 +3857,8 @@ def main():
     app.setApplicationName("UESceneFactory")
 
     # 程序图标: 窗口标题栏/任务栏显示 (打包后从 _MEIPASS 读取, 开发环境从脚本目录读取)
-    app.setWindowIcon(QIcon(get_resource_path("mapforge.ico")))
+    # mapforge.ico 已移入 config/ 目录
+    app.setWindowIcon(QIcon(get_resource_path("config/mapforge.ico")))
 
     # U17 修复: QSS 提到 app 级 (所有窗口统一继承) + 全局中文字体适配
     app.setStyleSheet(DARKROOM_THEME)

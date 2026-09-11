@@ -22,7 +22,8 @@ def test_mock_generate():
 
     mock = MockLLMClient([MOCK_SCENE])
     kp = KnowledgePack('data/knowledge')
-    ai = AssetIndex('asset_catalog.json')
+    # asset_catalog.json 已移入 config/ 目录
+    ai = AssetIndex('config/asset_catalog.json')
     gen = SceneGenerator(mock, kp, ai)
 
     intent = {'terrain_type': 'features', 'has_grass': True, 'keywords': ['grass'], 'placements': []}
@@ -38,11 +39,13 @@ def test_validate_generated():
     from ai.knowledge import KnowledgePack
     from ai.asset_index import AssetIndex
     from ai.generator import SceneGenerator
-    from validate_scene_json import validate_scene
+    # validate_scene_json 已移入 scripts/
+    from scripts.validate_scene_json import validate_scene
 
     mock = MockLLMClient([MOCK_SCENE])
     kp = KnowledgePack('data/knowledge')
-    ai = AssetIndex('asset_catalog.json')
+    # asset_catalog.json 已移入 config/ 目录
+    ai = AssetIndex('config/asset_catalog.json')
     gen = SceneGenerator(mock, kp, ai)
 
     intent = {'terrain_type': 'features', 'has_grass': True, 'keywords': ['grass'], 'placements': []}

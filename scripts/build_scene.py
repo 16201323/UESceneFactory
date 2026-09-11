@@ -871,8 +871,9 @@ def main():
     #       所以需校验 sys.argv[1] 是否为真实文件路径, 非法则用默认值
     # 新增: 优先从环境变量 MAPFORGE_SCENE 读取场景文件路径,
     #       彻底避免 ExecCmds 中 | 被当 argv 传入导致回退默认场景的问题
-    # 默认场景文件: scenes/examples/farming_village.yaml (目录重组后从子目录读取)
-    DEFAULT_SCENE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "scenes", "examples", "farming_village.yaml")
+    # 默认场景文件: scenes/examples/farming_village.yaml (build_scene.py 在 scripts/ 下, 父目录 = 项目根)
+    _root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    DEFAULT_SCENE = os.path.join(_root, "scenes", "examples", "farming_village.yaml")
     env_scene = os.environ.get("MAPFORGE_SCENE", "")
     if env_scene and os.path.isfile(env_scene):
         scene_file = env_scene

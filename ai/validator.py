@@ -3,7 +3,8 @@ import json
 from ai.client import LLMClient
 from ai.knowledge import KnowledgePack
 from ai.utils import extract_json
-from validate_scene_json import validate_scene
+# validate_scene_json 已移入 scripts/
+from scripts.validate_scene_json import validate_scene
 
 REPAIR_PROMPT_TEMPLATE = """你是 UE5 场景 JSON 修复器。以下 JSON 有校验错误，请修复。
 
