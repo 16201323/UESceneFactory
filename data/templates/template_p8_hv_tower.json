@@ -1,0 +1,32 @@
+{
+  "scene": {
+    "name": "HV_Tower_Only",
+    "target_level": "/Game/MapForgeTest/GB_HVTower_Only",
+    "description": "仅有高压电塔的场景 — 严格遵循 UE5_JSON 技能文档 4.4.1 节电线连接规则: 2座电塔沿Y轴相向布置, 缩到1%, 间距80cm使电线相向连接"
+  },
+
+  "ground": {
+    "_note": "草地地面: SM_House_FloorPlane_03 基础尺寸9.7m×5m, scale[1,1,1]保持原大小. 居中在两塔Y中点1460处(两塔y=1420和1500), 覆盖y=1210~1710, x=±485cm, 足够容纳两座缩到1%的电塔(77.5cm高)",
+    "asset": "/Game/RuralHouse/House/Meshes/ModularParts/SM_House_FloorPlane_03",
+    "location": [0, 1460, 0],
+    "scale": [1, 1, 1],
+    "material_override": "/Game/Foliage_Sets/ground_materials/materials/M_grass_simple_a"
+  },
+
+  "placements": [
+    {"_note": "=== Tower A: 高压电塔(20个Object组合) — 技能文档4.4.1实测参数 ==="},
+    {"_note": "location[0,1420,0]: 沿Y轴放置, roll=-90使塔身竖立(to_rotator关键字参数pitch/yaw/roll各归其位). scale[0.01]缩到1%: 塔身77.5m→77.5cm. skip_z_fix=true跳过独立Z修正(Object_10等部件bounds_origin.z=-3991独立Z修正会压平组装). ground_assembly=true整组贴地"},
+    {"type": "group", "asset_prefix": "/Game/HighVoltageTower/high_voltage_tower_wired/StaticMeshes/Object_", "count": 20, "location": [0, 1420, 0], "rotation": [0, 0, -90], "scale": [0.01, 0.01, 0.01], "skip_z_fix": true, "ground_assembly": true},
+
+    {"_note": "=== Tower B: 高压电塔(第2座) — yaw+180°翻转电线相向 ==="},
+    {"_note": "location[0,1500,0]: 与Tower A沿Y轴相距80cm(|1500-1420|=80cm=0.8m). rotation[0,180,-90]: yaw+180°镜像, 使B塔引出的电线朝向A塔, 两塔电线中段相向连接. 其余参数与A塔一致(scale 0.01/skip_z_fix/ground_assembly)"},
+    {"type": "group", "asset_prefix": "/Game/HighVoltageTower/high_voltage_tower_wired/StaticMeshes/Object_", "count": 20, "location": [0, 1500, 0], "rotation": [0, 180, -90], "scale": [0.01, 0.01, 0.01], "skip_z_fix": true, "ground_assembly": true}
+  ],
+
+  "lighting": {
+    "_note": "基础日光: 太阳45°俯角暖白光投射阴影 + 天空光冷色 + 大气层(Movable确保实时渲染, atmosphere_sun_light=True使SkyAtmosphere散射)",
+    "directional_light": {"location": [0, 0, 3000], "rotation": [-45, 35, 0], "intensity": 10.0, "color": [1.0, 0.94, 0.78], "cast_shadows": true},
+    "sky_light": {"location": [0, 0, 3000], "intensity": 1.0, "color": [0.78, 0.86, 1.0]},
+    "sky_atmosphere": {"location": [0, 0, 0]}
+  }
+}
