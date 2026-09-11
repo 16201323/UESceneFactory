@@ -1,0 +1,124 @@
+{
+  "scene": {
+    "_note": "梯田场景模板 — 沿Y轴(北向)递进多级台阶, 模拟农业梯田地貌。direction_deg=90使台阶沿+Y方向逐级升高, 每级step_height_m=3m高差、step_width_m=12m宽, bank_ratio=0.2表示每级20%为田埂过渡区(smoothstep光滑斜面)、80%为平坦田面; 63m×63m小地形, 改component_count可放大",
+    "name": "TerracedField",
+    "target_level": "/Game/MapForgeTest/GB_TerracedTemplate",
+    "description": "梯田地形模板: direction_deg=90沿Y轴递进, 每级3m高12m宽, bank_ratio=0.2田埂占20%, 63m×63m"
+  },
+  "landscape": {
+    "_note": "【梯田算法】C++将每个顶点投影到direction_deg方向轴, 投影距离÷step_width_m=层级号level; 层内位置t∈[0,1): t<(1-bank_ratio)→平坦田面(高度=base+level×step_height_m), t≥(1-bank_ratio)→smoothstep过渡到下一级高度; perturbation扭曲等高线消除几何痕迹, noise_overlay叠加自然微起伏; blend_mode=additive叠加到基础地形(此处基础=0)",
+    "material": "/Game/RuralHouse/Landscape/MI_Landscape",
+    "section_size_quads": 63,
+    "num_subsections": 1,
+    "component_count_x": 1,
+    "component_count_y": 1,
+    "location": [
+      0,
+      0,
+      0
+    ],
+    "rotation": [
+      0,
+      0,
+      0
+    ],
+    "scale": [
+      100,
+      100,
+      100
+    ],
+    "layers": [
+      {
+        "_note": "Layer1基底土: uniform权重0.7, 梯田平坦田面主材质(泥土/耕地)",
+        "info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer1_LayerInfo",
+        "weight": 0.7
+      },
+      {
+        "_note": "Layer2泥地: uniform权重0.3, 田埂斜面/低洼处泥地材质",
+        "info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer2_LayerInfo",
+        "weight": 0.3
+      }
+    ],
+    "height_pattern": {
+      "_note": "terraced核心参数: direction_deg=90(沿+Y北向递进, 0=+X东向); step_height_m=3.0(每级高度差3米, 值越大台阶越陡); step_width_m=12.0(每12米升一级, 值越大台阶越宽); bank_ratio=0.2(田埂占比[0,1], 0=无田埂全平坦, 1=全田埂无平面, 0.2=每级20%为光滑过渡田埂+80%为平坦田面); base_height_m=0.0(方向轴投影距离=0处起始基准高度); blend_mode=additive(梯田高度叠加到基础地形); 增强字段: perturbation_strength=0.3扭曲等高线, perturbation_scale=0.05扰动频率, noise_overlay(amp0.3m)叠加微起伏消除人工平整感",
+      "type": "terraced",
+      "direction_deg": 90,
+      "step_height_m": 3.0,
+      "step_width_m": 12.0,
+      "bank_ratio": 0.2,
+      "base_height_m": 0.0,
+      "blend_mode": "additive",
+      "perturbation_strength": 0.3,
+      "perturbation_scale": 0.05,
+      "perturbation_seed": 7,
+      "noise_overlay": {
+        "_note": "自然起伏: amp0.3m freq0.02 oct3 seed5, 在梯田几何上叠加低频Perlin微起伏",
+        "amplitude_m": 0.3,
+        "frequency": 0.02,
+        "octaves": 3,
+        "seed": 5
+      }
+    }
+  },
+  "ground": {},
+  "placements": [],
+  "lighting": {
+    "_note": "基础光照: 太阳斜射(俯角45°)正白光 + 天空光冷色补光 + 大气层 + 轻雾营造空气透视",
+    "directional_light": {
+      "location": [
+        0,
+        0,
+        5000
+      ],
+      "rotation": [
+        -45,
+        0,
+        0
+      ],
+      "intensity": 3.0,
+      "color": [
+        1,
+        1,
+        1
+      ]
+    },
+    "sky_light": {
+      "intensity": 1.0,
+      "color": [
+        0.8,
+        0.9,
+        1.0
+      ]
+    },
+    "sky_atmosphere": {
+      "location": [
+        0,
+        0,
+        0
+      ]
+    },
+    "height_fog": {
+      "location": [
+        0,
+        0,
+        0
+      ],
+      "density": 0.0001,
+      "color": [
+        0.8,
+        0.85,
+        0.9
+      ]
+    }
+  },
+  "weather": {
+    "_note": "体积云: UE5原生VolumetricCloud组件",
+    "volumetric_clouds": {
+      "location": [
+        0,
+        0,
+        2000
+      ]
+    }
+  }
+}
