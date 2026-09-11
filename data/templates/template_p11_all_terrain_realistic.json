@@ -1,0 +1,202 @@
+{
+  "scene": {
+    "name": "RealisticAllTerrain",
+    "target_level": "/Game/MapForgeTest/GB_RealisticAllTerrain",
+    "description": "1km×1km 仿真实世界高山河谷综合场景 — 西北雪山主峰(130m+80m,雪线75m以上积雪) + 山麓丘陵过渡 + 中东冰川湖盆(湖面5m,直径440m) + 两条连续山溪从山麓低处入湖(C++细分+俯仰贴合地形,不断节) + 西侧平坦区杉树森林(148棵HISM距离剔除远处消失) + 南部平坦草原(1小块60×40m开垦麦田,田内无杂草) + 东南缓丘 + 陡坡碎石坡 + 带状草地(6m以下无草,20~40m满草,40~60m越高越稀,60m以上无草) + 3条道路(主干土路+农村支路+湖畔路,均贴合地形高差); 6层权重分区; 180块散布岩石+10种草地+5种麦穗+148棵杉树"
+  },
+
+  "landscape": {
+    "_note": "【真实世界布局】西北→东南海拔递降: ①西北雪山主峰(180,200 h130m)+副峰(330,130 h80m)均超雪线75m→积雪 ②西麓丘陵(120,380 h55m)低于雪线→草地 ③中东部湖盆(600,550 d35m br120)挖出-15m凹陷,水位5m注入形成440m冰川湖 ④南部平坦草原基础穹隆~20m>水位5m→开垦1小块60×40m麦田(230~290,620~660) ⑤东南缓丘(820,800 h30m) ⑥基础穹隆(504,504 r950 h20m)将全图抬至约20m>水位5m,确保大部分陆地露出水面; NW山脊(region50~420 amp6 freq0.02 dir30°)在山区叠加正弦波纹增强山脊感; 2条河流: NW山溪(宽12m)+NE山麓溪流(宽8m)均从低处入湖,C++每段≤10m细分+俯仰贴合坡度+转角盖片→连续水面; 3条道路: 主干土路(西边缘)+农村支路(麦田→主干)+湖畔路(麦田→湖岸),同样细分+俯仰贴合高差; 西侧平坦区杉树森林(148棵HISM距离剔除cull 200~500m远处消失); noise_overlay(amp5)添加自然起伏; perturbation(str0.35)扭曲等高线消除几何痕迹; 6层权重: Layer1基底uniform0.5防秃 + Layer2泥地height_based(0~15m invert)低地 + Layer3雪线snow_line(75m transition20m)山峰积雪 + Layer4草地height_based(6~20m+fade40~60m+exclude麦田区)带状草(≤6m无草,40~60m渐稀,≥60m无草,麦田内无草) + Layer5碎石slope_based(0.35~0.9)陡坡 + Layer6麦田multi_region(南部平地1小块60×40m); 麦田需先运行gen_2km_scene.py的create_wheat_grass_type()生成/Game/Generated/LGT_Wheat与LIS_Wheat资产,否则C++加载失败仅Warning跳过(不影响其余地形)",
+    "material": "/Game/RuralHouse/Landscape/MI_Landscape",
+    "section_size_quads": 63,
+    "num_subsections": 1,
+    "component_count_x": 16,
+    "component_count_y": 16,
+    "location": [-50400, -50400, 0],
+    "rotation": [0, 0, 0],
+    "scale": [100, 100, 100],
+    "layers": [
+      {"_note": "Layer1 TrailSoil基底: uniform权重0.5,确保全图无秃斑(其他层权重为0处回退到此)",
+       "info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer1_LayerInfo", "weight": 0.5},
+      {"_note": "Layer2 Mud泥地: height_based(0~15m invert=true)→低海拔(湖岸/谷底)权重1,高海拔递减至0; 模拟低洼积水泥地",
+       "info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer2_LayerInfo", "weight": 1.0,
+       "weight_pattern": {
+         "pattern": "height_based",
+         "height_min_m": 0,
+         "height_max_m": 15,
+         "invert": true
+       }},
+      {"_note": "Layer3 ForestGround雪线层: snow_line(75m transition20m max_slope0.8)→海拔>75m且坡度<0.8处积雪,陡崖裸露岩石; 主峰130m+副峰80m均超雪线→山顶白雪",
+       "info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer3_LayerInfo", "weight": 1.0,
+       "weight_pattern": {
+         "pattern": "snow_line",
+         "snow_line_m": 75,
+         "transition_m": 20,
+         "max_slope": 0.8
+       }},
+      {"_note": "Layer4 Grass草地: height_based(6~20m invert=false + fade_max_m=60 fade_width_m=20)→带状分布: 海拔≤6m(水位5m以下/湖底)权重0不长草, 6~20m渐增, 20~40m全权重满草, 40~60m随高度渐稀(越高越稀疏), ≥60m权重0无草; 另加exclude_regions排除麦田区(230~290,620~660)→麦田内纯麦穗无杂草; corridor_exclude=true→河流/道路走廊(宽×1.25)内权重清零, 河岸/路侧不长草, 消除贴图感",
+       "info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer4_LayerInfo", "weight": 1.0,
+       "weight_pattern": {
+         "pattern": "height_based",
+         "height_min_m": 6,
+         "height_max_m": 20,
+         "fade_max_m": 60,
+         "fade_width_m": 20,
+         "invert": false,
+         "corridor_exclude": true,
+         "exclude_regions": [{"min_x": 230, "min_y": 620, "max_x": 290, "max_y": 660}]
+       }},
+      {"_note": "Layer5 Gravel碎石坡: slope_based(0.35~0.9)→陡坡(山体侧面/崖壁)出碎石,平地无; 模拟重力碎屑堆积",
+       "info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer5_LayerInfo", "weight": 1.0,
+       "weight_pattern": {
+         "pattern": "slope_based",
+         "slope_min": 0.35,
+         "slope_max": 0.9
+       }},
+      {"_note": "Layer6 Wheat麦田: multi_region在南部平坦草原开垦1小块地(230~290, 620~660, 60×40m); 选址避开全部山丘/森林/湖盆: 距主峰/丘陵>500m, 距森林区(240~380,420~560)南侧60m, 距湖盆(600,550 r220)边缘>170m, 地势为基础穹隆平地~20m; 修复: 原3块130×90m大麦田偏大且易与草混杂, 现为平原随机开垦的一小块; C++自动添加Wheat GrassOutput采样本层权重,区内=1触发麦穗生成, 且Layer4草地exclude_regions同步排除此区→麦田内无杂草",
+       "info": "/Game/Generated/LIS_Wheat", "weight": 1.0,
+       "weight_pattern": {
+         "pattern": "multi_region",
+         "regions": [
+           {"min_x": 230, "min_y": 620, "max_x": 290, "max_y": 660}
+         ]
+       }}
+    ],
+    "grass": {
+      "_note": "UE5原生草地: C++自动在GrassOutput添加Grass条目采样Layer4权重; Layer4=height_based(6~20m + fade 40~60m)→带状: ≤6m湖底无草, 20~40m满草, 40~60m越高越稀疏, ≥60m无草; 麦田区(230~290,620~660)被exclude_regions排除→田内无杂草; 10种VOL22_WildGrass混合(5高草密度20+5矮草密度6); 总密度120/10㎡",
+      "grass_type": "/Game/RuralHouse/Landscape/LandscapeFoliage/LGT_Grass",
+      "grass_mesh": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Tall_Wild_01a",
+      "layer_name": "Grass",
+      "density": 120.0
+    },
+    "wheat": {
+      "_note": "UE5原生麦田: C++自动在GrassOutput添加Wheat条目,连接新建LandscapeLayerSample(ParameterName=Wheat)采样Layer6权重; Layer6=multi_region→3块麦田区内=1.0触发麦穗生成,区外=0无麦; LGT_Wheat含5种realistic_wheat网格; 需先运行gen_2km_scene.py生成/Game/Generated/LGT_Wheat与LIS_Wheat资产",
+      "type_path": "/Game/Generated/LGT_Wheat",
+      "layer_name": "Wheat"
+    },
+    "height_pattern": {
+      "_note": "features模式blend_mode=additive: 所有山丘(正delta高斯凸起)+山谷(负delta平底碗状)累加; 7座山丘从西北主峰130m递降至东南缓丘10m形成真实海拔梯度; 1个山谷(湖盆d35); 1条NW山脊波纹; 水位5m注入湖盆形成湖泊; 2河3路(河流/道路均C++细分+俯仰贴合地形高差,连续不断节)+148棵杉树森林(HISM距离剔除); 180块5种岩石散布地表; 10种草+5种麦穗变体",
+      "type": "features",
+      "blend_mode": "additive",
+      "hills": [
+        {"_note": "基础穹隆: 中心(504,504)半径950m高20m→全图抬至约20m,大部分陆地露出水面(水位5m)", "center_x_m": 504, "center_y_m": 504, "radius_m": 950, "height_m": 20},
+        {"_note": "西北主峰: (180,200) r160 h130m→超雪线75m达130m,山顶常年积雪", "center_x_m": 180, "center_y_m": 200, "radius_m": 160, "height_m": 130},
+        {"_note": "西北副峰: (330,130) r100 h80m→超雪线75m,山顶积雪", "center_x_m": 330, "center_y_m": 130, "radius_m": 100, "height_m": 80},
+        {"_note": "西麓丘陵: (120,380) r90 h55m→低于雪线,山麓草地", "center_x_m": 120, "center_y_m": 380, "radius_m": 90, "height_m": 55},
+        {"_note": "东北山麓丘陵: (750,220) r180 h45m→东部 foothills 过渡区", "center_x_m": 750, "center_y_m": 220, "radius_m": 180, "height_m": 45},
+        {"_note": "东南缓丘: (820,800) r220 h30m→东南低缓丘陵", "center_x_m": 820, "center_y_m": 800, "radius_m": 220, "height_m": 30},
+        {"_note": "南部低隆: (400,880) r280 h10m→麦田区南侧微隆,地形平缓", "center_x_m": 400, "center_y_m": 880, "radius_m": 280, "height_m": 10}
+      ],
+      "valleys": [
+        {"_note": "冰川湖盆: (600,550) r220 d35m br120→基础20m-35m=-15m,水位5m注入形成440m直径湖泊,底半径120m为平底", "center_x_m": 600, "center_y_m": 550, "radius_m": 220, "depth_m": 35, "bottom_radius_m": 120}
+      ],
+      "ridges": [
+        {"_note": "NW山脊波纹: 区域(50,50)~(420,420)覆盖西北山区,amp6m freq0.02 dir30°→在山区叠加东北-西南向正弦山脊,增强山脊线立体感", "region_min_x_m": 50, "region_min_y_m": 50, "region_max_x_m": 420, "region_max_y_m": 420, "amplitude_m": 6, "frequency": 0.02, "direction_deg": 30}
+      ],
+      "water": {
+        "_note": "湖面水位5m: 注入湖盆(中心600,550 底-15m)形成440m冰川湖; 材质Water_Lake半透明水面",
+        "level_m": 5,
+        "material_path": "/Game/Modular_Rural_Cabin/Materials/Instances/Water_Lake"
+      },
+      "rivers": [
+        {"_note": "NW山溪: 从主峰南麓(250,350 约20m)沿自然下坡蜿蜒入湖(600,550),8折点宽12m; C++已升级: 每段按≤10m细分+俯仰角贴合地形坡度+转角盖片补缝+抬升50cm防Z-fighting→连续水面不断节; 路径不穿越任何山丘",
+         "points": [[250,350],[310,390],[380,420],[450,450],[510,480],[560,510],[590,530],[600,550]], "width_m": 12, "material_path": "/Game/Modular_Rural_Cabin/Materials/Instances/Water_Lake"},
+        {"_note": "NE山麓溪流: 从东北丘陵南缘(760,400 约25m)入湖(610,540),7折点宽8m; C++已升级: 细分+俯仰+盖片+抬升→连续水面; 路径从丘陵南缘低处出发沿南坡入湖",
+         "points": [[760,400],[730,440],[700,470],[670,495],[640,515],[615,530],[610,540]], "width_m": 8, "material_path": "/Game/Modular_Rural_Cabin/Materials/Instances/Water_Lake"}
+      ],
+      "roads": [
+        {"_note": "主干土路: 从南麦田区(250,830)沿西边缘蜿蜒至北山麓(220,280),8折点宽4m; 沿西边缘(x≤250)上行连接农田与山区,避开森林(240~380,420~560)和麦田(230~290,620~660); C++已升级: 细分+俯仰贴合地形+转角盖片+抬升20cm→道路连续无断节",
+         "points": [[250,830],[200,780],[150,700],[130,600],[140,500],[170,420],[200,350],[220,280]], "width_m": 4, "material_path": "/Game/MapForgeTest/M_Road_Dirt"},
+        {"_note": "农村支路(新增): 从麦田西边缘(230,640)向西衔接主干土路(172,728附近),4折点宽3m; 供农夫下田耕作的小路,全部走在南部平地无高差突变",
+         "points": [[230,640],[210,660],[190,700],[172,728]], "width_m": 3, "material_path": "/Game/MapForgeTest/M_Road_Dirt"},
+        {"_note": "农村湖畔路(新增): 从麦田东南角(280,660)向东蜿蜒至湖盆南缘(440,630),5折点宽3m; 终点距湖心(600,550)约180m处于湖岸线上方,沿途为南部平缓草原; 供村民前往湖边取水的小路",
+         "points": [[280,660],[330,672],[375,665],[410,650],[440,630]], "width_m": 3, "material_path": "/Game/MapForgeTest/M_Road_Dirt"}
+      ],
+      "noise_overlay": {
+        "_note": "自然起伏叠加: amp5m freq0.006 oct5 seed77→在几何地形上叠加多倍频Perlin噪声,消除人工平整感",
+        "amplitude_m": 5,
+        "frequency": 0.006,
+        "octaves": 5,
+        "seed": 77
+      },
+      "perturbation_strength": 0.35,
+      "perturbation_scale": 0.012,
+      "perturbation_seed": 55,
+      "scatter": [
+        {"_note": "散布岩石A-01: 50块, scale1.0~3.0, 随机旋转", "mesh_path": "/Game/RuralHouse/Environment/Ground/SM_Rock_A_01", "count": 50, "seed": 201, "scale_min": 1.0, "scale_max": 3.0, "random_rotation": true},
+        {"_note": "散布岩石A-04: 40块, scale0.8~2.0", "mesh_path": "/Game/RuralHouse/Environment/Ground/SM_Rock_A_04", "count": 40, "seed": 202, "scale_min": 0.8, "scale_max": 2.0, "random_rotation": true},
+        {"_note": "苔藓岩石: 30块, 湿润山体岩石", "mesh_path": "/Game/RuralHouse/Environment/Ground/SM_MossyRock_01", "count": 30, "seed": 203, "scale_min": 0.9, "scale_max": 2.0, "random_rotation": true},
+        {"_note": "散布岩石A-07: 30块, 大块scale1.5~4.0", "mesh_path": "/Game/RuralHouse/Environment/Ground/SM_Rock_A_07", "count": 30, "seed": 204, "scale_min": 1.5, "scale_max": 4.0, "random_rotation": true},
+        {"_note": "散布岩石A-05: 30块, 小块scale0.7~1.8", "mesh_path": "/Game/RuralHouse/Environment/Ground/SM_Rock_A_05", "count": 30, "seed": 205, "scale_min": 0.7, "scale_max": 1.8, "random_rotation": true}
+      ],
+      "grass_varieties": [
+        {"_note": "高草01a~01e: 密度20/10㎡, 中海拔山麓主草种", "mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Tall_Wild_01a", "density": 20, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 3000, "end_cull_dist": 30000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Tall_Wild_01b", "density": 20, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 3000, "end_cull_dist": 30000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Tall_Wild_01c", "density": 20, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 3000, "end_cull_dist": 30000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Tall_Wild_01d", "density": 20, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 3000, "end_cull_dist": 30000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Tall_Wild_01e", "density": 20, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 3000, "end_cull_dist": 30000},
+        {"_note": "矮草Beach01a~01e: 密度6/10㎡, 低地/湖岸矮草种", "mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Beach_01a", "density": 6, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 3000, "end_cull_dist": 30000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Beach_01b", "density": 6, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 3000, "end_cull_dist": 30000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Beach_01c", "density": 6, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 3000, "end_cull_dist": 30000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Beach_01d", "density": 6, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 3000, "end_cull_dist": 30000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Beach_01e", "density": 6, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 3000, "end_cull_dist": 30000}
+      ],
+      "wheat_varieties": [
+        {"_note": "麦穗变体: 5种realistic_wheat网格,密度200/10㎡,scale0.03~0.055(网格原始大需缩小); C++自动bUseGrid=true田垄行列式排列; 需先运行gen_2km_scene.py生成/Game/Generated/LGT_Wheat", "mesh_path": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_001_wheat_texture_0", "density": 200, "scale_min": 0.032, "scale_max": 0.040, "jitter": 0.2, "random_rotation": true, "start_cull_dist": 3000, "end_cull_dist": 50000},
+        {"mesh_path": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_002_wheat_texture_0", "density": 200, "scale_min": 0.042, "scale_max": 0.052, "jitter": 0.2, "random_rotation": true, "start_cull_dist": 3000, "end_cull_dist": 50000},
+        {"mesh_path": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_003_wheat_texture_0", "density": 200, "scale_min": 0.028, "scale_max": 0.034, "jitter": 0.2, "random_rotation": true, "start_cull_dist": 3000, "end_cull_dist": 50000},
+        {"mesh_path": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_004_wheat_texture_0", "density": 200, "scale_min": 0.045, "scale_max": 0.055, "jitter": 0.2, "random_rotation": true, "start_cull_dist": 3000, "end_cull_dist": 50000},
+        {"mesh_path": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_wheat_texture_0", "density": 200, "scale_min": 0.032, "scale_max": 0.040, "jitter": 0.2, "random_rotation": true, "start_cull_dist": 3000, "end_cull_dist": 50000}
+      ]
+    }
+  },
+
+  "ground": {},
+
+  "placements": [
+    {"_note": "=== 森林: 位于湖泊(600,550)西侧平坦区(240~380, 420~560),基础穹隆上海拔约19m,无山丘覆盖. 上层2种大型杉树5×5各25棵+下层2种小杉树7×7各49棵=148棵. HISM距离剔除 cull_start=20000(200m全显) cull_end=50000(500m渐隐消失)→远处不渲染近处全显 ==="},
+
+    {"_note": "SM_FirTree_01大型杉树(h~31m): 5×5=25棵 间距1800cm(18m) NW象限; 原点世界坐标(-26400,-8400,2000)=米(240,420,20m); 覆盖72×72m至(312,492); Z=2000cm≈基础穹隆20m高度(实际19m,树根微入土或微浮,±2m在噪声范围内可接受)"},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_FirTree_01", "location": [0, 0, 0], "grid": {"rows": 5, "cols": 5, "origin": [-26400, -8400, 2000], "spacing": [1800, 1800, 0], "jitter": 400, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.3, 1.3, 1.3], "cull_start": 20000, "cull_end": 50000}},
+
+    {"_note": "SM_FirTree_02大型杉树(h~36m): 5×5=25棵 间距1800cm(18m) SE象限; 原点世界坐标(-19600,-1600,2000)=米(308,488,20m); 覆盖72×72m至(380,560); 与NW象限交错形成自然森林边界"},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_FirTree_02", "location": [0, 0, 0], "grid": {"rows": 5, "cols": 5, "origin": [-19600, -1600, 2000], "spacing": [1800, 1800, 0], "jitter": 400, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.3, 1.3, 1.3], "cull_start": 20000, "cull_end": 50000}},
+
+    {"_note": "SM_SmallFir_01小杉树(h~6.4m): 7×7=49棵 间距900cm(9m) 中西部填充; 原点世界坐标(-24400,-6400,2000)=米(260,440,20m); 覆盖54×54m至(314,494); 填补大型树间空隙形成林下层"},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_SmallFir_01", "location": [0, 0, 0], "grid": {"rows": 7, "cols": 7, "origin": [-24400, -6400, 2000], "spacing": [900, 900, 0], "jitter": 200, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.4, 1.4, 1.4], "cull_start": 20000, "cull_end": 50000}},
+
+    {"_note": "SM_SmallFir_02小杉树(h~6m): 7×7=49棵 间距900cm(9m) 中东部填充; 原点世界坐标(-20600,-2600,2000)=米(298,478,20m); 覆盖54×54m至(352,532); 与中西部小杉交错增加密度变化"},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_SmallFir_02", "location": [0, 0, 0], "grid": {"rows": 7, "cols": 7, "origin": [-20600, -2600, 2000], "spacing": [900, 900, 0], "jitter": 200, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.4, 1.4, 1.4], "cull_start": 20000, "cull_end": 50000}}
+  ],
+
+  "lighting": {
+    "_note": "基础光照: 太阳斜射(俯角15° yaw60°)暖色光增强山体阴影立体感与雪山氛围 + 天空光冷色补光 + 大气层 + 轻雾营造空气透视",
+    "directional_light": {
+      "location": [0, 0, 3000],
+      "rotation": [-15, 60, 0],
+      "intensity": 10.0,
+      "color": [1.0, 0.85, 0.7],
+      "cast_shadows": true
+    },
+    "sky_light": {
+      "location": [0, 0, 3000],
+      "intensity": 1.0,
+      "color": [0.75, 0.85, 1.0]
+    },
+    "sky_atmosphere": {
+      "location": [0, 0, 0]
+    },
+    "height_fog": {
+      "location": [0, 0, 0],
+      "density": 0.0001,
+      "color": [0.7, 0.8, 0.9]
+    }
+  },
+
+  "weather": {
+    "_note": "体积云: UE5原生VolumetricCloud组件, 130m主峰穿云效果增强高山氛围",
+    "volumetric_clouds": {
+      "location": [0, 0, 2000]
+    }
+  }
+}
