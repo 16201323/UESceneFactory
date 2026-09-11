@@ -1,0 +1,39 @@
+{
+  "scene": {
+    "name": "Test_01_Heliport",
+    "target_level": "/Game/MapForgeTest/GB_Test_01_Heliport_v2",
+    "description": "单资产验证场景 — 直升机停机坪(group 10 Objects组合). 碰撞状态: Object_0=△仅复杂, Object_1~9=✓阻挡(简化2~4). v2:另存新关卡避免编辑器锁定原umap"
+  },
+
+  "ground": {
+    "_note": "草地地面: SM_House_FloorPlane_03原尺寸969×500cm, scale[10,20,1]→97m×100m, 足够放置37m直径停机坪",
+    "asset": "/Game/RuralHouse/House/Meshes/ModularParts/SM_House_FloorPlane_03",
+    "location": [0, 0, 0],
+    "scale": [10, 20, 1],
+    "material_override": "/Game/Foliage_Sets/ground_materials/materials/M_grass_simple_a"
+  },
+
+  "placements": [
+    {"_note": "停机坪10个Object组合: 复刻手动操作顺序(拖入→scale0.01→roll-90), 跳过Z自动修正(部件内部已含相对高度, 独立Z修正会把各部件底部压平导致整体偏低、Object_3相对错位)"},
+    {"type": "group", "asset_prefix": "/Game/heliport/heliport_helipad_air_base_helicopter/StaticMeshes/Object_", "count": 10, "location": [0, 0, 0], "rotation": [0, 0, -90], "scale": [0.01, 0.01, 0.01], "skip_z_fix": true, "scale_before_rotation": true}
+  ],
+
+  "lighting": {
+    "_note": "基础日光: 太阳45°俯角暖白光投射阴影 + 天空光冷色 + 大气层",
+    "directional_light": {
+      "location": [0, 0, 3000],
+      "rotation": [-45, 35, 0],
+      "intensity": 10.0,
+      "color": [1.0, 0.94, 0.78],
+      "cast_shadows": true
+    },
+    "sky_light": {
+      "location": [0, 0, 3000],
+      "intensity": 1.0,
+      "color": [0.78, 0.86, 1.0]
+    },
+    "sky_atmosphere": {
+      "location": [0, 0, 0]
+    }
+  }
+}
