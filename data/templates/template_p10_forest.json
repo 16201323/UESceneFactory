@@ -1,0 +1,61 @@
+{
+  "scene": {
+    "name": "Test_10_Forest",
+    "target_level": "/Game/MapForgeTest/GB_Test_10_Forest",
+    "description": "单资产验证场景 — 密集森林(11种杉树自然布局). 碰撞状态: 全部△仅复杂碰撞(玩家可穿透树干, 子弹命中); 上层4种大型杉树5×5四象限 + 下层7种小杉树3×3中心区. 省资源: HISM每实例距离剔除 cull_start=20000(200m) cull_end=50000(500m), >500m不渲染GPU"
+  },
+
+  "ground": {
+    "_note": "草地地面: SM_House_FloorPlane_03 scale[20,40,1]→194m×200m, 容纳密集森林: 上层4种×25棵=100棵大型 + 下层7种×9棵=63棵",
+    "asset": "/Game/RuralHouse/House/Meshes/ModularParts/SM_House_FloorPlane_03",
+    "location": [0, 0, 0],
+    "scale": [20, 40, 1],
+    "material_override": "/Game/Foliage_Sets/ground_materials/materials/M_grass_simple_a"
+  },
+
+  "placements": [
+    {"_note": "=== 上层林冠: 4种大型杉树, 各5×5=25棵, 间距1500cm(15m), 分布四象限. cull 200-500m渐隐剔除 ==="},
+
+    {"_note": "SM_FirTree_01: dim=[919,929,3095cm] NW象限 origin[-8000,2000], 覆盖-8000~-2000 X / 2000~8000 Y; 碰撞△仅复杂"},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_FirTree_01", "location": [0, 0, 0], "grid": {"rows": 5, "cols": 5, "origin": [-8000, 2000, 0], "spacing": [1500, 1500, 0], "jitter": 300, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.25, 1.25, 1.25], "cull_start": 20000, "cull_end": 50000}},
+
+    {"_note": "SM_FirTree_02: dim=[958,924,3578cm] NE象限 origin[2000,2000], 覆盖2000~8000 X / 2000~8000 Y; 碰撞△仅复杂"},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_FirTree_02", "location": [0, 0, 0], "grid": {"rows": 5, "cols": 5, "origin": [2000, 2000, 0], "spacing": [1500, 1500, 0], "jitter": 300, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.25, 1.25, 1.25], "cull_start": 20000, "cull_end": 50000}},
+
+    {"_note": "SM_FirTree_03: dim=[951,922,3399cm] SW象限 origin[-8000,-8000], 覆盖-8000~-2000 X / -8000~-2000 Y; 碰撞△仅复杂"},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_FirTree_03", "location": [0, 0, 0], "grid": {"rows": 5, "cols": 5, "origin": [-8000, -8000, 0], "spacing": [1500, 1500, 0], "jitter": 300, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.25, 1.25, 1.25], "cull_start": 20000, "cull_end": 50000}},
+
+    {"_note": "SM_FirTreeDead_01: dim=[909,903,3774cm] SE象限 origin[2000,-8000], 覆盖2000~8000 X / -8000~-2000 Y; 枯杉仅MI_Bark; 碰撞△仅复杂"},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_FirTreeDead_01", "location": [0, 0, 0], "grid": {"rows": 5, "cols": 5, "origin": [2000, -8000, 0], "spacing": [1500, 1500, 0], "jitter": 300, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.2, 1.2, 1.2], "cull_start": 20000, "cull_end": 50000}},
+
+    {"_note": "=== 下层林下: 7种小杉树, 各3×3=9棵, 间距600cm(6m), 填补大型树间空隙. cull 200-500m渐隐剔除 ==="},
+
+    {"_note": "SM_SmallFir_01: dim=[223,247,644cm] origin[-2400,-1200]; 碰撞△仅复杂"},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_SmallFir_01", "location": [0, 0, 0], "grid": {"rows": 3, "cols": 3, "origin": [-2400, -1200, 0], "spacing": [600, 600, 0], "jitter": 150, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.3, 1.3, 1.3], "cull_start": 20000, "cull_end": 50000}},
+
+    {"_note": "SM_SmallFir_02: dim=[209,221,603cm] origin[-600,-1200]; 碰撞△仅复杂"},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_SmallFir_02", "location": [0, 0, 0], "grid": {"rows": 3, "cols": 3, "origin": [-600, -1200, 0], "spacing": [600, 600, 0], "jitter": 150, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.3, 1.3, 1.3], "cull_start": 20000, "cull_end": 50000}},
+
+    {"_note": "SM_SmallFir_03: dim=[143,135,399cm] origin[1200,-1200]; 碰撞△仅复杂"},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_SmallFir_03", "location": [0, 0, 0], "grid": {"rows": 3, "cols": 3, "origin": [1200, -1200, 0], "spacing": [600, 600, 0], "jitter": 150, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.3, 1.3, 1.3], "cull_start": 20000, "cull_end": 50000}},
+
+    {"_note": "SM_SmallFir_04: dim=[219,204,526cm] origin[-2400,600]; 碰撞△仅复杂"},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_SmallFir_04", "location": [0, 0, 0], "grid": {"rows": 3, "cols": 3, "origin": [-2400, 600, 0], "spacing": [600, 600, 0], "jitter": 150, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.3, 1.3, 1.3], "cull_start": 20000, "cull_end": 50000}},
+
+    {"_note": "SM_SmallFir_05: dim=[284,252,679cm] origin[-600,600]; 碰撞△仅复杂"},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_SmallFir_05", "location": [0, 0, 0], "grid": {"rows": 3, "cols": 3, "origin": [-600, 600, 0], "spacing": [600, 600, 0], "jitter": 200, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.2, 1.2, 1.2], "cull_start": 20000, "cull_end": 50000}},
+
+    {"_note": "SM_SmallFirDead_01: dim=[259,271,673cm] origin[1200,600]; 枯死小杉; 碰撞△仅复杂"},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_SmallFirDead_01", "location": [0, 0, 0], "grid": {"rows": 3, "cols": 3, "origin": [1200, 600, 0], "spacing": [600, 600, 0], "jitter": 200, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.2, 1.2, 1.2], "cull_start": 20000, "cull_end": 50000}},
+
+    {"_note": "SM_SmallFirDead_02: dim=[269,279,757cm] origin[-900,-2700]; 枯死小杉; 碰撞△仅复杂"},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_SmallFirDead_02", "location": [0, 0, 0], "grid": {"rows": 3, "cols": 3, "origin": [-900, -2700, 0], "spacing": [600, 600, 0], "jitter": 200, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.2, 1.2, 1.2], "cull_start": 20000, "cull_end": 50000}}
+  ],
+
+  "lighting": {
+    "_note": "基础日光: 太阳45°俯角暖白光投射阴影 + 天空光冷色 + 大气层",
+    "directional_light": {"location": [0, 0, 3000], "rotation": [-45, 35, 0], "intensity": 10.0, "color": [1.0, 0.94, 0.78], "cast_shadows": true},
+    "sky_light": {"location": [0, 0, 3000], "intensity": 1.0, "color": [0.78, 0.86, 1.0]},
+    "sky_atmosphere": {"location": [0, 0, 0]}
+  }
+}
