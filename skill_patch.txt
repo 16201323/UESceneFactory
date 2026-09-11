@@ -1,0 +1,28 @@
+
+## 8. 完整场景模板（文件存档）
+
+本节关联两个已验证的完整场景 JSON 模板文件，存放于本技能目录下 `templates/` 子文件夹。需要时直接读取对应文件作为起点，修改 `target_level`/`location`/`scale` 等字段即可派生新场景，避免在文档中内联完整 JSON 以减少 token 消耗。
+
+### 8.1 模板 P1 — 直升机停机坪
+
+- 文件：`templates/template_p1_heliport.json`
+- 资产前缀：`/Game/heliport/heliport_helipad_air_base_helicopter/StaticMeshes/Object_`（group 10 个 Object）
+- 关键开关：`rotation [0,0,-90]` + `scale [0.01,0.01,0.01]` + `skip_z_fix: true` + `scale_before_rotation: true`
+- 地面：`SM_House_FloorPlane_03` scale `[10,20,1]`
+- 详细规则见 4.4.1 节同类配置说明
+
+### 8.2 模板 P8 — 高压电塔（双塔电线相向）
+
+- 文件：`templates/template_p8_hv_tower.json`
+- 资产前缀：`/Game/HighVoltageTower/high_voltage_tower_wired/StaticMeshes/Object_`（每塔 20 个 Object）
+- Tower A：`location [0,1420,0]` `rotation [0,0,-90]`
+- Tower B：`location [0,1500,0]` `rotation [0,180,-90]`（yaw+180°使电线相向）
+- 公共开关：`scale [0.01,0.01,0.01]` + `skip_z_fix: true` + `ground_assembly: true`
+- 两塔 Y 间距 80cm（scale 0.01 下经验值），电线相向连接规则详见 4.4.1 节
+
+### 8.3 派生要点
+
+复制模板后通常只需改：`target_level`、`location`、`scale`、`ground.location/scale`。三个开关 `skip_z_fix`/`scale_before_rotation`/`ground_assembly` 必须保持一致，否则会出现部件错位/塔身躺倒/悬浮。改 scale 时双塔间距需等比调整（≈ scale × 8000cm）。
+
+---
+

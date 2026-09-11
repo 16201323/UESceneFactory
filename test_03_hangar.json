@@ -1,0 +1,48 @@
+{
+  "scene": {
+    "name": "Test_03_Hangar",
+    "target_level": "/Game/MapForgeTest/GB_Test_03_Hangar",
+    "description": "单资产验证场景 — 机库区(2种蓝图+3种设备道具). 碰撞状态: BP_House_RuralBrickFarm=✓完整碰撞, BP_House_Traditional=✓完整碰撞, SM_DieselGenerator=✓(简化2convex), SM_AirConditioner=✓(简化1box), SM_ElectricBox=✓(简化1box)"
+  },
+
+  "ground": {
+    "_note": "草地地面: SM_House_FloorPlane_03原尺寸969×500cm, scale[10,20,1]→97m×100m, 足够放置3栋建筑+3个道具",
+    "asset": "/Game/RuralHouse/House/Meshes/ModularParts/SM_House_FloorPlane_03",
+    "location": [0, 0, 0],
+    "scale": [10, 20, 1],
+    "material_override": "/Game/Foliage_Sets/ground_materials/materials/M_grass_simple_a"
+  },
+
+  "placements": [
+    {"_note": "=== 3栋住宅蓝图(机库/飞行控制/备用), 间距15m, Yaw=180背向朝南 ==="},
+    {"_note": "spawn_blueprint自带Z自动修正, 蓝图原点在中心/顶部时自动将底部对齐z=0, 不悬浮"},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_RuralBrickFarm", "location": [-1500, 0, 0], "rotation": [0, 180, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_Traditional", "location": [0, 0, 0], "rotation": [0, 180, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_RuralBrickFarm", "location": [1500, 0, 0], "rotation": [0, 180, 0]},
+
+    {"_note": "=== 机库周边设备道具散布(建筑南侧Y=+2000, 间距5m) ==="},
+    {"_note": "SM_DieselGenerator: near_bottom原点(zoff=0.35); SM_AirConditioner: bottom原点(zoff=0); SM_ElectricBox: center原点(zoff=50.49); 均由Z自动修正落地"},
+    {"asset": "/Game/RuralHouse/Props/SM_DieselGenerator", "location": [-2000, 2000, 0]},
+    {"asset": "/Game/RuralHouse/Props/SM_AirConditioner", "location": [0, 2000, 0]},
+    {"asset": "/Game/RuralHouse/Props/SM_ElectricBox", "location": [2000, 2000, 0]}
+  ],
+
+  "lighting": {
+    "_note": "基础日光: 太阳45°俯角暖白光投射阴影 + 天空光冷色 + 大气层",
+    "directional_light": {
+      "location": [0, 0, 3000],
+      "rotation": [-45, 35, 0],
+      "intensity": 10.0,
+      "color": [1.0, 0.94, 0.78],
+      "cast_shadows": true
+    },
+    "sky_light": {
+      "location": [0, 0, 3000],
+      "intensity": 1.0,
+      "color": [0.78, 0.86, 1.0]
+    },
+    "sky_atmosphere": {
+      "location": [0, 0, 0]
+    }
+  }
+}

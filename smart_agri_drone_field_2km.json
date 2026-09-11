@@ -1,0 +1,303 @@
+{
+  "scene": {
+    "name": "SmartAgriDroneField2km",
+    "target_level": "/Game/MapForgeTest/GB_SmartAgriDroneField2km_2",
+    "description": "智慧农林无人机起降场 2km×2km — 中央停机坪核心区(500×500m) + 大环形麦田(6条带~0.96km², HISM距离剔除) + 550~750m野草过渡环 + 西北/东南2个散居村落(各9栋) + 东北雪山主峰(118m,雪线70m) + 东部湖泊(水位2m) + 东北山溪入湖 + 南北西三条林带 + 湖畔树林 + 2高压塔+2通信塔 + 3条农村道路; 全植被LOD距离剔除"
+  },
+
+  "landscape": {
+    "_note": "【地形骨架】2016×2016m(32×32 Component×63 quad×scale100), location[-100800,-100800,0]使地形中心(局部坐标1008,1008)=世界原点(0,0); features模式blend_mode=additive。坐标系: features/weight_pattern坐标=地形局部米(左上角为0,0, +x东+y南), placements=世界厘米。【高度设计】①基础穹隆(center1008,1008 r6000 h8): 高斯exp(-d²/2r²)把全图抬至7.78~8.00m(整图波动仅22cm), 使水面level=2m时只灌湖盆不淹平地(C++约束level>0才生成水) ②NE主峰(局部1938,128=世界(930,-880)) r140 h110→山顶约118m超雪线70m积雪 ③SW丘陵(局部148,1868=世界(-860,860)) r130 h60→低于雪线长草 ④湖盆(局部1798,1008=世界(790,0)) r180 d30 br80→底约-22m, 水位2m注入成直径360m湖泊。无noise_overlay无perturbation: 保证高斯公式可精确预估各地形高度, 所有放置物z按8×exp(-d²/7.2e7)米计算(790~800cm), 避免浮空/埋地",
+    "material": "/Game/RuralHouse/Landscape/MI_Landscape",
+    "section_size_quads": 63,
+    "num_subsections": 1,
+    "component_count_x": 32,
+    "component_count_y": 32,
+    "location": [-100800, -100800, 0],
+    "rotation": [0, 0, 0],
+    "scale": [100, 100, 100],
+    "layers": [
+      {"_note": "Layer1 TrailSoil基底: uniform权重0.5, 其他层权重0处回退到此, 全图无秃斑",
+       "info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer1_LayerInfo", "weight": 0.5},
+      {"_note": "Layer2 Mud泥地: height_based(-25~-5m, invert)→湖盆深处(-22m)权重1, 陆地(≥7.8m)权重0; 修正自P11的0~15m区间: 本场景平地仅7.8m, 若沿用0~15会使平地泥权重0.5",
+       "info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer2_LayerInfo", "weight": 1.0,
+       "weight_pattern": {
+         "pattern": "height_based",
+         "height_min_m": -25,
+         "height_max_m": -5,
+         "invert": true
+       }},
+      {"_note": "Layer3 ForestGround雪线层: snow_line(70m过渡12m坡度上限0.8)→海拔>70m且坡度<0.8处积雪; NE主峰118m→山顶常年积雪, 山体60~75m处草渐稀与雪过渡衔接; SW丘陵60m不积雪",
+       "info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer3_LayerInfo", "weight": 1.0,
+       "weight_pattern": {
+         "pattern": "snow_line",
+         "snow_line_m": 70,
+         "transition_m": 12,
+         "max_slope": 0.8
+       }},
+      {"_note": "Layer4 Grass草地: height_based(0~5m全权重, fade_max75/fade_width15→60~75m越高越稀, ≥75m无草)→平地满草, 60m以上渐稀, 湖底无草; exclude_regions排除9区: 6条麦田条带(局部坐标=世界+1008)+停机坪50×50m+西北/东南两村宅基地→麦田/坪/村内无杂草; corridor_exclude=true→河流/道路走廊(宽×2.5)内权重清零, 岸边路侧干净",
+       "info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer4_LayerInfo", "weight": 1.0,
+       "weight_pattern": {
+         "pattern": "height_based",
+         "height_min_m": 0,
+         "height_max_m": 5,
+         "fade_max_m": 75,
+         "fade_width_m": 15,
+         "invert": false,
+         "corridor_exclude": true,
+         "exclude_regions": [
+           {"min_x": 458, "min_y": 458, "max_x": 1558, "max_y": 758},
+           {"min_x": 458, "min_y": 1258, "max_x": 1558, "max_y": 1558},
+           {"min_x": 458, "min_y": 908, "max_x": 758, "max_y": 993},
+           {"min_x": 458, "min_y": 1023, "max_x": 758, "max_y": 1108},
+           {"min_x": 1258, "min_y": 908, "max_x": 1558, "max_y": 993},
+           {"min_x": 1258, "min_y": 1023, "max_x": 1558, "max_y": 1108},
+           {"min_x": 983, "min_y": 983, "max_x": 1033, "max_y": 1033},
+           {"min_x": 308, "min_y": 318, "max_x": 468, "max_y": 448},
+           {"min_x": 1548, "min_y": 1568, "max_x": 1708, "max_y": 1698}
+         ]
+       }},
+      {"_note": "Layer5 Gravel碎石坡: slope_based(0.35~0.9)→NE主峰陡坡(最大坡度~0.48)出碎石, 平地/缓坡无",
+       "info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer5_LayerInfo", "weight": 1.0,
+       "weight_pattern": {
+         "pattern": "slope_based",
+         "slope_min": 0.35,
+         "slope_max": 0.9
+       }}
+    ],
+    "grass": {
+      "_note": "UE5原生草地(LandscapeGrassOutput): C++自动在材质添加Grass条目采样Layer4权重→按上述height_based+exclude+corridor分布; 11种VOL22_WildGrass混合(5高草密度16+5矮草5+3枯草3≈114/10㎡, 参照P11验证值130); 密度块数值仅作基准, varieties由C++改写LGT_Grass",
+      "grass_type": "/Game/RuralHouse/Landscape/LandscapeFoliage/LGT_Grass",
+      "grass_mesh": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Tall_Wild_01a",
+      "layer_name": "Grass",
+      "density": 120.0
+    },
+    "height_pattern": {
+      "_note": "features模式: ①基础穹隆抬全图至~7.8m ②NE主峰118m积雪 ③SW丘陵60m ④湖盆+水位2m ⑤山溪8折点从主峰西坡(局部1888,178=世界(880,-830)高程约97m)沿自然下坡入湖北岸(局部1758,888) ⑥3条道路(主干土路东西各1条+湖畔路) ⑦50块岩石散布 ⑧11种草地变体(LOD剔除2~12km)",
+      "type": "features",
+      "blend_mode": "additive",
+      "hills": [
+        {"_note": "基础穹隆: 中心局部(1008,1008)=世界原点, r6000远超地形半径→高斯极平缓, 全图7.78~8.00m; 抬升目的: 水位2m时湖盆蓄水而平地(7.8m>2m)不淹",
+         "center_x_m": 1008, "center_y_m": 1008, "radius_m": 6000, "height_m": 8},
+        {"_note": "NE雪山主峰: 局部(1938,128)=世界(930,-880), r140 h110→山顶约118m; 高斯尾部约束: 距麦田东北角(局部1558,758=世界(550,-250))距离518m处残高仅0.1m, 麦田不被抬升",
+         "center_x_m": 1938, "center_y_m": 128, "radius_m": 140, "height_m": 110},
+        {"_note": "SW草丘: 局部(148,1868)=世界(-860,860), r130 h60→约68m低于雪线70m, 山顶草稀(60~75m淡出带); 距麦田西南角残高0.2m, 距S林带(世界x≥-450)413m处残高0.4m",
+         "center_x_m": 148, "center_y_m": 1868, "radius_m": 130, "height_m": 60}
+      ],
+      "valleys": [
+        {"_note": "湖盆: 局部(1798,1008)=世界(790,0), r180 d30 br80→湖底约-22m, 水位2m注入成360m直径湖; 西岸距麦田东条带(世界x≤547)63m草带过渡",
+         "center_x_m": 1798, "center_y_m": 1008, "radius_m": 180, "depth_m": 30, "bottom_radius_m": 80}
+      ],
+      "water": {
+        "_note": "湖面水位2m: 高于湖底-22m成湖, 低于平地7.8m不淹田; C++约束level>0才生成水面",
+        "level_m": 2,
+        "material_path": "/Game/Modular_Rural_Cabin/Materials/Instances/Water_Lake"
+      },
+      "rivers": [
+        {"_note": "NE山溪: 从主峰西坡世界(880,-830)高程约97m沿自然下坡(97→44→11→1.3→0→湖盆)蜿蜒入湖北岸; 8折点宽8m; C++自动河床冲刷(U型谷深1.5m)+水面ribbon贴合地形-30cm→连续不断节; 全程x∈[750,880]避开麦田(x≤547)/湖畔林(x≤610)/北林带(x≤457)",
+         "points": [[1888,178],[1838,288],[1798,398],[1768,508],[1788,608],[1758,708],[1778,818],[1758,888]], "width_m": 8, "material_path": "/Game/Modular_Rural_Cabin/Materials/Instances/Water_Lake"}
+      ],
+      "roads": [
+        {"_note": "西主干土路: 世界(-60,0)→(-550,0)沿麦田东西走廊缝(y∈±15m留30m缝)→草环折向西北(-620,-600)村口; 9折点宽4m; C++自动路基平整+ribbon贴合高差",
+         "points": [[948,1008],[758,1008],[608,1008],[458,1008],[438,938],[413,788],[396,588],[388,448],[388,408]], "width_m": 4, "material_path": "/Game/MapForgeTest/M_Road_Dirt"},
+        {"_note": "东主干土路: 世界(60,0)→(550,0)沿走廊缝→草环折向东南(620,600)村口, 与湖畔路在(550,0)交汇成丁字路口",
+         "points": [[1068,1008],[1258,1008],[1408,1008],[1558,1008],[1578,1078],[1603,1228],[1620,1428],[1628,1568],[1628,1608]], "width_m": 4, "material_path": "/Game/MapForgeTest/M_Road_Dirt"},
+        {"_note": "湖畔支路: 从东主干(550,0)向南蜿蜒至湖西南岸(665,128)水线处; 5折点宽3m; 终点距湖心178m恰在湖岸线上(地形-0.4m高于水位2m)",
+         "points": [[1558,1008],[1598,1038],[1633,1063],[1663,1103],[1673,1136]], "width_m": 3, "material_path": "/Game/MapForgeTest/M_Road_Dirt"}
+      ],
+      "scatter": [
+        {"_note": "山岩散布: 4种共50块随机散布地表(避开概率低, 麦田占比24%散落数块属自然农田景观)",
+         "mesh_path": "/Game/RuralHouse/Environment/Ground/SM_Rock_A_01", "count": 15, "seed": 301, "scale_min": 1.0, "scale_max": 3.0, "random_rotation": true},
+        {"mesh_path": "/Game/RuralHouse/Environment/Ground/SM_Rock_A_04", "count": 12, "seed": 302, "scale_min": 0.8, "scale_max": 2.0, "random_rotation": true},
+        {"mesh_path": "/Game/RuralHouse/Environment/Ground/SM_MossyRock_01", "count": 10, "seed": 303, "scale_min": 0.9, "scale_max": 2.0, "random_rotation": true},
+        {"mesh_path": "/Game/RuralHouse/Environment/Ground/SM_Rock_A_07", "count": 13, "seed": 304, "scale_min": 1.5, "scale_max": 4.0, "random_rotation": true}
+      ],
+      "grass_varieties": [
+        {"_note": "高草01a~01e: 密度16/10㎡, 主草种; LOD剔除20~120m(近处满显, 120m外GPU不画)",
+        "mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Tall_Wild_01a", "density": 16, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 12000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Tall_Wild_01b", "density": 16, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 12000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Tall_Wild_01c", "density": 16, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 12000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Tall_Wild_01d", "density": 16, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 12000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Tall_Wild_01e", "density": 16, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 12000},
+        {"_note": "矮草Beach01a~01c: 密度5, 低地填充",
+        "mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Beach_01a", "density": 5, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 12000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Beach_01b", "density": 5, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 12000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Beach_01c", "density": 5, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 12000},
+        {"_note": "枯草01a~01c: 密度3, 点缀自然感",
+        "mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Dead_Plants_01a", "density": 3, "scale_min": 0.7, "scale_max": 1.1, "jitter": 0.6, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 12000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Dead_Plants_01b", "density": 3, "scale_min": 0.7, "scale_max": 1.1, "jitter": 0.6, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 12000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Dead_Plants_01c", "density": 3, "scale_min": 0.7, "scale_max": 1.1, "jitter": 0.6, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 12000}
+      ]
+    }
+  },
+
+  "ground": {},
+
+  "placements": [
+    {"_note": "=== 一、起降核心区(世界±250m内, 地形为穹隆顶~8.0m, z=795~800) ==="},
+
+    {"_note": "1.1 直升机停机坪: 10个Object组合, 原尺寸3728m经scale0.01缩至37m标准坪, roll=-90平躺顶面朝上; z=798略沉入穹隆顶(800)2cm; skip_z_fix=true锁定组合内部相对高度不被逐件Z修正压平, scale_before_rotation=true先缩放后旋转还原装配顺序",
+    "type": "group", "asset_prefix": "/Game/heliport/heliport_helipad_air_base_helicopter/StaticMeshes/Object_", "count": 10, "location": [0, 0, 798], "rotation": [0, 0, -90], "scale": [0.01, 0.01, 0.01], "skip_z_fix": true, "scale_before_rotation": true},
+
+    {"_note": "1.2 方形铁丝网围栏: P2模板instances数组(弃用grid圆形), 50m×50m方形(半边2500cm)完全围住37m停机坪; 100块面板间距200cm(南25+北25+西25+东25); 删除2个Cylinder铁柱子(用户明确不用铁柱); location[0,0,795]使面板世界中心z=906(底795沉入穹隆顶800cm 5cm, 与原方案同高); yaw:南180/北0/西90/东270使各面面板朝向围合无缺口"},
+    {"type": "instanced_grid", "asset": "/Game/WireFence/chainlink_fence_tileable/StaticMeshes/Plane_004_chainlink_fence_textures_0", "location": [0, 0, 795], "instances": [{"location": [-2400, -2500, 111], "rotation": [0, 180, 0], "scale": [1, 1, 1]}, {"location": [-2200, -2500, 111], "rotation": [0, 180, 0], "scale": [1, 1, 1]}, {"location": [-2000, -2500, 111], "rotation": [0, 180, 0], "scale": [1, 1, 1]}, {"location": [-1800, -2500, 111], "rotation": [0, 180, 0], "scale": [1, 1, 1]}, {"location": [-1600, -2500, 111], "rotation": [0, 180, 0], "scale": [1, 1, 1]}, {"location": [-1400, -2500, 111], "rotation": [0, 180, 0], "scale": [1, 1, 1]}, {"location": [-1200, -2500, 111], "rotation": [0, 180, 0], "scale": [1, 1, 1]}, {"location": [-1000, -2500, 111], "rotation": [0, 180, 0], "scale": [1, 1, 1]}, {"location": [-800, -2500, 111], "rotation": [0, 180, 0], "scale": [1, 1, 1]}, {"location": [-600, -2500, 111], "rotation": [0, 180, 0], "scale": [1, 1, 1]}, {"location": [-400, -2500, 111], "rotation": [0, 180, 0], "scale": [1, 1, 1]}, {"location": [-200, -2500, 111], "rotation": [0, 180, 0], "scale": [1, 1, 1]}, {"location": [0, -2500, 111], "rotation": [0, 180, 0], "scale": [1, 1, 1]}, {"location": [200, -2500, 111], "rotation": [0, 180, 0], "scale": [1, 1, 1]}, {"location": [400, -2500, 111], "rotation": [0, 180, 0], "scale": [1, 1, 1]}, {"location": [600, -2500, 111], "rotation": [0, 180, 0], "scale": [1, 1, 1]}, {"location": [800, -2500, 111], "rotation": [0, 180, 0], "scale": [1, 1, 1]}, {"location": [1000, -2500, 111], "rotation": [0, 180, 0], "scale": [1, 1, 1]}, {"location": [1200, -2500, 111], "rotation": [0, 180, 0], "scale": [1, 1, 1]}, {"location": [1400, -2500, 111], "rotation": [0, 180, 0], "scale": [1, 1, 1]}, {"location": [1600, -2500, 111], "rotation": [0, 180, 0], "scale": [1, 1, 1]}, {"location": [1800, -2500, 111], "rotation": [0, 180, 0], "scale": [1, 1, 1]}, {"location": [2000, -2500, 111], "rotation": [0, 180, 0], "scale": [1, 1, 1]}, {"location": [2200, -2500, 111], "rotation": [0, 180, 0], "scale": [1, 1, 1]}, {"location": [2400, -2500, 111], "rotation": [0, 180, 0], "scale": [1, 1, 1]}, {"location": [-2400, 2500, 111], "rotation": [0, 0, 0], "scale": [1, 1, 1]}, {"location": [-2200, 2500, 111], "rotation": [0, 0, 0], "scale": [1, 1, 1]}, {"location": [-2000, 2500, 111], "rotation": [0, 0, 0], "scale": [1, 1, 1]}, {"location": [-1800, 2500, 111], "rotation": [0, 0, 0], "scale": [1, 1, 1]}, {"location": [-1600, 2500, 111], "rotation": [0, 0, 0], "scale": [1, 1, 1]}, {"location": [-1400, 2500, 111], "rotation": [0, 0, 0], "scale": [1, 1, 1]}, {"location": [-1200, 2500, 111], "rotation": [0, 0, 0], "scale": [1, 1, 1]}, {"location": [-1000, 2500, 111], "rotation": [0, 0, 0], "scale": [1, 1, 1]}, {"location": [-800, 2500, 111], "rotation": [0, 0, 0], "scale": [1, 1, 1]}, {"location": [-600, 2500, 111], "rotation": [0, 0, 0], "scale": [1, 1, 1]}, {"location": [-400, 2500, 111], "rotation": [0, 0, 0], "scale": [1, 1, 1]}, {"location": [-200, 2500, 111], "rotation": [0, 0, 0], "scale": [1, 1, 1]}, {"location": [0, 2500, 111], "rotation": [0, 0, 0], "scale": [1, 1, 1]}, {"location": [200, 2500, 111], "rotation": [0, 0, 0], "scale": [1, 1, 1]}, {"location": [400, 2500, 111], "rotation": [0, 0, 0], "scale": [1, 1, 1]}, {"location": [600, 2500, 111], "rotation": [0, 0, 0], "scale": [1, 1, 1]}, {"location": [800, 2500, 111], "rotation": [0, 0, 0], "scale": [1, 1, 1]}, {"location": [1000, 2500, 111], "rotation": [0, 0, 0], "scale": [1, 1, 1]}, {"location": [1200, 2500, 111], "rotation": [0, 0, 0], "scale": [1, 1, 1]}, {"location": [1400, 2500, 111], "rotation": [0, 0, 0], "scale": [1, 1, 1]}, {"location": [1600, 2500, 111], "rotation": [0, 0, 0], "scale": [1, 1, 1]}, {"location": [1800, 2500, 111], "rotation": [0, 0, 0], "scale": [1, 1, 1]}, {"location": [2000, 2500, 111], "rotation": [0, 0, 0], "scale": [1, 1, 1]}, {"location": [2200, 2500, 111], "rotation": [0, 0, 0], "scale": [1, 1, 1]}, {"location": [2400, 2500, 111], "rotation": [0, 0, 0], "scale": [1, 1, 1]}, {"location": [-2500, -2400, 111], "rotation": [0, 90, 0], "scale": [1, 1, 1]}, {"location": [-2500, -2200, 111], "rotation": [0, 90, 0], "scale": [1, 1, 1]}, {"location": [-2500, -2000, 111], "rotation": [0, 90, 0], "scale": [1, 1, 1]}, {"location": [-2500, -1800, 111], "rotation": [0, 90, 0], "scale": [1, 1, 1]}, {"location": [-2500, -1600, 111], "rotation": [0, 90, 0], "scale": [1, 1, 1]}, {"location": [-2500, -1400, 111], "rotation": [0, 90, 0], "scale": [1, 1, 1]}, {"location": [-2500, -1200, 111], "rotation": [0, 90, 0], "scale": [1, 1, 1]}, {"location": [-2500, -1000, 111], "rotation": [0, 90, 0], "scale": [1, 1, 1]}, {"location": [-2500, -800, 111], "rotation": [0, 90, 0], "scale": [1, 1, 1]}, {"location": [-2500, -600, 111], "rotation": [0, 90, 0], "scale": [1, 1, 1]}, {"location": [-2500, -400, 111], "rotation": [0, 90, 0], "scale": [1, 1, 1]}, {"location": [-2500, -200, 111], "rotation": [0, 90, 0], "scale": [1, 1, 1]}, {"location": [-2500, 0, 111], "rotation": [0, 90, 0], "scale": [1, 1, 1]}, {"location": [-2500, 200, 111], "rotation": [0, 90, 0], "scale": [1, 1, 1]}, {"location": [-2500, 400, 111], "rotation": [0, 90, 0], "scale": [1, 1, 1]}, {"location": [-2500, 600, 111], "rotation": [0, 90, 0], "scale": [1, 1, 1]}, {"location": [-2500, 800, 111], "rotation": [0, 90, 0], "scale": [1, 1, 1]}, {"location": [-2500, 1000, 111], "rotation": [0, 90, 0], "scale": [1, 1, 1]}, {"location": [-2500, 1200, 111], "rotation": [0, 90, 0], "scale": [1, 1, 1]}, {"location": [-2500, 1400, 111], "rotation": [0, 90, 0], "scale": [1, 1, 1]}, {"location": [-2500, 1600, 111], "rotation": [0, 90, 0], "scale": [1, 1, 1]}, {"location": [-2500, 1800, 111], "rotation": [0, 90, 0], "scale": [1, 1, 1]}, {"location": [-2500, 2000, 111], "rotation": [0, 90, 0], "scale": [1, 1, 1]}, {"location": [-2500, 2200, 111], "rotation": [0, 90, 0], "scale": [1, 1, 1]}, {"location": [-2500, 2400, 111], "rotation": [0, 90, 0], "scale": [1, 1, 1]}, {"location": [2500, -2400, 111], "rotation": [0, 270, 0], "scale": [1, 1, 1]}, {"location": [2500, -2200, 111], "rotation": [0, 270, 0], "scale": [1, 1, 1]}, {"location": [2500, -2000, 111], "rotation": [0, 270, 0], "scale": [1, 1, 1]}, {"location": [2500, -1800, 111], "rotation": [0, 270, 0], "scale": [1, 1, 1]}, {"location": [2500, -1600, 111], "rotation": [0, 270, 0], "scale": [1, 1, 1]}, {"location": [2500, -1400, 111], "rotation": [0, 270, 0], "scale": [1, 1, 1]}, {"location": [2500, -1200, 111], "rotation": [0, 270, 0], "scale": [1, 1, 1]}, {"location": [2500, -1000, 111], "rotation": [0, 270, 0], "scale": [1, 1, 1]}, {"location": [2500, -800, 111], "rotation": [0, 270, 0], "scale": [1, 1, 1]}, {"location": [2500, -600, 111], "rotation": [0, 270, 0], "scale": [1, 1, 1]}, {"location": [2500, -400, 111], "rotation": [0, 270, 0], "scale": [1, 1, 1]}, {"location": [2500, -200, 111], "rotation": [0, 270, 0], "scale": [1, 1, 1]}, {"location": [2500, 0, 111], "rotation": [0, 270, 0], "scale": [1, 1, 1]}, {"location": [2500, 200, 111], "rotation": [0, 270, 0], "scale": [1, 1, 1]}, {"location": [2500, 400, 111], "rotation": [0, 270, 0], "scale": [1, 1, 1]}, {"location": [2500, 600, 111], "rotation": [0, 270, 0], "scale": [1, 1, 1]}, {"location": [2500, 800, 111], "rotation": [0, 270, 0], "scale": [1, 1, 1]}, {"location": [2500, 1000, 111], "rotation": [0, 270, 0], "scale": [1, 1, 1]}, {"location": [2500, 1200, 111], "rotation": [0, 270, 0], "scale": [1, 1, 1]}, {"location": [2500, 1400, 111], "rotation": [0, 270, 0], "scale": [1, 1, 1]}, {"location": [2500, 1600, 111], "rotation": [0, 270, 0], "scale": [1, 1, 1]}, {"location": [2500, 1800, 111], "rotation": [0, 270, 0], "scale": [1, 1, 1]}, {"location": [2500, 2000, 111], "rotation": [0, 270, 0], "scale": [1, 1, 1]}, {"location": [2500, 2200, 111], "rotation": [0, 270, 0], "scale": [1, 1, 1]}, {"location": [2500, 2400, 111], "rotation": [0, 270, 0], "scale": [1, 1, 1]}]},
+
+    {"_note": "1.3 机库区3栋建筑(停机坪南侧, 已移入核心空洞±250m内避开南麦田条带y≥250m): z=800对齐穹隆地形(d约130-156m处地形约799-800cm, Z_FIX对bottom-origin蓝图不触发故直接设地形高度); yaw=180朝北面向停机坪; RuralBrickFarm可见网格底面高出Actor原点约180cm(74组件原生位置), Z下调180cm(800→620)使网格底面贴合地形, Traditional自带5x缩放网格已达原点故Z=800不变",
+    "type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_RuralBrickFarm", "location": [-12000, 10000, 620], "rotation": [0, 180, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_Traditional", "location": [0, 13000, 800], "rotation": [0, 180, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_RuralBrickFarm", "location": [12000, 10000, 620], "rotation": [0, 180, 0]},
+
+    {"_note": "1.4 机库周边设备: 柴油发电机(中库右后方)/空调(西库侧)/电箱(中库前), 均在空洞内, spawn_mesh自带Z修正对齐z=795"},
+    {"asset": "/Game/RuralHouse/Props/SM_DieselGenerator", "location": [6000, 17000, 795]},
+    {"asset": "/Game/RuralHouse/Props/SM_AirConditioner", "location": [-6000, 8000, 795]},
+    {"asset": "/Game/RuralHouse/Props/SM_ElectricBox", "location": [0, 8000, 795]},
+
+    {"_note": "1.5 充电桩区: 停机坪东南侧4个充电位沿x=+200m纵列, 间距60m(y=60~240m, 南端240m<250m空洞边界不侵入麦田)"},
+    {"asset": "/Game/RuralHouse/Props/SM_ElectricBox", "location": [20000, 6000, 795]},
+    {"asset": "/Game/RuralHouse/Props/SM_ElectricBox", "location": [20000, 12000, 795]},
+    {"asset": "/Game/RuralHouse/Props/SM_ElectricBox", "location": [20000, 18000, 795]},
+    {"asset": "/Game/RuralHouse/Props/SM_ElectricBox", "location": [20000, 24000, 795]},
+
+    {"_note": "1.6 光伏田(东西双翼, 北侧): P5模板参数 group类型227部件组合体, asset_prefix=Material(非Material2, 原instanced_grid+Material2+scale1导致面板400m+不可见=无光伏); scale[0.01,0.01,0.01]将原尺寸缩至合理大小, rotation[0,0,-90]使面板朝向正确; skip_z_fix锁定内部堆叠, ground_assembly整组贴地z=800(地形高度); 位于核心区北部(y-94m)避开东西道路走廊(y±15m)"},
+    {"_note": "1.6a 光伏田西翼: P5模板227部件, location[-16000,-9400,800]"},
+    {"type": "group", "asset_prefix": "/Game/Photovoltaic/-photovoltaic_panels/StaticMeshes/Material", "count": 227, "location": [-16000, -9400, 800], "rotation": [0, 0, -90], "scale": [0.01, 0.01, 0.01], "skip_z_fix": true, "ground_assembly": true},
+    {"_note": "1.6b 光伏田东翼: P5模板227部件, location[11000,-9400,800]"},
+    {"type": "group", "asset_prefix": "/Game/Photovoltaic/-photovoltaic_panels/StaticMeshes/Material", "count": 227, "location": [11000, -9400, 800], "rotation": [0, 0, -90], "scale": [0.01, 0.01, 0.01], "skip_z_fix": true, "ground_assembly": true},
+
+    {"_note": "=== 二、环形麦田(6条带, 1100×1100m外框-500×500m核心空洞, 面积约0.96km²) ==="},
+    {"_note": "5种麦苗(Plane_001/002/003/004/wheat_texture_0)按行交错混播解决单一资产问题; 每条带拆5个品种子条带, 各占1/5行(间距=5x base), origin_y偏移k*base使5品种行交错密铺无空缺; 大条带间距250cm(原300, 增密1.44x), 走廊间距300cm; random_yaw随机朝向, scale0.04~0.06随机缩放; 5品种原高20~32m各异, 同scale下株高0.8~1.9m自然差异; z=790麦根沉土3~10cm; cull 100~500m; 总实例约11.76万"},
+
+    {"_note": "2.1.1 北条带-品种1(Plane_001_wheat_texture_0): origin[-55000,-55000,790], 24行x440列=10560株, 间距x250/y1250交错", "type": "instanced_grid", "asset": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_001_wheat_texture_0", "location": [0, 0, 0], "grid": {"rows": 24, "cols": 440, "origin": [-55000, -55000, 790], "spacing": [250, 1250, 0], "random_yaw": true, "scale_min": [0.04, 0.04, 0.04], "scale_max": [0.06, 0.06, 0.06], "cull_start": 10000, "cull_end": 50000}},
+    {"_note": "2.1.2 北条带-品种2(Plane_002_wheat_texture_0): origin[-55000,-54750,790], 24行x440列=10560株, 间距x250/y1250交错", "type": "instanced_grid", "asset": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_002_wheat_texture_0", "location": [0, 0, 0], "grid": {"rows": 24, "cols": 440, "origin": [-55000, -54750, 790], "spacing": [250, 1250, 0], "random_yaw": true, "scale_min": [0.04, 0.04, 0.04], "scale_max": [0.06, 0.06, 0.06], "cull_start": 10000, "cull_end": 50000}},
+    {"_note": "2.1.3 北条带-品种3(Plane_003_wheat_texture_0): origin[-55000,-54500,790], 24行x440列=10560株, 间距x250/y1250交错", "type": "instanced_grid", "asset": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_003_wheat_texture_0", "location": [0, 0, 0], "grid": {"rows": 24, "cols": 440, "origin": [-55000, -54500, 790], "spacing": [250, 1250, 0], "random_yaw": true, "scale_min": [0.04, 0.04, 0.04], "scale_max": [0.06, 0.06, 0.06], "cull_start": 10000, "cull_end": 50000}},
+    {"_note": "2.1.4 北条带-品种4(Plane_004_wheat_texture_0): origin[-55000,-54250,790], 24行x440列=10560株, 间距x250/y1250交错", "type": "instanced_grid", "asset": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_004_wheat_texture_0", "location": [0, 0, 0], "grid": {"rows": 24, "cols": 440, "origin": [-55000, -54250, 790], "spacing": [250, 1250, 0], "random_yaw": true, "scale_min": [0.04, 0.04, 0.04], "scale_max": [0.06, 0.06, 0.06], "cull_start": 10000, "cull_end": 50000}},
+    {"_note": "2.1.5 北条带-品种5(Plane_wheat_texture_0): origin[-55000,-54000,790], 24行x440列=10560株, 间距x250/y1250交错", "type": "instanced_grid", "asset": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_wheat_texture_0", "location": [0, 0, 0], "grid": {"rows": 24, "cols": 440, "origin": [-55000, -54000, 790], "spacing": [250, 1250, 0], "random_yaw": true, "scale_min": [0.04, 0.04, 0.04], "scale_max": [0.06, 0.06, 0.06], "cull_start": 10000, "cull_end": 50000}},
+    {"_note": "2.2.1 南条带-品种1(Plane_001_wheat_texture_0): origin[-55000,25000,790], 24行x440列=10560株, 间距x250/y1250交错", "type": "instanced_grid", "asset": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_001_wheat_texture_0", "location": [0, 0, 0], "grid": {"rows": 24, "cols": 440, "origin": [-55000, 25000, 790], "spacing": [250, 1250, 0], "random_yaw": true, "scale_min": [0.04, 0.04, 0.04], "scale_max": [0.06, 0.06, 0.06], "cull_start": 10000, "cull_end": 50000}},
+    {"_note": "2.2.2 南条带-品种2(Plane_002_wheat_texture_0): origin[-55000,25250,790], 24行x440列=10560株, 间距x250/y1250交错", "type": "instanced_grid", "asset": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_002_wheat_texture_0", "location": [0, 0, 0], "grid": {"rows": 24, "cols": 440, "origin": [-55000, 25250, 790], "spacing": [250, 1250, 0], "random_yaw": true, "scale_min": [0.04, 0.04, 0.04], "scale_max": [0.06, 0.06, 0.06], "cull_start": 10000, "cull_end": 50000}},
+    {"_note": "2.2.3 南条带-品种3(Plane_003_wheat_texture_0): origin[-55000,25500,790], 24行x440列=10560株, 间距x250/y1250交错", "type": "instanced_grid", "asset": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_003_wheat_texture_0", "location": [0, 0, 0], "grid": {"rows": 24, "cols": 440, "origin": [-55000, 25500, 790], "spacing": [250, 1250, 0], "random_yaw": true, "scale_min": [0.04, 0.04, 0.04], "scale_max": [0.06, 0.06, 0.06], "cull_start": 10000, "cull_end": 50000}},
+    {"_note": "2.2.4 南条带-品种4(Plane_004_wheat_texture_0): origin[-55000,25750,790], 24行x440列=10560株, 间距x250/y1250交错", "type": "instanced_grid", "asset": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_004_wheat_texture_0", "location": [0, 0, 0], "grid": {"rows": 24, "cols": 440, "origin": [-55000, 25750, 790], "spacing": [250, 1250, 0], "random_yaw": true, "scale_min": [0.04, 0.04, 0.04], "scale_max": [0.06, 0.06, 0.06], "cull_start": 10000, "cull_end": 50000}},
+    {"_note": "2.2.5 南条带-品种5(Plane_wheat_texture_0): origin[-55000,26000,790], 24行x440列=10560株, 间距x250/y1250交错", "type": "instanced_grid", "asset": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_wheat_texture_0", "location": [0, 0, 0], "grid": {"rows": 24, "cols": 440, "origin": [-55000, 26000, 790], "spacing": [250, 1250, 0], "random_yaw": true, "scale_min": [0.04, 0.04, 0.04], "scale_max": [0.06, 0.06, 0.06], "cull_start": 10000, "cull_end": 50000}},
+    {"_note": "2.3.1 西北走廊-品种1(Plane_001_wheat_texture_0): origin[-55000,-10000,790], 6行x100列=600株, 间距x300/y1500交错", "type": "instanced_grid", "asset": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_001_wheat_texture_0", "location": [0, 0, 0], "grid": {"rows": 6, "cols": 100, "origin": [-55000, -10000, 790], "spacing": [300, 1500, 0], "random_yaw": true, "scale_min": [0.04, 0.04, 0.04], "scale_max": [0.06, 0.06, 0.06], "cull_start": 10000, "cull_end": 50000}},
+    {"_note": "2.3.2 西北走廊-品种2(Plane_002_wheat_texture_0): origin[-55000,-9700,790], 6行x100列=600株, 间距x300/y1500交错", "type": "instanced_grid", "asset": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_002_wheat_texture_0", "location": [0, 0, 0], "grid": {"rows": 6, "cols": 100, "origin": [-55000, -9700, 790], "spacing": [300, 1500, 0], "random_yaw": true, "scale_min": [0.04, 0.04, 0.04], "scale_max": [0.06, 0.06, 0.06], "cull_start": 10000, "cull_end": 50000}},
+    {"_note": "2.3.3 西北走廊-品种3(Plane_003_wheat_texture_0): origin[-55000,-9400,790], 6行x100列=600株, 间距x300/y1500交错", "type": "instanced_grid", "asset": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_003_wheat_texture_0", "location": [0, 0, 0], "grid": {"rows": 6, "cols": 100, "origin": [-55000, -9400, 790], "spacing": [300, 1500, 0], "random_yaw": true, "scale_min": [0.04, 0.04, 0.04], "scale_max": [0.06, 0.06, 0.06], "cull_start": 10000, "cull_end": 50000}},
+    {"_note": "2.3.4 西北走廊-品种4(Plane_004_wheat_texture_0): origin[-55000,-9100,790], 6行x100列=600株, 间距x300/y1500交错", "type": "instanced_grid", "asset": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_004_wheat_texture_0", "location": [0, 0, 0], "grid": {"rows": 6, "cols": 100, "origin": [-55000, -9100, 790], "spacing": [300, 1500, 0], "random_yaw": true, "scale_min": [0.04, 0.04, 0.04], "scale_max": [0.06, 0.06, 0.06], "cull_start": 10000, "cull_end": 50000}},
+    {"_note": "2.3.5 西北走廊-品种5(Plane_wheat_texture_0): origin[-55000,-8800,790], 6行x100列=600株, 间距x300/y1500交错", "type": "instanced_grid", "asset": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_wheat_texture_0", "location": [0, 0, 0], "grid": {"rows": 6, "cols": 100, "origin": [-55000, -8800, 790], "spacing": [300, 1500, 0], "random_yaw": true, "scale_min": [0.04, 0.04, 0.04], "scale_max": [0.06, 0.06, 0.06], "cull_start": 10000, "cull_end": 50000}},
+    {"_note": "2.4.1 西南走廊-品种1(Plane_001_wheat_texture_0): origin[-55000,1500,790], 6行x100列=600株, 间距x300/y1500交错", "type": "instanced_grid", "asset": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_001_wheat_texture_0", "location": [0, 0, 0], "grid": {"rows": 6, "cols": 100, "origin": [-55000, 1500, 790], "spacing": [300, 1500, 0], "random_yaw": true, "scale_min": [0.04, 0.04, 0.04], "scale_max": [0.06, 0.06, 0.06], "cull_start": 10000, "cull_end": 50000}},
+    {"_note": "2.4.2 西南走廊-品种2(Plane_002_wheat_texture_0): origin[-55000,1800,790], 6行x100列=600株, 间距x300/y1500交错", "type": "instanced_grid", "asset": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_002_wheat_texture_0", "location": [0, 0, 0], "grid": {"rows": 6, "cols": 100, "origin": [-55000, 1800, 790], "spacing": [300, 1500, 0], "random_yaw": true, "scale_min": [0.04, 0.04, 0.04], "scale_max": [0.06, 0.06, 0.06], "cull_start": 10000, "cull_end": 50000}},
+    {"_note": "2.4.3 西南走廊-品种3(Plane_003_wheat_texture_0): origin[-55000,2100,790], 6行x100列=600株, 间距x300/y1500交错", "type": "instanced_grid", "asset": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_003_wheat_texture_0", "location": [0, 0, 0], "grid": {"rows": 6, "cols": 100, "origin": [-55000, 2100, 790], "spacing": [300, 1500, 0], "random_yaw": true, "scale_min": [0.04, 0.04, 0.04], "scale_max": [0.06, 0.06, 0.06], "cull_start": 10000, "cull_end": 50000}},
+    {"_note": "2.4.4 西南走廊-品种4(Plane_004_wheat_texture_0): origin[-55000,2400,790], 6行x100列=600株, 间距x300/y1500交错", "type": "instanced_grid", "asset": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_004_wheat_texture_0", "location": [0, 0, 0], "grid": {"rows": 6, "cols": 100, "origin": [-55000, 2400, 790], "spacing": [300, 1500, 0], "random_yaw": true, "scale_min": [0.04, 0.04, 0.04], "scale_max": [0.06, 0.06, 0.06], "cull_start": 10000, "cull_end": 50000}},
+    {"_note": "2.4.5 西南走廊-品种5(Plane_wheat_texture_0): origin[-55000,2700,790], 6行x100列=600株, 间距x300/y1500交错", "type": "instanced_grid", "asset": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_wheat_texture_0", "location": [0, 0, 0], "grid": {"rows": 6, "cols": 100, "origin": [-55000, 2700, 790], "spacing": [300, 1500, 0], "random_yaw": true, "scale_min": [0.04, 0.04, 0.04], "scale_max": [0.06, 0.06, 0.06], "cull_start": 10000, "cull_end": 50000}},
+    {"_note": "2.5.1 东北走廊-品种1(Plane_001_wheat_texture_0): origin[25000,-10000,790], 6行x100列=600株, 间距x300/y1500交错", "type": "instanced_grid", "asset": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_001_wheat_texture_0", "location": [0, 0, 0], "grid": {"rows": 6, "cols": 100, "origin": [25000, -10000, 790], "spacing": [300, 1500, 0], "random_yaw": true, "scale_min": [0.04, 0.04, 0.04], "scale_max": [0.06, 0.06, 0.06], "cull_start": 10000, "cull_end": 50000}},
+    {"_note": "2.5.2 东北走廊-品种2(Plane_002_wheat_texture_0): origin[25000,-9700,790], 6行x100列=600株, 间距x300/y1500交错", "type": "instanced_grid", "asset": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_002_wheat_texture_0", "location": [0, 0, 0], "grid": {"rows": 6, "cols": 100, "origin": [25000, -9700, 790], "spacing": [300, 1500, 0], "random_yaw": true, "scale_min": [0.04, 0.04, 0.04], "scale_max": [0.06, 0.06, 0.06], "cull_start": 10000, "cull_end": 50000}},
+    {"_note": "2.5.3 东北走廊-品种3(Plane_003_wheat_texture_0): origin[25000,-9400,790], 6行x100列=600株, 间距x300/y1500交错", "type": "instanced_grid", "asset": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_003_wheat_texture_0", "location": [0, 0, 0], "grid": {"rows": 6, "cols": 100, "origin": [25000, -9400, 790], "spacing": [300, 1500, 0], "random_yaw": true, "scale_min": [0.04, 0.04, 0.04], "scale_max": [0.06, 0.06, 0.06], "cull_start": 10000, "cull_end": 50000}},
+    {"_note": "2.5.4 东北走廊-品种4(Plane_004_wheat_texture_0): origin[25000,-9100,790], 6行x100列=600株, 间距x300/y1500交错", "type": "instanced_grid", "asset": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_004_wheat_texture_0", "location": [0, 0, 0], "grid": {"rows": 6, "cols": 100, "origin": [25000, -9100, 790], "spacing": [300, 1500, 0], "random_yaw": true, "scale_min": [0.04, 0.04, 0.04], "scale_max": [0.06, 0.06, 0.06], "cull_start": 10000, "cull_end": 50000}},
+    {"_note": "2.5.5 东北走廊-品种5(Plane_wheat_texture_0): origin[25000,-8800,790], 6行x100列=600株, 间距x300/y1500交错", "type": "instanced_grid", "asset": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_wheat_texture_0", "location": [0, 0, 0], "grid": {"rows": 6, "cols": 100, "origin": [25000, -8800, 790], "spacing": [300, 1500, 0], "random_yaw": true, "scale_min": [0.04, 0.04, 0.04], "scale_max": [0.06, 0.06, 0.06], "cull_start": 10000, "cull_end": 50000}},
+    {"_note": "2.6.1 东南走廊-品种1(Plane_001_wheat_texture_0): origin[25000,1500,790], 6行x100列=600株, 间距x300/y1500交错", "type": "instanced_grid", "asset": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_001_wheat_texture_0", "location": [0, 0, 0], "grid": {"rows": 6, "cols": 100, "origin": [25000, 1500, 790], "spacing": [300, 1500, 0], "random_yaw": true, "scale_min": [0.04, 0.04, 0.04], "scale_max": [0.06, 0.06, 0.06], "cull_start": 10000, "cull_end": 50000}},
+    {"_note": "2.6.2 东南走廊-品种2(Plane_002_wheat_texture_0): origin[25000,1800,790], 6行x100列=600株, 间距x300/y1500交错", "type": "instanced_grid", "asset": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_002_wheat_texture_0", "location": [0, 0, 0], "grid": {"rows": 6, "cols": 100, "origin": [25000, 1800, 790], "spacing": [300, 1500, 0], "random_yaw": true, "scale_min": [0.04, 0.04, 0.04], "scale_max": [0.06, 0.06, 0.06], "cull_start": 10000, "cull_end": 50000}},
+    {"_note": "2.6.3 东南走廊-品种3(Plane_003_wheat_texture_0): origin[25000,2100,790], 6行x100列=600株, 间距x300/y1500交错", "type": "instanced_grid", "asset": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_003_wheat_texture_0", "location": [0, 0, 0], "grid": {"rows": 6, "cols": 100, "origin": [25000, 2100, 790], "spacing": [300, 1500, 0], "random_yaw": true, "scale_min": [0.04, 0.04, 0.04], "scale_max": [0.06, 0.06, 0.06], "cull_start": 10000, "cull_end": 50000}},
+    {"_note": "2.6.4 东南走廊-品种4(Plane_004_wheat_texture_0): origin[25000,2400,790], 6行x100列=600株, 间距x300/y1500交错", "type": "instanced_grid", "asset": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_004_wheat_texture_0", "location": [0, 0, 0], "grid": {"rows": 6, "cols": 100, "origin": [25000, 2400, 790], "spacing": [300, 1500, 0], "random_yaw": true, "scale_min": [0.04, 0.04, 0.04], "scale_max": [0.06, 0.06, 0.06], "cull_start": 10000, "cull_end": 50000}},
+    {"_note": "2.6.5 东南走廊-品种5(Plane_wheat_texture_0): origin[25000,2700,790], 6行x100列=600株, 间距x300/y1500交错", "type": "instanced_grid", "asset": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_wheat_texture_0", "location": [0, 0, 0], "grid": {"rows": 6, "cols": 100, "origin": [25000, 2700, 790], "spacing": [300, 1500, 0], "random_yaw": true, "scale_min": [0.04, 0.04, 0.04], "scale_max": [0.06, 0.06, 0.06], "cull_start": 10000, "cull_end": 50000}},
+
+    {"_note": "=== 三、散居村落(西北/东南各9栋, 中心距停机坪约620m, 在麦田(550m)与林带(700m)之间的草环带; 楼栋坐标/朝向手工错落, 不排排坐; z按各栋地形高度设置(d约810-910m处地形约791-793cm, Z_FIX对bottom-origin蓝图不触发故直接设地形高度); RuralBrickFarm可见网格底面高出Actor原点约180cm, 其Z下调180cm(790-793→610-613)贴合地形, Traditional自带5x缩放故原Z不变; 宅基地已加入草地exclude_regions无杂草) ==="},
+
+    {"_note": "3.1 西北村(中心世界(-620,-610)): 5栋砖农舍+4栋传统民居交错",
+    "type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_RuralBrickFarm", "location": [-66000, -56000, 612], "rotation": [0, 40, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_Traditional", "location": [-59000, -58500, 792], "rotation": [0, -30, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_RuralBrickFarm", "location": [-68000, -63000, 611], "rotation": [0, 160, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_Traditional", "location": [-61500, -64500, 791], "rotation": [0, 95, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_RuralBrickFarm", "location": [-56000, -65500, 612], "rotation": [0, -120, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_Traditional", "location": [-64500, -67500, 790], "rotation": [0, 15, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_RuralBrickFarm", "location": [-57500, -69000, 611], "rotation": [0, 200, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_Traditional", "location": [-70000, -58000, 791], "rotation": [0, -60, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_RuralBrickFarm", "location": [-54000, -61000, 613], "rotation": [0, 140, 0]},
+
+    {"_note": "3.2 东南村(中心世界(620,620)): 5栋传统+4栋砖农舍交错",
+    "type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_Traditional", "location": [66000, 56000, 792], "rotation": [0, -40, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_RuralBrickFarm", "location": [59000, 58500, 612], "rotation": [0, 30, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_Traditional", "location": [68000, 63000, 791], "rotation": [0, -160, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_RuralBrickFarm", "location": [61500, 64500, 611], "rotation": [0, -95, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_Traditional", "location": [56000, 65500, 792], "rotation": [0, 120, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_RuralBrickFarm", "location": [64500, 67500, 610], "rotation": [0, -15, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_Traditional", "location": [57500, 69000, 791], "rotation": [0, -200, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_RuralBrickFarm", "location": [70000, 58000, 611], "rotation": [0, 60, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_Traditional", "location": [54000, 61000, 793], "rotation": [0, -140, 0]},
+
+    {"_note": "=== 四、塔站(东西方向各2座, 均在麦田外草环带; z=790贴地) ==="},
+
+    {"_note": "4.1 高压电塔(西侧): P8模板参数 rotation[0,0,-90]使塔身竖立(roll=-90把水平前向轴转为垂直向上), scale[0.01,0.01,0.01]将77.5m原尺寸缩至77.5cm×100=77.5m实际高度; skip_z_fix锁定内部堆叠, ground_assembly整组贴地",
+    "type": "group", "asset_prefix": "/Game/HighVoltageTower/high_voltage_tower_wired/StaticMeshes/Object_", "count": 20, "location": [-70000, 25000, 790], "rotation": [0, 0, -90], "scale": [0.01, 0.01, 0.01], "skip_z_fix": true, "ground_assembly": true},
+    {"_note": "4.2 高压电塔(东北侧): yaw+180°镜像(与西侧塔对称朝向, 高压线连接方向一致), roll=-90竖立; P8模板规范",
+    "type": "group", "asset_prefix": "/Game/HighVoltageTower/high_voltage_tower_wired/StaticMeshes/Object_", "count": 20, "location": [64000, -35000, 790], "rotation": [0, 180, -90], "scale": [0.01, 0.01, 0.01], "skip_z_fix": true, "ground_assembly": true},
+    {"_note": "4.3 通信塔(东南侧): P7模板参数 scale[1.2,1.2,1.2]将20.6m原尺寸放大至24.7m(城市宏基站标准15-30m); skip_z_fix锁定堆叠, ground_assembly整组贴地",
+    "type": "group", "asset_prefix": "/Game/CommunicationTower/telecommunication_tower_low-poly_free/StaticMeshes/Object_", "count": 6, "location": [59000, 35000, 790], "rotation": [0, 0, 0], "scale": [1.2, 1.2, 1.2], "skip_z_fix": true, "ground_assembly": true},
+    {"_note": "4.4 通信塔(西北侧): P7模板 scale1.2放大至24.7m; skip_z_fix锁定堆叠, ground_assembly整组贴地",
+    "type": "group", "asset_prefix": "/Game/CommunicationTower/telecommunication_tower_low-poly_free/StaticMeshes/Object_", "count": 6, "location": [-64000, -35000, 790], "rotation": [0, 0, 0], "scale": [1.2, 1.2, 1.2], "skip_z_fix": true, "ground_assembly": true},
+
+    {"_note": "=== 五、林带(南北西三条+湖畔两片, 共约2000棵杉树; z=785沉入地形0~15cm; 大树LOD剔除30~80km, 小树20~50km) ==="},
+    {"_note": "杉树(Fir)材质无风吹动画; 树冠距麦田/道路/村落均预留间距; 北林带东端止于x=457m避开NE主峰高斯尾部"},
+
+    {"_note": "5.1 北林带(y-950~-700, x-850~457): 大杉01/02/03三层+小杉+枯杉, 共约850棵",
+    "type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_FirTree_01", "location": [0, 0, 0], "grid": {"rows": 3, "cols": 44, "origin": [-85000, -94000, 785], "spacing": [3000, 5000, 0], "jitter": 300, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.25, 1.25, 1.25], "cull_start": 30000, "cull_end": 80000}},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_FirTree_02", "location": [0, 0, 0], "grid": {"rows": 3, "cols": 44, "origin": [-85000, -89000, 785], "spacing": [3000, 5000, 0], "jitter": 300, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.25, 1.25, 1.25], "cull_start": 30000, "cull_end": 80000}},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_FirTree_03", "location": [0, 0, 0], "grid": {"rows": 2, "cols": 44, "origin": [-85000, -79000, 785], "spacing": [3000, 5000, 0], "jitter": 300, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.2, 1.2, 1.2], "cull_start": 30000, "cull_end": 80000}},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_SmallFir_01", "location": [0, 0, 0], "grid": {"rows": 5, "cols": 80, "origin": [-85000, -93500, 785], "spacing": [1650, 2400, 0], "jitter": 200, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.3, 1.3, 1.3], "cull_start": 20000, "cull_end": 50000}},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_SmallFirDead_01", "location": [0, 0, 0], "grid": {"rows": 2, "cols": 50, "origin": [-84000, -88000, 785], "spacing": [2600, 1800, 0], "jitter": 200, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.2, 1.2, 1.2], "cull_start": 20000, "cull_end": 50000}},
+
+    {"_note": "5.2 南林带(y700~950, x-450~850, 西端避SW丘陵): 共约850棵",
+    "type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_FirTree_01", "location": [0, 0, 0], "grid": {"rows": 3, "cols": 44, "origin": [-45000, 70500, 785], "spacing": [3000, 5000, 0], "jitter": 300, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.25, 1.25, 1.25], "cull_start": 30000, "cull_end": 80000}},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_FirTree_02", "location": [0, 0, 0], "grid": {"rows": 3, "cols": 44, "origin": [-45000, 75500, 785], "spacing": [3000, 5000, 0], "jitter": 300, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.25, 1.25, 1.25], "cull_start": 30000, "cull_end": 80000}},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_FirTree_03", "location": [0, 0, 0], "grid": {"rows": 2, "cols": 44, "origin": [-45000, 85000, 785], "spacing": [3000, 5000, 0], "jitter": 300, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.2, 1.2, 1.2], "cull_start": 30000, "cull_end": 80000}},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_SmallFir_03", "location": [0, 0, 0], "grid": {"rows": 5, "cols": 80, "origin": [-45000, 71000, 785], "spacing": [1650, 2400, 0], "jitter": 200, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.3, 1.3, 1.3], "cull_start": 20000, "cull_end": 50000}},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_SmallFirDead_02", "location": [0, 0, 0], "grid": {"rows": 2, "cols": 50, "origin": [-44000, 74000, 785], "spacing": [2600, 1800, 0], "jitter": 200, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.2, 1.2, 1.2], "cull_start": 20000, "cull_end": 50000}},
+
+    {"_note": "5.3 西林带(x-950~-736, y-450~445, 东西向主林带): 共约230棵",
+    "type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_FirTree_01", "location": [0, 0, 0], "grid": {"rows": 18, "cols": 3, "origin": [-94500, -45000, 785], "spacing": [10000, 5300, 0], "jitter": 300, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.25, 1.25, 1.25], "cull_start": 30000, "cull_end": 80000}},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_FirTree_02", "location": [0, 0, 0], "grid": {"rows": 18, "cols": 3, "origin": [-94500, -42000, 785], "spacing": [10000, 5300, 0], "jitter": 300, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.25, 1.25, 1.25], "cull_start": 30000, "cull_end": 80000}},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_SmallFir_02", "location": [0, 0, 0], "grid": {"rows": 30, "cols": 4, "origin": [-94500, -44500, 785], "spacing": [7000, 3100, 0], "jitter": 200, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.3, 1.3, 1.3], "cull_start": 20000, "cull_end": 50000}},
+
+    {"_note": "5.4 湖西南岸林(世界x560~610, y-215~-65, 东向临湖): 26棵; 距麦田东条带(x547)13m过渡",
+    "type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_FirTree_03", "location": [0, 0, 0], "grid": {"rows": 4, "cols": 2, "origin": [56500, -22000, 790], "spacing": [3500, 5000, 0], "jitter": 300, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.2, 1.2, 1.2], "cull_start": 30000, "cull_end": 80000}},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_SmallFir_02", "location": [0, 0, 0], "grid": {"rows": 6, "cols": 3, "origin": [56000, -21500, 790], "spacing": [2500, 3000, 0], "jitter": 200, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.3, 1.3, 1.3], "cull_start": 20000, "cull_end": 50000}},
+
+    {"_note": "5.5 湖东北岸林(世界x820~890, y-435~-255, 河溪东侧): 74棵; 距河溪(x750~790)30m+",
+    "type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_FirTree_01", "location": [0, 0, 0], "grid": {"rows": 6, "cols": 4, "origin": [82000, -44000, 785], "spacing": [2300, 3700, 0], "jitter": 300, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.25, 1.25, 1.25], "cull_start": 30000, "cull_end": 80000}},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_SmallFir_01", "location": [0, 0, 0], "grid": {"rows": 10, "cols": 5, "origin": [82000, -43500, 785], "spacing": [1750, 2000, 0], "jitter": 200, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.3, 1.3, 1.3], "cull_start": 20000, "cull_end": 50000}}
+  ],
+
+  "lighting": {
+    "_note": "清晨暖光: 太阳低角度斜射增强山体阴影/麦浪立体感; 天空光冷色补光; 大气层; 轻雾空气透视",
+    "directional_light": {
+      "location": [0, 0, 3000],
+      "rotation": [-15, 60, 0],
+      "intensity": 10.0,
+      "color": [1.0, 0.85, 0.7],
+      "cast_shadows": true
+    },
+    "sky_light": {
+      "location": [0, 0, 3000],
+      "intensity": 1.0,
+      "color": [0.75, 0.85, 1.0]
+    },
+    "sky_atmosphere": {
+      "location": [0, 0, 0],
+      "render_in_main_pass": true,
+      "multi_scattering_factor": 2.0,
+      "sky_luminance_factor": [1.0, 1.0, 1.0]
+    },
+    "height_fog": {
+      "location": [0, 0, 0],
+      "density": 0.0001,
+      "color": [0.7, 0.8, 0.9]
+    }
+  },
+
+  "weather": {
+    "_note": "体积云: UE5原生VolumetricCloud, 配合SkyAtmosphere渲染真实3D云层",
+    "volumetric_clouds": {
+      "location": [0, 0, 2000]
+    },
+    "post_process": {
+      "auto_exposure_min": 0.5,
+      "auto_exposure_max": 5.0
+    }
+  }
+}

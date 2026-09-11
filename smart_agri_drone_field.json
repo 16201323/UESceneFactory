@@ -1,0 +1,158 @@
+{
+  "scene": {
+    "name": "SmartAgriDroneField",
+    "target_level": "/Game/MapForgeTest/GB_SmartAgriDroneField",
+    "description": "智慧农林无人机起降场 5km×5km 十字通道布局 — 全杉树无风吹动画/正确Z偏移/草地材质地面/可见通信塔/建筑落地"
+  },
+
+  "ground": {
+    "_note": "大地面: SM_House_FloorPlane_03原尺寸969.38×500cm(平躺, bottom原点), scale[516,1000,1]精确覆盖5km×5km(969.38×516≈500km? 不, 969.38×516=500324cm≈5km); 材质覆盖为M_grass_simple_a(可靠草地, 替代有编译错误的M_ground_dirt_grass_master解决木地板问题)",
+    "asset": "/Game/RuralHouse/House/Meshes/ModularParts/SM_House_FloorPlane_03",
+    "location": [0, 0, 0],
+    "scale": [516, 1000, 1],
+    "material_override": "/Game/Foliage_Sets/ground_materials/materials/M_grass_simple_a"
+  },
+
+  "placements": [
+
+    {"_note": "=== 1. 起降核心区: 原点直升机停机坪 (10个Object组合) ==="},
+    {"_note": "资产Object_0原尺寸3728m(X-Z平面竖立, Y=0); 需绕X轴旋转-90度(roll=-90)使其平躺且顶面朝上(roll=+90会上下颠倒); scale=0.01将3728m缩至37m(标准停机坪尺寸); group内部spawn_mesh自带Z自动修正, 各部件底部对齐z=0"},
+    {"type": "group", "asset_prefix": "/Game/heliport/heliport_helipad_air_base_helicopter/StaticMeshes/Object_", "count": 10, "location": [0, 0, 0], "rotation": [0, 0, -90], "scale": [0.01, 0.01, 0.01]},
+
+    {"_note": "=== 2. 铁丝网围栏环: R=2500cm(25m半径), 52实例, 面板+双柱各一HISM ==="},
+    {"_note": "修复Z偏移: 面板Plane_004原点在中心, dim_z=236.4cm, zoff=110.98, 需z_offset=111使底部落地面z=0; 支柱Cylinder原点在中心, dim_z=690.2cm, zoff=590.16, 需z_offset=590使底部落地面z=0; 此前z_offset=0导致围栏沉入地下不可见"},
+    {"type": "instanced_grid", "asset": "/Game/WireFence/chainlink_fence_tileable/StaticMeshes/Plane_004_chainlink_fence_textures_0", "location": [0, 0, 0], "grid": {"pattern": "circle", "count": 52, "radius": 2500, "center": [0, 0, 0], "face_center": true, "yaw_offset": 90, "z_offset": 111}},
+    {"type": "instanced_grid", "asset": "/Game/WireFence/chainlink_fence_tileable/StaticMeshes/Cylinder_001_chainlink_fence_textures_0", "location": [0, 0, 0], "grid": {"pattern": "circle", "count": 52, "radius": 2500, "center": [0, 0, 0], "face_center": false, "z_offset": 590}},
+    {"type": "instanced_grid", "asset": "/Game/WireFence/chainlink_fence_tileable/StaticMeshes/Cylinder_004_chainlink_fence_textures_0", "location": [0, 0, 0], "grid": {"pattern": "circle", "count": 52, "radius": 2500, "center": [0, 0, 0], "face_center": false, "z_offset": 590}},
+
+    {"_note": "=== 3. 机库区: 停机坪南侧3栋住宅蓝图(飞行控制/维修/备用) ==="},
+    {"_note": "修复建筑离地: spawn_blueprint现已添加Z自动修正(与spawn_mesh一致), 蓝图原点在中心/顶部时自动将底部对齐z=0, 不再悬浮; Yaw=180背向停机坪朝南"},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_RuralBrickFarm", "location": [-1200, -3500, 0], "rotation": [0, 180, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_Traditional", "location": [0, -4000, 0], "rotation": [0, 180, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_RuralBrickFarm", "location": [1200, -3500, 0], "rotation": [0, 180, 0]},
+
+    {"_note": "=== 机库周边设备道具散布 (均为spawn_mesh, 自带Z自动修正) ==="},
+    {"_note": "SM_DieselGenerator: near_bottom原点(zoff=0.35); SM_AirConditioner: bottom原点(zoff=0); SM_ElectricBox: center原点(zoff=50.49); 均由Z自动修正落地"},
+    {"asset": "/Game/RuralHouse/Props/SM_DieselGenerator", "location": [800, -4500, 0]},
+    {"asset": "/Game/RuralHouse/Props/SM_AirConditioner", "location": [-800, -3200, 0]},
+    {"asset": "/Game/RuralHouse/Props/SM_ElectricBox", "location": [0, -3000, 0]},
+
+    {"_note": "=== 4. 充电桩区: 停机坪东侧4个充电位, X=+2000, 间距600cm ==="},
+    {"asset": "/Game/RuralHouse/Props/SM_ElectricBox", "location": [2000, -2000, 0]},
+    {"asset": "/Game/RuralHouse/Props/SM_ElectricBox", "location": [2000, -2600, 0]},
+    {"asset": "/Game/RuralHouse/Props/SM_ElectricBox", "location": [2000, -3200, 0]},
+    {"asset": "/Game/RuralHouse/Props/SM_ElectricBox", "location": [2000, -3800, 0]},
+
+    {"_note": "=== 5. 光伏田(东西双翼): 各10×8=80块, 间距600cm, 每板向南倾斜Pitch=-15° ==="},
+    {"_note": "Material2: dim=[267.7,421.3,39.9] flat_horizontal top原点; HISM无Z自动修正, 需手动设origin[2]=50使面板高于地面(顶面z=50, 底面z=10), pitch=-15倾斜后最低边仍在地面以上; scale=1.0(原尺寸约2.7×4.2m为正确厘米单位)"},
+    {"type": "instanced_grid", "asset": "/Game/Photovoltaic/-photovoltaic_panels/StaticMeshes/Material2", "location": [0, 0, 0], "grid": {"rows": 10, "cols": 8, "origin": [-21000, -2400, 50], "spacing": [600, 600, 0], "pitch": -15, "scale_min": [1, 1, 1], "scale_max": [1, 1, 1]}},
+    {"type": "instanced_grid", "asset": "/Game/Photovoltaic/-photovoltaic_panels/StaticMeshes/Material2", "location": [0, 0, 0], "grid": {"rows": 10, "cols": 8, "origin": [15000, -2400, 50], "spacing": [600, 600, 0], "pitch": -15, "scale_min": [1, 1, 1], "scale_max": [1, 1, 1]}},
+
+    {"_note": "=== 6. 四角麦田: 各80×80=6400株, 间距300cm(3m), 缩放0.04~0.06(原27.7m→1.1~1.7m小麦高度) ==="},
+    {"_note": "Plane_wheat_texture_0: dim=[711.3,208.7,2774.2] standing_tall center原点; zoff=24.51(原点近底部, 底端仅低2.4cm); scale=0.05时zoff=1.2cm可忽略; origin[2]=0使麦根落在地面"},
+    {"type": "instanced_grid", "asset": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_wheat_texture_0", "location": [0, 0, 0], "grid": {"rows": 80, "cols": 80, "origin": [80000, 50000, 0], "spacing": [300, 300, 0], "random_yaw": true, "scale_min": [0.04, 0.04, 0.04], "scale_max": [0.06, 0.06, 0.06]}},
+    {"type": "instanced_grid", "asset": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_wheat_texture_0", "location": [0, 0, 0], "grid": {"rows": 80, "cols": 80, "origin": [-104000, 50000, 0], "spacing": [300, 300, 0], "random_yaw": true, "scale_min": [0.04, 0.04, 0.04], "scale_max": [0.06, 0.06, 0.06]}},
+    {"type": "instanced_grid", "asset": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_wheat_texture_0", "location": [0, 0, 0], "grid": {"rows": 80, "cols": 80, "origin": [80000, -80000, 0], "spacing": [300, 300, 0], "random_yaw": true, "scale_min": [0.04, 0.04, 0.04], "scale_max": [0.06, 0.06, 0.06]}},
+    {"type": "instanced_grid", "asset": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_wheat_texture_0", "location": [0, 0, 0], "grid": {"rows": 80, "cols": 80, "origin": [-104000, -80000, 0], "spacing": [300, 300, 0], "random_yaw": true, "scale_min": [0.04, 0.04, 0.04], "scale_max": [0.06, 0.06, 0.06]}},
+
+    {"_note": "=== 7. 南北林带屏障: 全部使用杉树(Fir)材质MI_FirNeedles无风吹动画 ==="},
+    {"_note": "关键修复: 原JSON使用松树(Pine)其材质MI_Pine_Tree_Branches含WorldPositionOffset风吹动画导致树摇晃如草; 现全部替换为杉树11种(材质MI_FirNeedles/MI_Bark无风); 杉树原点near_bottom/bottom, zoff≈0.02~0.15cm可忽略, origin[2]=0直接落地"},
+
+    {"_note": "--- 北林带 (Y=+200000) 大型杉树3段+枯杉1段, X从-240km到+240km, 中央留净空 ---"},
+    {"_note": "SM_FirTree_01: dim=[919,929,3095cm] near_bottom zoff=0.09; 5行×55列, 间距20m×15m, 覆盖1.1km"},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_FirTree_01", "location": [0, 0, 0], "grid": {"rows": 5, "cols": 55, "origin": [-240000, 200000, 0], "spacing": [2000, 1500, 0], "jitter": 200, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.25, 1.25, 1.25]}},
+    {"_note": "SM_FirTree_02: dim=[958,924,3578cm] near_bottom zoff=0.09; 5行×55列"},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_FirTree_02", "location": [0, 0, 0], "grid": {"rows": 5, "cols": 55, "origin": [-125000, 200000, 0], "spacing": [2000, 1500, 0], "jitter": 200, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.25, 1.25, 1.25]}},
+    {"_note": "SM_FirTree_03: dim=[951,922,3399cm] near_bottom zoff=0.15; 5行×55列"},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_FirTree_03", "location": [0, 0, 0], "grid": {"rows": 5, "cols": 55, "origin": [10000, 200000, 0], "spacing": [2000, 1500, 0], "jitter": 200, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.25, 1.25, 1.25]}},
+    {"_note": "SM_FirTreeDead_01: dim=[909,903,3774cm] near_bottom zoff=0.13, 仅MI_Bark(枯树); 3行×45列"},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_FirTreeDead_01", "location": [0, 0, 0], "grid": {"rows": 3, "cols": 45, "origin": [125000, 200000, 0], "spacing": [2500, 2000, 0], "jitter": 300, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.2, 1.2, 1.2]}},
+
+    {"_note": "--- 北林带 下木层(小杉树)填补大型树间空隙 ---"},
+    {"_note": "SM_SmallFir_01: dim=[223,247,644cm] near_bottom zoff=0.05; 4行×80列, 间距15m"},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_SmallFir_01", "location": [0, 0, 0], "grid": {"rows": 4, "cols": 80, "origin": [-240000, 207500, 0], "spacing": [1500, 1500, 0], "jitter": 150, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.3, 1.3, 1.3]}},
+    {"_note": "SM_SmallFir_03: dim=[143,135,399cm] bottom zoff=0; 4行×80列"},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_SmallFir_03", "location": [0, 0, 0], "grid": {"rows": 4, "cols": 80, "origin": [10000, 207500, 0], "spacing": [1500, 1500, 0], "jitter": 150, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.3, 1.3, 1.3]}},
+
+    {"_note": "--- 南林带 (Y=-200000) 大型杉树3段+枯杉1段(镜像北林带) ---"},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_FirTree_01", "location": [0, 0, 0], "grid": {"rows": 5, "cols": 55, "origin": [-240000, -200000, 0], "spacing": [2000, 1500, 0], "jitter": 200, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.25, 1.25, 1.25]}},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_FirTree_02", "location": [0, 0, 0], "grid": {"rows": 5, "cols": 55, "origin": [-125000, -200000, 0], "spacing": [2000, 1500, 0], "jitter": 200, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.25, 1.25, 1.25]}},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_FirTree_03", "location": [0, 0, 0], "grid": {"rows": 5, "cols": 55, "origin": [10000, -200000, 0], "spacing": [2000, 1500, 0], "jitter": 200, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.25, 1.25, 1.25]}},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_FirTreeDead_01", "location": [0, 0, 0], "grid": {"rows": 3, "cols": 45, "origin": [125000, -200000, 0], "spacing": [2500, 2000, 0], "jitter": 300, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.2, 1.2, 1.2]}},
+
+    {"_note": "--- 南林带 下木层(小杉树+枯小杉) ---"},
+    {"_note": "SM_SmallFir_02: dim=[209,221,603cm] near_bottom zoff=0.03"},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_SmallFir_02", "location": [0, 0, 0], "grid": {"rows": 4, "cols": 80, "origin": [-240000, -207500, 0], "spacing": [1500, 1500, 0], "jitter": 150, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.3, 1.3, 1.3]}},
+    {"_note": "SM_SmallFir_04: dim=[219,204,526cm] near_bottom zoff=0.02"},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_SmallFir_04", "location": [0, 0, 0], "grid": {"rows": 4, "cols": 80, "origin": [10000, -207500, 0], "spacing": [1500, 1500, 0], "jitter": 150, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.3, 1.3, 1.3]}},
+    {"_note": "SM_SmallFir_05: dim=[284,252,679cm] near_bottom zoff=0.05; 3行×60列 最外层屏障"},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_SmallFir_05", "location": [0, 0, 0], "grid": {"rows": 3, "cols": 60, "origin": [-200000, -214000, 0], "spacing": [2000, 2000, 0], "jitter": 200, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.2, 1.2, 1.2]}},
+    {"_note": "SM_SmallFirDead_01: dim=[259,271,673cm] bottom zoff=0; 枯死小杉增加自然感"},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_SmallFirDead_01", "location": [0, 0, 0], "grid": {"rows": 3, "cols": 60, "origin": [20000, -214000, 0], "spacing": [2000, 2000, 0], "jitter": 200, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.2, 1.2, 1.2]}},
+    {"_note": "SM_SmallFirDead_02: dim=[269,279,757cm] bottom zoff=0; 枯死小杉"},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_SmallFirDead_02", "location": [0, 0, 0], "grid": {"rows": 3, "cols": 60, "origin": [140000, -214000, 0], "spacing": [2000, 2000, 0], "jitter": 200, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.2, 1.2, 1.2]}},
+
+    {"_note": "=== 8. 四座通信塔: 全部使用telecommunication_tower(6个Object, 全可见, 最高20.6m) ==="},
+    {"_note": "关键修复: 原JSON的comms_twr_3d_densified有93个Object但全为空网格(零bounds无几何体)导致不可见; 现替换为telecom(6个Object全可见)和sci-fi(10个Object全可见); group内spawn_mesh自带Z自动修正, bottom原点部件直接落地"},
+
+    {"_note": "NW角: 电信塔(6 Object, 最高2058cm=20.6m)"},
+    {"type": "group", "asset_prefix": "/Game/CommunicationTower/telecommunication_tower_low-poly_free/StaticMeshes/Object_", "count": 6, "location": [-200000, 200000, 0], "rotation": [0, 0, 0], "scale": [1, 1, 1]},
+    {"_note": "NE角: 科幻通信塔(10 Object, 最高280cm=2.8m, 小型基站风格)"},
+    {"type": "group", "asset_prefix": "/Game/CommunicationTower/sci-fi_communication_tower/StaticMeshes/Object_", "count": 10, "location": [200000, 200000, 0], "rotation": [0, 0, 0], "scale": [1, 1, 1]},
+    {"_note": "SW角: 电信塔(6 Object)"},
+    {"type": "group", "asset_prefix": "/Game/CommunicationTower/telecommunication_tower_low-poly_free/StaticMeshes/Object_", "count": 6, "location": [-200000, -200000, 0], "rotation": [0, 0, 0], "scale": [1, 1, 1]},
+    {"_note": "SE角: 科幻通信塔(10 Object)"},
+    {"type": "group", "asset_prefix": "/Game/CommunicationTower/sci-fi_communication_tower/StaticMeshes/Object_", "count": 10, "location": [200000, -200000, 0], "rotation": [0, 0, 0], "scale": [1, 1, 1]},
+
+    {"_note": "=== 9. 高压塔阵: 四角各1座(4组×20 Object), 远场飞行挑战背景 ==="},
+    {"_note": "Object_0: dim=[992,184,7745cm] standing_tall center原点 zoff=3873; group内spawn_mesh自带Z自动修正将77.5m高塔底部对齐z=0(原点在中心需上移半个高度3873cm); 各Object内部相对偏移自带, 自动组装成完整铁塔"},
+    {"type": "group", "asset_prefix": "/Game/HighVoltageTower/high_voltage_tower_wired/StaticMeshes/Object_", "count": 20, "location": [-230000, 230000, 0], "rotation": [0, 0, 0], "scale": [1, 1, 1]},
+    {"type": "group", "asset_prefix": "/Game/HighVoltageTower/high_voltage_tower_wired/StaticMeshes/Object_", "count": 20, "location": [230000, 230000, 0], "rotation": [0, 0, 0], "scale": [1, 1, 1]},
+    {"type": "group", "asset_prefix": "/Game/HighVoltageTower/high_voltage_tower_wired/StaticMeshes/Object_", "count": 20, "location": [-230000, -230000, 0], "rotation": [0, 0, 0], "scale": [1, 1, 1]},
+    {"type": "group", "asset_prefix": "/Game/HighVoltageTower/high_voltage_tower_wired/StaticMeshes/Object_", "count": 20, "location": [230000, -230000, 0], "rotation": [0, 0, 0], "scale": [1, 1, 1]},
+
+    {"_note": "=== 10. 居民村落: 2个村落各5栋, 沿街排列, 距停机坪1.25km远场 ==="},
+    {"_note": "V1 村落(西北): 中心(-125000,+25000), 5×RuralBrickFarm, 间距25m, 交替朝向; spawn_blueprint已加Z自动修正, 房屋落地不再悬浮"},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_RuralBrickFarm", "location": [-130000, 25000, 0], "rotation": [0, 0, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_RuralBrickFarm", "location": [-127500, 25000, 0], "rotation": [0, 180, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_RuralBrickFarm", "location": [-125000, 25000, 0], "rotation": [0, 0, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_RuralBrickFarm", "location": [-122500, 25000, 0], "rotation": [0, 180, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_RuralBrickFarm", "location": [-120000, 25000, 0], "rotation": [0, 0, 0]},
+    {"_note": "V2 村落(东南): 中心(+125000,-25000), 5×Traditional, 间距25m, 交替朝向"},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_Traditional", "location": [120000, -25000, 0], "rotation": [0, 0, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_Traditional", "location": [122500, -25000, 0], "rotation": [0, 180, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_Traditional", "location": [125000, -25000, 0], "rotation": [0, 0, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_Traditional", "location": [127500, -25000, 0], "rotation": [0, 180, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_Traditional", "location": [130000, -25000, 0], "rotation": [0, 0, 0]}
+  ],
+
+  "lighting": {
+    "_note": "清晨暖光: 太阳Pitch=-15°低角度, Yaw=60°, 暖橙色; 天空光弱冷色; 大气层UE5默认; 薄雾",
+    "directional_light": {
+      "location": [0, 0, 3000],
+      "rotation": [-15, 60, 0],
+      "intensity": 10.0,
+      "color": [1.0, 0.85, 0.7],
+      "cast_shadows": true
+    },
+    "sky_light": {
+      "location": [0, 0, 3000],
+      "intensity": 1.0,
+      "color": [0.75, 0.85, 1.0]
+    },
+    "sky_atmosphere": {
+      "location": [0, 0, 0]
+    },
+    "height_fog": {
+      "location": [0, 0, 0],
+      "density": 0.0001,
+      "color": [0.7, 0.8, 0.9]
+    }
+  },
+
+  "weather": {
+    "volumetric_clouds": {
+      "location": [0, 0, 2000]
+    }
+  }
+}

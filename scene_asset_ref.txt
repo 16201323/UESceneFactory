@@ -1,0 +1,489 @@
+
+=== 1. 树木/灌木(林带) ===
+  path=/Game/Modular_Rural_Cabin/Meshes/Foliage/Pine_Tree.Pine_Tree
+    dim=[624.1, 666.8, 1230.0] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=mixed (混合) origin_z=near_bottom (原点近底部, 需上移0.79) zoff=0.79 sug_z=0.79
+    mats=['/Game/Modular_Rural_Cabin/Materials/Instances/Bark_Pine.Bark_Pine', '/Game/Modular_Rural_Cabin/Materials/Instances/Pine_Branches.Pine_Branches']
+  path=/Game/Modular_Rural_Cabin/Meshes/Foliage/SM_Pine_Tree_01.SM_Pine_Tree_01
+    dim=[587.8, 568.7, 1302.9] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=standing_tall (竖立) origin_z=center (原点在中心, 需上移半个高度) zoff=48.34 sug_z=48.34
+    mats=['/Game/Modular_Rural_Cabin/Materials/Instances/MI_Pine_Tree_Bark.MI_Pine_Tree_Bark', '/Game/Modular_Rural_Cabin/Materials/Instances/MI_Pine_Tree_Branches.MI_Pine_Tree_Branches']
+  path=/Game/Modular_Rural_Cabin/Meshes/Foliage/SM_Pine_Tree_02.SM_Pine_Tree_02
+    dim=[398.7, 444.5, 1403.3] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=standing_tall (竖立) origin_z=center (原点在中心, 需上移半个高度) zoff=48.67 sug_z=48.67
+    mats=['/Game/Modular_Rural_Cabin/Materials/Instances/MI_Pine_Tree_Bark.MI_Pine_Tree_Bark', '/Game/Modular_Rural_Cabin/Materials/Instances/MI_Pine_Tree_Branches.MI_Pine_Tree_Branches']
+  path=/Game/Modular_Rural_Cabin/Meshes/Foliage/SM_Pine_Tree_03.SM_Pine_Tree_03
+    dim=[405.4, 429.2, 833.5] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=mixed (混合) origin_z=center (原点在中心, 需上移半个高度) zoff=48.33 sug_z=48.33
+    mats=['/Game/Modular_Rural_Cabin/Materials/Instances/MI_Pine_Tree_Bark.MI_Pine_Tree_Bark', '/Game/Modular_Rural_Cabin/Materials/Instances/MI_Pine_Tree_Branches.MI_Pine_Tree_Branches']
+  path=/Game/Modular_Rural_Cabin/Meshes/Foliage/SM_Pine_Tree_04.SM_Pine_Tree_04
+    dim=[318.0, 331.8, 1757.2] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=standing_tall (竖立) origin_z=center (原点在中心, 需上移半个高度) zoff=48.03 sug_z=48.03
+    mats=['/Game/Modular_Rural_Cabin/Materials/Instances/MI_Pine_Tree_Bark.MI_Pine_Tree_Bark', '/Game/Modular_Rural_Cabin/Materials/Instances/MI_Pine_Tree_Branches.MI_Pine_Tree_Branches']
+  path=/Game/Modular_Rural_Cabin/Meshes/Foliage/SM_Pine_Tree_05.SM_Pine_Tree_05
+    dim=[264.1, 294.8, 587.9] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=mixed (混合) origin_z=center (原点在中心, 需上移半个高度) zoff=35.27 sug_z=35.27
+    mats=['/Game/Modular_Rural_Cabin/Materials/Instances/MI_Pine_Tree_Bark.MI_Pine_Tree_Bark', '/Game/Modular_Rural_Cabin/Materials/Instances/MI_Pine_Tree_Branches.MI_Pine_Tree_Branches']
+  path=/Game/RuralHouse/Environment/Trees/SM_FirTree_01.SM_FirTree_01
+    dim=[919.2, 929.2, 3095.3] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=standing_tall (竖立) origin_z=near_bottom (原点近底部, 需上移0.09) zoff=0.09 sug_z=0.09
+    mats=['/Game/RuralHouse/Environment/Trees/Materials/MI_Bark.MI_Bark', '/Game/RuralHouse/Environment/Trees/Materials/MI_FirNeedles.MI_FirNeedles']
+  path=/Game/RuralHouse/Environment/Trees/SM_FirTree_02.SM_FirTree_02
+    dim=[958.2, 924.5, 3577.7] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=standing_tall (竖立) origin_z=near_bottom (原点近底部, 需上移0.09) zoff=0.09 sug_z=0.09
+    mats=['/Game/RuralHouse/Environment/Trees/Materials/MI_Bark.MI_Bark', '/Game/RuralHouse/Environment/Trees/Materials/MI_FirNeedles.MI_FirNeedles']
+  path=/Game/RuralHouse/Environment/Trees/SM_FirTree_03.SM_FirTree_03
+    dim=[951.2, 922.0, 3398.9] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=standing_tall (竖立) origin_z=near_bottom (原点近底部, 需上移0.15) zoff=0.15 sug_z=0.15
+    mats=['/Game/RuralHouse/Environment/Trees/Materials/MI_Bark.MI_Bark', '/Game/RuralHouse/Environment/Trees/Materials/MI_FirNeedles.MI_FirNeedles']
+  path=/Game/RuralHouse/Environment/Trees/SM_FirTreeDead_01.SM_FirTreeDead_01
+    dim=[909.1, 903.4, 3773.7] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=standing_tall (竖立) origin_z=near_bottom (原点近底部, 需上移0.13) zoff=0.13 sug_z=0.13
+    mats=['/Game/RuralHouse/Environment/Trees/Materials/MI_Bark.MI_Bark']
+  path=/Game/RuralHouse/Environment/Trees/SM_SmallFir_01.SM_SmallFir_01
+    dim=[222.6, 246.6, 644.4] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=standing_tall (竖立) origin_z=near_bottom (原点近底部, 需上移0.05) zoff=0.05 sug_z=0.05
+    mats=['/Game/RuralHouse/Environment/Trees/Materials/MI_Bark.MI_Bark', '/Game/RuralHouse/Environment/Trees/Materials/MI_FirNeedles.MI_FirNeedles']
+  path=/Game/RuralHouse/Environment/Trees/SM_SmallFir_02.SM_SmallFir_02
+    dim=[208.8, 220.6, 603.1] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=standing_tall (竖立) origin_z=near_bottom (原点近底部, 需上移0.03) zoff=0.03 sug_z=0.03
+    mats=['/Game/RuralHouse/Environment/Trees/Materials/MI_Bark.MI_Bark', '/Game/RuralHouse/Environment/Trees/Materials/MI_FirNeedles.MI_FirNeedles']
+  path=/Game/RuralHouse/Environment/Trees/SM_SmallFir_03.SM_SmallFir_03
+    dim=[143.1, 134.6, 399.4] unit=centimeters (可能正确) scale_to_cm=1.0 sug_scale=1.0
+    orient=standing_tall (竖立) origin_z=bottom (原点在底部, 可直接放地面) zoff=- sug_z=0
+    mats=['/Game/RuralHouse/Environment/Trees/Materials/MI_Bark.MI_Bark', '/Game/RuralHouse/Environment/Trees/Materials/MI_FirNeedles.MI_FirNeedles']
+  path=/Game/RuralHouse/Environment/Trees/SM_SmallFir_04.SM_SmallFir_04
+    dim=[218.7, 204.1, 525.7] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=standing_tall (竖立) origin_z=near_bottom (原点近底部, 需上移0.02) zoff=0.02 sug_z=0.02
+    mats=['/Game/RuralHouse/Environment/Trees/Materials/MI_Bark.MI_Bark', '/Game/RuralHouse/Environment/Trees/Materials/MI_FirNeedles.MI_FirNeedles']
+  path=/Game/RuralHouse/Environment/Trees/SM_SmallFir_05.SM_SmallFir_05
+    dim=[284.1, 251.7, 678.8] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=standing_tall (竖立) origin_z=near_bottom (原点近底部, 需上移0.05) zoff=0.05 sug_z=0.05
+    mats=['/Game/RuralHouse/Environment/Trees/Materials/MI_Bark.MI_Bark', '/Game/RuralHouse/Environment/Trees/Materials/MI_FirNeedles.MI_FirNeedles']
+  path=/Game/RuralHouse/Environment/Trees/SM_SmallFirDead_01.SM_SmallFirDead_01
+    dim=[259.1, 271.4, 672.9] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=standing_tall (竖立) origin_z=bottom (原点在底部, 可直接放地面) zoff=- sug_z=0
+    mats=['/Game/RuralHouse/Environment/Trees/Materials/MI_Bark.MI_Bark']
+  path=/Game/RuralHouse/Environment/Trees/SM_SmallFirDead_02.SM_SmallFirDead_02
+    dim=[269.1, 278.7, 757.0] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=standing_tall (竖立) origin_z=bottom (原点在底部, 可直接放地面) zoff=- sug_z=0
+    mats=['/Game/RuralHouse/Environment/Trees/Materials/MI_Bark.MI_Bark']
+  (共 17 条)
+
+=== 2. 地面材质(草地/泥土) ===
+  (非网格) /Game/Fab/Megascans/Surfaces/Clover_Patches_on_Grass_sgmkajak/Medium/sgmkajak_tier_2/Materials/MI_sgmkajak.MI_sgmkajak [MaterialInstanceConstant]
+  (非网格) /Game/Fab/Megascans/Surfaces/Grass_And_Rubble_pjwey0/High/pjwey0_tier_1/Materials/MI_pjwey0.MI_pjwey0 [MaterialInstanceConstant]
+  (非网格) /Game/Fab/Megascans/Surfaces/Uncut_Grass_oilpt20/High/oilpt20_tier_1/Materials/MI_oilpt20.MI_oilpt20 [MaterialInstanceConstant]
+  (非网格) /Game/Foliage_Sets/Ground003_4K-JPG/M_Ground003.M_Ground003 [Material]
+  (非网格) /Game/Foliage_Sets/ground_materials/materials/M_grass_simple_a.M_grass_simple_a [Material]
+  (非网格) /Game/Foliage_Sets/ground_materials/materials/M_ground_dirt_grass_Inst_a.M_ground_dirt_grass_Inst_a [MaterialInstanceConstant]
+  (非网格) /Game/Foliage_Sets/ground_materials/materials/M_ground_dirt_grass_Inst_b.M_ground_dirt_grass_Inst_b [MaterialInstanceConstant]
+  (非网格) /Game/Foliage_Sets/ground_materials/materials/M_ground_dirt_grass_Inst_c.M_ground_dirt_grass_Inst_c [MaterialInstanceConstant]
+  (非网格) /Game/Foliage_Sets/ground_materials/materials/M_ground_dirt_grass_master.M_ground_dirt_grass_master [Material]
+  (非网格) /Game/Foliage_Sets/ground_materials/materials/M_ground_dirt_grass_weeds_Inst_a.M_ground_dirt_grass_weeds_Inst_a [MaterialInstanceConstant]
+  (非网格) /Game/Foliage_Sets/ground_materials/materials/M_ground_parallax_cracks_Inst.M_ground_parallax_cracks_Inst [MaterialInstanceConstant]
+  (非网格) /Game/Foliage_Sets/ground_materials/materials/M_ground_parallax_dirt_grass_Inst.M_ground_parallax_dirt_grass_Inst [MaterialInstanceConstant]
+  (非网格) /Game/Foliage_Sets/ground_materials/materials/M_ground_parallax_dirt_Inst.M_ground_parallax_dirt_Inst [MaterialInstanceConstant]
+  (非网格) /Game/Foliage_Sets/ground_materials/materials/M_ground_parallax_grass_Inst.M_ground_parallax_grass_Inst [MaterialInstanceConstant]
+  (非网格) /Game/Foliage_Sets/ground_materials/materials/M_ground_parallax_master.M_ground_parallax_master [Material]
+  (非网格) /Game/Foliage_Sets/ground_materials/materials/M_ground_parallax_rock_Inst.M_ground_parallax_rock_Inst [MaterialInstanceConstant]
+  (非网格) /Game/Foliage_Sets/VOL22_WildGrass/DEMO/MI_Ground_Demo_01a.MI_Ground_Demo_01a [MaterialInstanceConstant]
+  (非网格) /Game/Foliage_Sets/VOL22_WildGrass/DEMO/MM_Ground_Demo_01a.MM_Ground_Demo_01a [Material]
+  (非网格) /Game/Foliage_Sets/VOL22_WildGrass/Materials/MI_Grass_Beach_01a.MI_Grass_Beach_01a [MaterialInstanceConstant]
+  (非网格) /Game/Foliage_Sets/VOL22_WildGrass/Materials/MI_Plants_Dead_01a.MI_Plants_Dead_01a [MaterialInstanceConstant]
+  (共 20 条)
+
+=== 3. 小麦/作物 ===
+  path=/Game/wheat/realistic_wheat/StaticMeshes/Plane_001_wheat_texture_0.Plane_001_wheat_texture_0
+    dim=[746.8, 240.9, 2774.2] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=standing_tall (竖立) origin_z=center (原点在中心, 需上移半个高度) zoff=24.51 sug_z=24.51
+    mats=['/Game/wheat/realistic_wheat/Materials/wheat_texture.wheat_texture']
+  path=/Game/wheat/realistic_wheat/StaticMeshes/Plane_002_wheat_texture_0.Plane_002_wheat_texture_0
+    dim=[450.4, 127.9, 2119.4] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=standing_tall (竖立) origin_z=center (原点在中心, 需上移半个高度) zoff=24.51 sug_z=24.51
+    mats=['/Game/wheat/realistic_wheat/Materials/wheat_texture.wheat_texture']
+  path=/Game/wheat/realistic_wheat/StaticMeshes/Plane_003_wheat_texture_0.Plane_003_wheat_texture_0
+    dim=[953.3, 774.8, 3239.1] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=standing_tall (竖立) origin_z=center (原点在中心, 需上移半个高度) zoff=35.43 sug_z=35.43
+    mats=['/Game/wheat/realistic_wheat/Materials/wheat_texture.wheat_texture']
+  path=/Game/wheat/realistic_wheat/StaticMeshes/Plane_004_wheat_texture_0.Plane_004_wheat_texture_0
+    dim=[711.3, 121.7, 2001.1] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=standing_tall (竖立) origin_z=center (原点在中心, 需上移半个高度) zoff=24.51 sug_z=24.51
+    mats=['/Game/wheat/realistic_wheat/Materials/wheat_texture.wheat_texture']
+  path=/Game/wheat/realistic_wheat/StaticMeshes/Plane_wheat_texture_0.Plane_wheat_texture_0
+    dim=[711.3, 208.7, 2774.2] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=standing_tall (竖立) origin_z=center (原点在中心, 需上移半个高度) zoff=24.51 sug_z=24.51
+    mats=['/Game/wheat/realistic_wheat/Materials/wheat_texture.wheat_texture']
+  (共 5 条)
+
+=== 4. 住宅蓝图 ===
+  (非网格) /Game/hourse/Blueprints/BP_House_RuralBrickFarm.BP_House_RuralBrickFarm [Blueprint]
+  (非网格) /Game/hourse/Blueprints/BP_House_Traditional.BP_House_Traditional [Blueprint]
+  (非网格) /Game/RuralHouse/BP/BP_CableSpline.BP_CableSpline [Blueprint]
+  (非网格) /Game/RuralHouse/BP/BP_ForestSpline.BP_ForestSpline [Blueprint]
+  (共 4 条)
+
+=== 5. 停机坪 ===
+  path=/Game/heliport/heliport_helipad_air_base_helicopter/StaticMeshes/Object_0.Object_0
+    dim=[372793.7, 0.0, 372793.7] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=mixed (混合) origin_z=center (原点在中心, 需上移半个高度) zoff=186396.86 sug_z=186396.86
+    mats=['/Game/heliport/heliport_helipad_air_base_helicopter/Materials/Disc_1.Disc_1']
+  path=/Game/heliport/heliport_helipad_air_base_helicopter/StaticMeshes/Object_1.Object_1
+    dim=[48723.5, 17929.2, 48912.2] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=mixed (混合) origin_z=top (原点在顶部, 需下移) zoff=- sug_z=0
+    mats=['/Game/heliport/heliport_helipad_air_base_helicopter/Materials/PELEH_1.PELEH_1']
+  path=/Game/heliport/heliport_helipad_air_base_helicopter/StaticMeshes/Object_2.Object_2
+    dim=[141244.1, 2931.2, 140669.3] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=mixed (混合) origin_z=center (原点在中心, 需上移半个高度) zoff=70138.12 sug_z=70138.12
+    mats=['/Game/heliport/heliport_helipad_air_base_helicopter/Materials/badan_1.badan_1']
+  path=/Game/heliport/heliport_helipad_air_base_helicopter/StaticMeshes/Object_3.Object_3
+    dim=[147471.9, 16296.1, 145519.9] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=mixed (混合) origin_z=center (原点在中心, 需上移半个高度) zoff=71783.95 sug_z=71783.95
+    mats=['/Game/heliport/heliport_helipad_air_base_helicopter/Materials/biroon_1.biroon_1']
+  path=/Game/heliport/heliport_helipad_air_base_helicopter/StaticMeshes/Object_4.Object_4
+    dim=[49056.3, 18549.2, 49467.1] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=mixed (混合) origin_z=top (原点在顶部, 需下移) zoff=- sug_z=0
+    mats=['/Game/heliport/heliport_helipad_air_base_helicopter/Materials/kenar_peleh_1.kenar_peleh_1']
+  path=/Game/heliport/heliport_helipad_air_base_helicopter/StaticMeshes/Object_5.Object_5
+    dim=[144089.3, 7882.9, 131808.8] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=mixed (混合) origin_z=center (原点在中心, 需上移半个高度) zoff=59739.03 sug_z=59739.03
+    mats=['/Game/heliport/heliport_helipad_air_base_helicopter/Materials/lamp_1.lamp_1']
+  path=/Game/heliport/heliport_helipad_air_base_helicopter/StaticMeshes/Object_6.Object_6
+    dim=[162389.5, 10382.4, 161246.5] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=mixed (混合) origin_z=center (原点在中心, 需上移半个高度) zoff=79433.43 sug_z=79433.43
+    mats=['/Game/heliport/heliport_helipad_air_base_helicopter/Materials/paye_toori_1.paye_toori_1']
+  path=/Game/heliport/heliport_helipad_air_base_helicopter/StaticMeshes/Object_7.Object_7
+    dim=[141519.6, 362.8, 140942.3] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=mixed (混合) origin_z=center (原点在中心, 需上移半个高度) zoff=70206.87 sug_z=70206.87
+    mats=['/Game/heliport/heliport_helipad_air_base_helicopter/Materials/sim_1.sim_1']
+  path=/Game/heliport/heliport_helipad_air_base_helicopter/StaticMeshes/Object_8.Object_8
+    dim=[161651.6, 6498.5, 161018.8] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=mixed (混合) origin_z=center (原点在中心, 需上移半个高度) zoff=80193.02 sug_z=80193.02
+    mats=['/Game/heliport/heliport_helipad_air_base_helicopter/Materials/toori_1.toori_1']
+  path=/Game/heliport/heliport_helipad_air_base_helicopter/StaticMeshes/Object_9.Object_9
+    dim=[142626.3, 1706.2, 141925.4] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=mixed (混合) origin_z=center (原点在中心, 需上移半个高度) zoff=70611.1 sug_z=70611.1
+    mats=['/Game/heliport/heliport_helipad_air_base_helicopter/Materials/zard_1.zard_1']
+  (共 10 条)
+
+=== 6. 通信塔(非空网格) ===
+  path=/Game/CommunicationTower/sci-fi_communication_tower/StaticMeshes/Object_0.Object_0
+    dim=[207.2, 207.2, 120.8] unit=centimeters (可能正确) scale_to_cm=1.0 sug_scale=1.0
+    orient=mixed (混合) origin_z=bottom (原点在底部, 可直接放地面) zoff=- sug_z=0
+    mats=['/Game/CommunicationTower/sci-fi_communication_tower/Materials/screen_001.screen_001']
+  path=/Game/CommunicationTower/sci-fi_communication_tower/StaticMeshes/Object_1.Object_1
+    dim=[39.8, 40.0, 13.5] unit=meters_or_small_cm ( scale_to_cm=100.0 sug_scale=100.0
+    orient=mixed (混合) origin_z=bottom (原点在底部, 可直接放地面) zoff=- sug_z=0
+    mats=['/Game/CommunicationTower/sci-fi_communication_tower/Materials/screen_001.screen_001']
+  path=/Game/CommunicationTower/sci-fi_communication_tower/StaticMeshes/Object_2.Object_2
+    dim=[50.0, 50.2, 5.4] unit=centimeters (可能正确) scale_to_cm=1.0 sug_scale=1.0
+    orient=flat_horizontal (平躺) origin_z=bottom (原点在底部, 可直接放地面) zoff=- sug_z=0
+    mats=['/Game/CommunicationTower/sci-fi_communication_tower/Materials/Sparkle_Metal_green.Sparkle_Metal_green']
+  path=/Game/CommunicationTower/sci-fi_communication_tower/StaticMeshes/Object_3.Object_3
+    dim=[208.7, 216.1, 279.4] unit=centimeters (可能正确) scale_to_cm=1.0 sug_scale=1.0
+    orient=mixed (混合) origin_z=near_bottom (原点近底部, 需上移0.05) zoff=0.05 sug_z=0.05
+    mats=['/Game/CommunicationTower/sci-fi_communication_tower/Materials/Pointiness_Metal.Pointiness_Metal']
+  path=/Game/CommunicationTower/sci-fi_communication_tower/StaticMeshes/Object_4.Object_4
+    dim=[178.2, 178.0, 275.2] unit=centimeters (可能正确) scale_to_cm=1.0 sug_scale=1.0
+    orient=mixed (混合) origin_z=bottom (原点在底部, 可直接放地面) zoff=- sug_z=0
+    mats=['/Game/CommunicationTower/sci-fi_communication_tower/Materials/Blue_Car_Paint.Blue_Car_Paint']
+  path=/Game/CommunicationTower/sci-fi_communication_tower/StaticMeshes/Object_5.Object_5
+    dim=[143.5, 121.6, 51.7] unit=centimeters (可能正确) scale_to_cm=1.0 sug_scale=1.0
+    orient=mixed (混合) origin_z=bottom (原点在底部, 可直接放地面) zoff=- sug_z=0
+    mats=['/Game/CommunicationTower/sci-fi_communication_tower/Materials/Sandblasted_black_metal.Sandblasted_black_metal']
+  path=/Game/CommunicationTower/sci-fi_communication_tower/StaticMeshes/Object_6.Object_6
+    dim=[54.9, 55.2, 244.2] unit=centimeters (可能正确) scale_to_cm=1.0 sug_scale=1.0
+    orient=standing_tall (竖立) origin_z=bottom (原点在底部, 可直接放地面) zoff=- sug_z=0
+    mats=['/Game/CommunicationTower/sci-fi_communication_tower/Materials/Advanced_Hologram_Screen_Glass_Red.Advanced_Hologram_Screen_Glass_Red']
+  path=/Game/CommunicationTower/sci-fi_communication_tower/StaticMeshes/Object_7.Object_7
+    dim=[204.2, 203.9, 252.2] unit=centimeters (可能正确) scale_to_cm=1.0 sug_scale=1.0
+    orient=cube_like (立方体) origin_z=bottom (原点在底部, 可直接放地面) zoff=- sug_z=0
+    mats=['/Game/CommunicationTower/sci-fi_communication_tower/Materials/Sparkle_Metal_blue.Sparkle_Metal_blue']
+  path=/Game/CommunicationTower/sci-fi_communication_tower/StaticMeshes/Object_8.Object_8
+    dim=[80.5, 79.8, 0.5] unit=centimeters (可能正确) scale_to_cm=1.0 sug_scale=1.0
+    orient=flat_horizontal (平躺) origin_z=bottom (原点在底部, 可直接放地面) zoff=- sug_z=0
+    mats=['/Game/CommunicationTower/sci-fi_communication_tower/Materials/Advanced_Hologram_Screen_Glass.Advanced_Hologram_Screen_Glass']
+  path=/Game/CommunicationTower/sci-fi_communication_tower/StaticMeshes/Object_9.Object_9
+    dim=[149.7, 150.5, 257.9] unit=centimeters (可能正确) scale_to_cm=1.0 sug_scale=1.0
+    orient=mixed (混合) origin_z=bottom (原点在底部, 可直接放地面) zoff=- sug_z=0
+    mats=['/Game/CommunicationTower/sci-fi_communication_tower/Materials/Advanced_Hologram_Screen_Green.Advanced_Hologram_Screen_Green']
+  path=/Game/CommunicationTower/telecommunication_tower_low-poly_free/StaticMeshes/Object_0.Object_0
+    dim=[265.2, 267.1, 1534.3] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=standing_tall (竖立) origin_z=bottom (原点在底部, 可直接放地面) zoff=- sug_z=0
+    mats=['/Game/CommunicationTower/telecommunication_tower_low-poly_free/Materials/Radio.Radio']
+  path=/Game/CommunicationTower/telecommunication_tower_low-poly_free/StaticMeshes/Object_1.Object_1
+    dim=[265.2, 267.1, 1534.3] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=standing_tall (竖立) origin_z=bottom (原点在底部, 可直接放地面) zoff=- sug_z=0
+    mats=['/Game/CommunicationTower/telecommunication_tower_low-poly_free/Materials/Radio.Radio']
+  path=/Game/CommunicationTower/telecommunication_tower_low-poly_free/StaticMeshes/Object_2.Object_2
+    dim=[265.2, 267.1, 1537.9] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=standing_tall (竖立) origin_z=bottom (原点在底部, 可直接放地面) zoff=- sug_z=0
+    mats=['/Game/CommunicationTower/telecommunication_tower_low-poly_free/Materials/Radio.Radio']
+  path=/Game/CommunicationTower/telecommunication_tower_low-poly_free/StaticMeshes/Object_3.Object_3
+    dim=[404.5, 404.5, 2058.4] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=standing_tall (竖立) origin_z=near_bottom (原点近底部, 需上移0.28) zoff=0.28 sug_z=0.28
+    mats=['/Game/CommunicationTower/telecommunication_tower_low-poly_free/Materials/Radio.Radio']
+  path=/Game/CommunicationTower/telecommunication_tower_low-poly_free/StaticMeshes/Object_4.Object_4
+    dim=[404.5, 404.5, 2058.4] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=standing_tall (竖立) origin_z=near_bottom (原点近底部, 需上移0.28) zoff=0.28 sug_z=0.28
+    mats=['/Game/CommunicationTower/telecommunication_tower_low-poly_free/Materials/Radio.Radio']
+  path=/Game/CommunicationTower/telecommunication_tower_low-poly_free/StaticMeshes/Object_5.Object_5
+    dim=[404.5, 404.5, 2058.4] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=standing_tall (竖立) origin_z=near_bottom (原点近底部, 需上移0.28) zoff=0.28 sug_z=0.28
+    mats=['/Game/CommunicationTower/telecommunication_tower_low-poly_free/Materials/Radio.Radio']
+  (共 16 条)
+
+=== 7. 高压塔(非空网格) ===
+  path=/Game/HighVoltageTower/high_voltage_tower_wired/StaticMeshes/Object_0.Object_0
+    dim=[991.9, 183.5, 7745.3] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=standing_tall (竖立) origin_z=center (原点在中心, 需上移半个高度) zoff=3873.25 sug_z=3873.25
+    mats=['/Game/HighVoltageTower/high_voltage_tower_wired/Materials/mat-10.mat-10']
+  path=/Game/HighVoltageTower/high_voltage_tower_wired/StaticMeshes/Object_1.Object_1
+    dim=[784.8, 183.9, 7762.6] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=standing_tall (竖立) origin_z=center (原点在中心, 需上移半个高度) zoff=3881.62 sug_z=3881.62
+    mats=['/Game/HighVoltageTower/high_voltage_tower_wired/Materials/mat-7.mat-7']
+  path=/Game/HighVoltageTower/high_voltage_tower_wired/StaticMeshes/Object_10.Object_10
+    dim=[247.1, 22.1, 241.3] unit=centimeters (可能正确) scale_to_cm=1.0 sug_scale=1.0
+    orient=mixed (混合) origin_z=top (原点在顶部, 需下移) zoff=- sug_z=0
+    mats=['/Game/HighVoltageTower/high_voltage_tower_wired/Materials/Default_material.Default_material']
+  path=/Game/HighVoltageTower/high_voltage_tower_wired/StaticMeshes/Object_11.Object_11
+    dim=[916.0, 358.7, 217.4] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=mixed (混合) origin_z=top (原点在顶部, 需下移) zoff=- sug_z=0
+    mats=['/Game/HighVoltageTower/high_voltage_tower_wired/Materials/Default_material.Default_material']
+  path=/Game/HighVoltageTower/high_voltage_tower_wired/StaticMeshes/Object_12.Object_12
+    dim=[812.1, 21.8, 208.4] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=mixed (混合) origin_z=top (原点在顶部, 需下移) zoff=- sug_z=0
+    mats=['/Game/HighVoltageTower/high_voltage_tower_wired/Materials/Default_material.Default_material']
+  path=/Game/HighVoltageTower/high_voltage_tower_wired/StaticMeshes/Object_13.Object_13
+    dim=[801.9, 21.6, 126.3] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=mixed (混合) origin_z=top (原点在顶部, 需下移) zoff=- sug_z=0
+    mats=['/Game/HighVoltageTower/high_voltage_tower_wired/Materials/Default_material.Default_material']
+  path=/Game/HighVoltageTower/high_voltage_tower_wired/StaticMeshes/Object_14.Object_14
+    dim=[1006.3, 1624.1, 248.2] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=flat_horizontal (平躺) origin_z=top (原点在顶部, 需下移) zoff=- sug_z=0
+    mats=['/Game/HighVoltageTower/high_voltage_tower_wired/Materials/Default_material.Default_material']
+  path=/Game/HighVoltageTower/high_voltage_tower_wired/StaticMeshes/Object_15.Object_15
+    dim=[999.4, 1305.8, 289.7] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=flat_horizontal (平躺) origin_z=top (原点在顶部, 需下移) zoff=- sug_z=0
+    mats=['/Game/HighVoltageTower/high_voltage_tower_wired/Materials/Default_material.Default_material']
+  path=/Game/HighVoltageTower/high_voltage_tower_wired/StaticMeshes/Object_16.Object_16
+    dim=[30.4, 23.5, 258.7] unit=centimeters (可能正确) scale_to_cm=1.0 sug_scale=1.0
+    orient=standing_tall (竖立) origin_z=top (原点在顶部, 需下移) zoff=- sug_z=0
+    mats=['/Game/HighVoltageTower/high_voltage_tower_wired/Materials/Default_material.Default_material']
+  path=/Game/HighVoltageTower/high_voltage_tower_wired/StaticMeshes/Object_17.Object_17
+    dim=[29.9, 23.8, 288.7] unit=centimeters (可能正确) scale_to_cm=1.0 sug_scale=1.0
+    orient=standing_tall (竖立) origin_z=top (原点在顶部, 需下移) zoff=- sug_z=0
+    mats=['/Game/HighVoltageTower/high_voltage_tower_wired/Materials/Default_material.Default_material']
+  path=/Game/HighVoltageTower/high_voltage_tower_wired/StaticMeshes/Object_18.Object_18
+    dim=[29.8, 23.4, 105.0] unit=centimeters (可能正确) scale_to_cm=1.0 sug_scale=1.0
+    orient=standing_tall (竖立) origin_z=top (原点在顶部, 需下移) zoff=- sug_z=0
+    mats=['/Game/HighVoltageTower/high_voltage_tower_wired/Materials/Default_material.Default_material']
+  path=/Game/HighVoltageTower/high_voltage_tower_wired/StaticMeshes/Object_19.Object_19
+    dim=[784.9, 459.5, 233.7] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=mixed (混合) origin_z=top (原点在顶部, 需下移) zoff=- sug_z=0
+    mats=['/Game/HighVoltageTower/high_voltage_tower_wired/Materials/mat-1.mat-1']
+  path=/Game/HighVoltageTower/high_voltage_tower_wired/StaticMeshes/Object_2.Object_2
+    dim=[1.2, 148.3, 7984.8] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=standing_tall (竖立) origin_z=center (原点在中心, 需上移半个高度) zoff=3996.51 sug_z=3996.51
+    mats=['/Game/HighVoltageTower/high_voltage_tower_wired/Materials/mat-11.mat-11']
+  path=/Game/HighVoltageTower/high_voltage_tower_wired/StaticMeshes/Object_3.Object_3
+    dim=[991.5, 85.2, 280.6] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=mixed (混合) origin_z=top (原点在顶部, 需下移) zoff=- sug_z=0
+    mats=['/Game/HighVoltageTower/high_voltage_tower_wired/Materials/mat-5.mat-5']
+  path=/Game/HighVoltageTower/high_voltage_tower_wired/StaticMeshes/Object_4.Object_4
+    dim=[801.2, 23.4, 257.7] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=mixed (混合) origin_z=top (原点在顶部, 需下移) zoff=- sug_z=0
+    mats=['/Game/HighVoltageTower/high_voltage_tower_wired/Materials/Default_material.Default_material']
+  path=/Game/HighVoltageTower/high_voltage_tower_wired/StaticMeshes/Object_5.Object_5
+    dim=[917.6, 360.6, 250.1] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=mixed (混合) origin_z=top (原点在顶部, 需下移) zoff=- sug_z=0
+    mats=['/Game/HighVoltageTower/high_voltage_tower_wired/Materials/Default_material.Default_material']
+  path=/Game/HighVoltageTower/high_voltage_tower_wired/StaticMeshes/Object_6.Object_6
+    dim=[813.5, 23.6, 241.1] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=mixed (混合) origin_z=top (原点在顶部, 需下移) zoff=- sug_z=0
+    mats=['/Game/HighVoltageTower/high_voltage_tower_wired/Materials/Default_material.Default_material']
+  path=/Game/HighVoltageTower/high_voltage_tower_wired/StaticMeshes/Object_7.Object_7
+    dim=[915.3, 359.8, 233.1] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=mixed (混合) origin_z=top (原点在顶部, 需下移) zoff=- sug_z=0
+    mats=['/Game/HighVoltageTower/high_voltage_tower_wired/Materials/Default_material.Default_material']
+  path=/Game/HighVoltageTower/high_voltage_tower_wired/StaticMeshes/Object_8.Object_8
+    dim=[247.2, 21.7, 240.5] unit=centimeters (可能正确) scale_to_cm=1.0 sug_scale=1.0
+    orient=mixed (混合) origin_z=top (原点在顶部, 需下移) zoff=- sug_z=0
+    mats=['/Game/HighVoltageTower/high_voltage_tower_wired/Materials/Default_material.Default_material']
+  path=/Game/HighVoltageTower/high_voltage_tower_wired/StaticMeshes/Object_9.Object_9
+    dim=[29.8, 23.5, 272.4] unit=centimeters (可能正确) scale_to_cm=1.0 sug_scale=1.0
+    orient=standing_tall (竖立) origin_z=top (原点在顶部, 需下移) zoff=- sug_z=0
+    mats=['/Game/HighVoltageTower/high_voltage_tower_wired/Materials/Default_material.Default_material']
+  (共 20 条)
+
+=== 8. 光伏板(非空网格) ===
+  path=/Game/Photovoltaic/-photovoltaic_panels/StaticMeshes/Material2.Material2
+    dim=[267.7, 421.3, 39.9] unit=centimeters (可能正确) scale_to_cm=1.0 sug_scale=1.0
+    orient=flat_horizontal (平躺) origin_z=top (原点在顶部, 需下移) zoff=- sug_z=0
+    mats=['/Game/Photovoltaic/-photovoltaic_panels/Materials/0046_Gold.0046_Gold']
+  path=/Game/Photovoltaic/-photovoltaic_panels/StaticMeshes/Material21.Material21
+    dim=[41218.6, 1603.0, 8932.5] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=mixed (混合) origin_z=center (原点在中心, 需上移半个高度) zoff=832.69 sug_z=832.69
+    mats=['/Game/Photovoltaic/-photovoltaic_panels/Materials/0137_Black.0137_Black']
+  path=/Game/Photovoltaic/-photovoltaic_panels/StaticMeshes/Material213.Material213
+    dim=[135.3, 36.9, 0.0] unit=centimeters (可能正确) scale_to_cm=1.0 sug_scale=1.0
+    orient=flat_horizontal (平躺) origin_z=top (原点在顶部, 需下移) zoff=- sug_z=0
+    mats=['/Game/Photovoltaic/-photovoltaic_panels/Materials/0043_SaddleBrown.0043_SaddleBrown']
+  path=/Game/Photovoltaic/-photovoltaic_panels/StaticMeshes/Material214.Material214
+    dim=[133.9, 78.7, 0.0] unit=centimeters (可能正确) scale_to_cm=1.0 sug_scale=1.0
+    orient=flat_horizontal (平躺) origin_z=top (原点在顶部, 需下移) zoff=- sug_z=0
+    mats=['/Game/Photovoltaic/-photovoltaic_panels/Materials/0063_GreenYellow.0063_GreenYellow']
+  path=/Game/Photovoltaic/-photovoltaic_panels/StaticMeshes/Material215.Material215
+    dim=[133.8, 78.7, 0.0] unit=centimeters (可能正确) scale_to_cm=1.0 sug_scale=1.0
+    orient=flat_horizontal (平躺) origin_z=top (原点在顶部, 需下移) zoff=- sug_z=0
+    mats=['/Game/Photovoltaic/-photovoltaic_panels/Materials/0020_Red.0020_Red']
+  path=/Game/Photovoltaic/-photovoltaic_panels/StaticMeshes/Material216.Material216
+    dim=[44.3, 44.3, 27.6] unit=meters_or_small_cm ( scale_to_cm=100.0 sug_scale=100.0
+    orient=mixed (混合) origin_z=top (原点在顶部, 需下移) zoff=- sug_z=0
+    mats=['/Game/Photovoltaic/-photovoltaic_panels/Materials/0019_Crimson.0019_Crimson']
+  path=/Game/Photovoltaic/-photovoltaic_panels/StaticMeshes/Material218.Material218
+    dim=[40000.6, 4944.5, 12152.9] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=mixed (混合) origin_z=center (原点在中心, 需上移半个高度) zoff=260.33 sug_z=260.33
+    mats=['/Game/Photovoltaic/-photovoltaic_panels/Materials/0107_MidnightBlue.0107_MidnightBlue']
+  path=/Game/Photovoltaic/-photovoltaic_panels/StaticMeshes/Material219.Material219
+    dim=[23065.2, 1290.1, 13066.7] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=mixed (混合) origin_z=center (原点在中心, 需上移半个高度) zoff=594.55 sug_z=594.55
+    mats=['/Game/Photovoltaic/-photovoltaic_panels/Materials/Polished_Concrete_Old.Polished_Concrete_Old']
+  path=/Game/Photovoltaic/-photovoltaic_panels/StaticMeshes/Material22.Material22
+    dim=[40063.5, 3193.7, 7703.9] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=mixed (混合) origin_z=bottom (原点在底部, 可直接放地面) zoff=- sug_z=0
+    mats=['/Game/Photovoltaic/-photovoltaic_panels/Materials/0105_Navy.0105_Navy']
+  path=/Game/Photovoltaic/-photovoltaic_panels/StaticMeshes/Material220.Material220
+    dim=[1293.3, 1158.2, 570.9] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=mixed (混合) origin_z=top (原点在顶部, 需下移) zoff=- sug_z=0
+    mats=['/Game/Photovoltaic/-photovoltaic_panels/Materials/Metal_Aluminum_Anodized.Metal_Aluminum_Anodized']
+  path=/Game/Photovoltaic/-photovoltaic_panels/StaticMeshes/Material221.Material221
+    dim=[91.8, 437.1, 200.8] unit=centimeters (可能正确) scale_to_cm=1.0 sug_scale=1.0
+    orient=mixed (混合) origin_z=top (原点在顶部, 需下移) zoff=- sug_z=0
+    mats=['/Game/Photovoltaic/-photovoltaic_panels/Materials/Metal_Steel_Textured.Metal_Steel_Textured']
+  path=/Game/Photovoltaic/-photovoltaic_panels/StaticMeshes/Material222.Material222
+    dim=[142.4, 332.7, 112.4] unit=centimeters (可能正确) scale_to_cm=1.0 sug_scale=1.0
+    orient=mixed (混合) origin_z=top (原点在顶部, 需下移) zoff=- sug_z=0
+    mats=['/Game/Photovoltaic/-photovoltaic_panels/Materials/Metal_Corrugated_Shiny.Metal_Corrugated_Shiny']
+  path=/Game/Photovoltaic/-photovoltaic_panels/StaticMeshes/Material223.Material223
+    dim=[744.6, 1118.1, 1102.1] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=mixed (混合) origin_z=top (原点在顶部, 需下移) zoff=- sug_z=0
+    mats=['/Game/Photovoltaic/-photovoltaic_panels/Materials/Metal_Aluminum_Anodized_1.Metal_Aluminum_Anodized_1']
+  path=/Game/Photovoltaic/-photovoltaic_panels/StaticMeshes/Material224.Material224
+    dim=[22367.5, 4899.0, 12649.1] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=mixed (混合) origin_z=center (原点在中心, 需上移半个高度) zoff=508.04 sug_z=508.04
+    mats=['/Game/Photovoltaic/-photovoltaic_panels/Materials/Steel_Brushed_Stainless.Steel_Brushed_Stainless']
+  path=/Game/Photovoltaic/-photovoltaic_panels/StaticMeshes/Material225.Material225
+    dim=[23861.3, 4948.0, 12837.6] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=mixed (混合) origin_z=center (原点在中心, 需上移半个高度) zoff=645.02 sug_z=645.02
+    mats=['/Game/Photovoltaic/-photovoltaic_panels/Materials/Steel_Brushed_Stainless_0.Steel_Brushed_Stainless_0']
+  (共 15 条)
+
+=== 9. 围栏 ===
+  path=/Game/WireFence/chainlink_fence_tileable/StaticMeshes/Cylinder_001_chainlink_fence_textures_0.Cylinder_001_chainlink_fence_textures_0
+    dim=[200.0, 233.2, 690.2] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=standing_tall (竖立) origin_z=center (原点在中心, 需上移半个高度) zoff=590.16 sug_z=590.16
+    mats=['/Game/WireFence/chainlink_fence_tileable/Materials/chainlink_fence_textures.chainlink_fence_textures']
+  path=/Game/WireFence/chainlink_fence_tileable/StaticMeshes/Cylinder_004_chainlink_fence_textures_0.Cylinder_004_chainlink_fence_textures_0
+    dim=[200.0, 233.2, 690.2] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=standing_tall (竖立) origin_z=center (原点在中心, 需上移半个高度) zoff=590.16 sug_z=590.16
+    mats=['/Game/WireFence/chainlink_fence_tileable/Materials/chainlink_fence_textures.chainlink_fence_textures']
+  path=/Game/WireFence/chainlink_fence_tileable/StaticMeshes/Plane_004_chainlink_fence_textures_0.Plane_004_chainlink_fence_textures_0
+    dim=[203.7, 22.6, 236.4] unit=centimeters (可能正确) scale_to_cm=1.0 sug_scale=1.0
+    orient=mixed (混合) origin_z=center (原点在中心, 需上移半个高度) zoff=110.98 sug_z=110.98
+    mats=['/Game/WireFence/chainlink_fence_tileable/Materials/chainlink_fence_textures.chainlink_fence_textures']
+  path=/Game/WireFence/chainlink_fence_tileable/StaticMeshes/Plane_005_chainlink_fence_textures_0.Plane_005_chainlink_fence_textures_0
+    dim=[203.7, 22.6, 236.4] unit=centimeters (可能正确) scale_to_cm=1.0 sug_scale=1.0
+    orient=mixed (混合) origin_z=center (原点在中心, 需上移半个高度) zoff=110.98 sug_z=110.98
+    mats=['/Game/WireFence/chainlink_fence_tileable/Materials/chainlink_fence_textures.chainlink_fence_textures']
+  path=/Game/WireFence/chainlink_fence_tileable/StaticMeshes/Plane_006_chainlink_fence_textures_0.Plane_006_chainlink_fence_textures_0
+    dim=[203.7, 22.6, 236.4] unit=centimeters (可能正确) scale_to_cm=1.0 sug_scale=1.0
+    orient=mixed (混合) origin_z=center (原点在中心, 需上移半个高度) zoff=110.98 sug_z=110.98
+    mats=['/Game/WireFence/chainlink_fence_tileable/Materials/chainlink_fence_textures.chainlink_fence_textures']
+  path=/Game/WireFence/chainlink_fence_tileable/StaticMeshes/Plane_007_chainlink_fence_textures_0.Plane_007_chainlink_fence_textures_0
+    dim=[203.7, 22.6, 236.4] unit=centimeters (可能正确) scale_to_cm=1.0 sug_scale=1.0
+    orient=mixed (混合) origin_z=center (原点在中心, 需上移半个高度) zoff=110.98 sug_z=110.98
+    mats=['/Game/WireFence/chainlink_fence_tileable/Materials/chainlink_fence_textures.chainlink_fence_textures']
+  path=/Game/WireFence/chainlink_fence_tileable/StaticMeshes/Plane_010_chainlink_fence_textures_0.Plane_010_chainlink_fence_textures_0
+    dim=[203.7, 22.6, 236.4] unit=centimeters (可能正确) scale_to_cm=1.0 sug_scale=1.0
+    orient=mixed (混合) origin_z=center (原点在中心, 需上移半个高度) zoff=110.98 sug_z=110.98
+    mats=['/Game/WireFence/chainlink_fence_tileable/Materials/chainlink_fence_textures.chainlink_fence_textures']
+  (共 7 条)
+
+=== 10. 机库道具 ===
+  path=/Game/Modular_Rural_Cabin/Meshes/Props/Metal_Sheet_1.Metal_Sheet_1
+    dim=[101.4, 143.9, 9.2] unit=centimeters (可能正确) scale_to_cm=1.0 sug_scale=1.0
+    orient=flat_horizontal (平躺) origin_z=center (原点在中心, 需上移半个高度) zoff=4.3 sug_z=4.3
+    mats=['/Game/Modular_Rural_Cabin/Materials/Instances/Metal_Roof_blend.Metal_Roof_blend']
+  path=/Game/Modular_Rural_Cabin/Meshes/Props/Metal_Sheet_2.Metal_Sheet_2
+    dim=[100.7, 135.3, 8.4] unit=centimeters (可能正确) scale_to_cm=1.0 sug_scale=1.0
+    orient=flat_horizontal (平躺) origin_z=center (原点在中心, 需上移半个高度) zoff=3.25 sug_z=3.25
+    mats=['/Game/Modular_Rural_Cabin/Materials/Instances/Metal_Roof_blend.Metal_Roof_blend']
+  path=/Game/Modular_Rural_Cabin/Meshes/Props/Power_Pole_1.Power_Pole_1
+    dim=[316.5, 38.0, 1037.2] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=standing_tall (竖立) origin_z=center (原点在中心, 需上移半个高度) zoff=100.0 sug_z=100.0
+    mats=['/Game/Modular_Rural_Cabin/Materials/Instances/Power_Pole.Power_Pole', '/Game/Modular_Rural_Cabin/Materials/Instances/Power_Pole_Addons.Power_Pole_Addons']
+  path=/Game/Modular_Rural_Cabin/Meshes/Props/Power_Pole_Addons.Power_Pole_Addons
+    dim=[287.6, 77.8, 740.8] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=standing_tall (竖立) origin_z=bottom (原点在底部, 可直接放地面) zoff=- sug_z=0
+    mats=['/Game/Modular_Rural_Cabin/Materials/Instances/Power_Pole_Addons.Power_Pole_Addons']
+  path=/Game/Modular_Rural_Cabin/Meshes/Props/Power_Pole_Light.Power_Pole_Light
+    dim=[26.6, 227.2, 32.7] unit=centimeters (可能正确) scale_to_cm=1.0 sug_scale=1.0
+    orient=mixed (混合) origin_z=center (原点在中心, 需上移半个高度) zoff=5.17 sug_z=5.17
+    mats=['/Game/Modular_Rural_Cabin/Materials/Instances/Power_Pole_Light.Power_Pole_Light']
+  path=/Game/RuralHouse/Props/SM_AirConditioner.SM_AirConditioner
+    dim=[101.3, 49.4, 71.1] unit=centimeters (可能正确) scale_to_cm=1.0 sug_scale=1.0
+    orient=mixed (混合) origin_z=bottom (原点在底部, 可直接放地面) zoff=- sug_z=0
+    mats=['/Game/RuralHouse/Props/Materials/MI_AirConditioner.MI_AirConditioner']
+  path=/Game/RuralHouse/Props/SM_DieselGenerator.SM_DieselGenerator
+    dim=[102.4, 54.0, 81.4] unit=centimeters (可能正确) scale_to_cm=1.0 sug_scale=1.0
+    orient=mixed (混合) origin_z=near_bottom (原点近底部, 需上移0.35) zoff=0.35 sug_z=0.35
+    mats=['/Game/RuralHouse/Props/Materials/MI_DieselGenerator.MI_DieselGenerator', '/Game/RuralHouse/Props/Materials/M_DieselGenerator_Glass.M_DieselGenerator_Glass']
+  path=/Game/RuralHouse/Props/SM_ElectricBox.SM_ElectricBox
+    dim=[41.6, 15.1, 51.6] unit=centimeters (可能正确) scale_to_cm=1.0 sug_scale=1.0
+    orient=mixed (混合) origin_z=center (原点在中心, 需上移半个高度) zoff=50.49 sug_z=50.49
+    mats=['/Game/RuralHouse/Props/Materials/MI_ElectricBox.MI_ElectricBox']
+  (共 8 条)
+
+=== 11. 地面平面网格 ===
+  path=/Game/Foliage_Sets/ground_materials/models/Grass_a.Grass_a
+    dim=[237.3, 249.8, 81.4] unit=centimeters (可能正确) scale_to_cm=1.0 sug_scale=1.0
+    orient=mixed (混合) origin_z=center (原点在中心, 需上移半个高度) zoff=7.76 sug_z=7.76
+    mats=[]
+  path=/Game/Foliage_Sets/ground_materials/models/Ground_plane_a.Ground_plane_a
+    dim=[1909.4, 0.0, 1905.2] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=mixed (混合) origin_z=center (原点在中心, 需上移半个高度) zoff=952.58 sug_z=952.58
+    mats=['/Engine/EngineMaterials/WorldGridMaterial.WorldGridMaterial']
+  path=/Game/Modular_Rural_Cabin/Meshes/Unique/Diorama_Ground.Diorama_Ground
+    dim=[3543.7, 3455.2, 364.0] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=flat_horizontal (平躺) origin_z=center (原点在中心, 需上移半个高度) zoff=198.61 sug_z=198.61
+    mats=['/Game/Modular_Rural_Cabin/Materials/Instances/Diorama_Ground.Diorama_Ground', '/Game/Modular_Rural_Cabin/Materials/Instances/Sand.Sand']
+  path=/Game/RuralHouse/Environment/Ground/SM_FallenBranch_01.SM_FallenBranch_01
+    dim=[33.0, 71.6, 7.3] unit=centimeters (可能正确) scale_to_cm=1.0 sug_scale=1.0
+    orient=flat_horizontal (平躺) origin_z=center (原点在中心, 需上移半个高度) zoff=1.6 sug_z=1.6
+    mats=['/Game/RuralHouse/Environment/Ground/Materials/MI_BarkFallen.MI_BarkFallen']
+  path=/Game/RuralHouse/Environment/Ground/SM_FallenBranch_02.SM_FallenBranch_02
+    dim=[27.7, 63.7, 9.0] unit=centimeters (可能正确) scale_to_cm=1.0 sug_scale=1.0
+    orient=flat_horizontal (平躺) origin_z=near_bottom (原点近底部, 需上移0.41) zoff=0.41 sug_z=0.41
+    mats=['/Game/RuralHouse/Environment/Ground/Materials/MI_BarkFallen.MI_BarkFallen']
+  path=/Game/RuralHouse/Environment/Ground/SM_FallenBranch_03.SM_FallenBranch_03
+    dim=[29.9, 71.6, 7.8] unit=centimeters (可能正确) scale_to_cm=1.0 sug_scale=1.0
+    orient=flat_horizontal (平躺) origin_z=center (原点在中心, 需上移半个高度) zoff=1.14 sug_z=1.14
+    mats=['/Game/RuralHouse/Environment/Ground/Materials/MI_BarkFallen.MI_BarkFallen']
+  path=/Game/RuralHouse/Environment/Ground/SM_FallenBranch_04.SM_FallenBranch_04
+    dim=[34.6, 71.5, 7.7] unit=centimeters (可能正确) scale_to_cm=1.0 sug_scale=1.0
+    orient=flat_horizontal (平躺) origin_z=center (原点在中心, 需上移半个高度) zoff=1.2 sug_z=1.2
+    mats=['/Game/RuralHouse/Environment/Ground/Materials/MI_BarkFallen.MI_BarkFallen']
+  path=/Game/RuralHouse/Environment/Ground/SM_ForestGroundRoots.SM_ForestGroundRoots
+    dim=[502.6, 501.9, 39.3] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=flat_horizontal (平躺) origin_z=center (原点在中心, 需上移半个高度) zoff=26.92 sug_z=26.92
+    mats=['/Game/RuralHouse/Environment/Ground/Materials/MI_GroundRoots.MI_GroundRoots']
+  path=/Game/RuralHouse/Environment/Ground/SM_ForestGroundRoots_Mossy.SM_ForestGroundRoots_Mossy
+    dim=[502.6, 501.9, 39.3] unit=centimeters (大物体, 可能 scale_to_cm=1.0 sug_scale=1.0
+    orient=flat_horizontal (平躺) origin_z=center (原点在中心, 需上移半个高度) zoff=26.92 sug_z=26.92
+    mats=['/Game/RuralHouse/Environment/Ground/Materials/MI_GroundRoots_Mossy.MI_GroundRoots_Mossy']
+  path=/Game/RuralHouse/Environment/Ground/SM_MossyRock_01.SM_MossyRock_01
+    dim=[223.8, 336.9, 147.3] unit=centimeters (可能正确) scale_to_cm=1.0 sug_scale=1.0
+    orient=mixed (混合) origin_z=center (原点在中心, 需上移半个高度) zoff=73.63 sug_z=73.63
+    mats=['/Game/RuralHouse/Environment/Ground/Materials/MI_MossyRocks_01.MI_MossyRocks_01']
+  (共 10 条)

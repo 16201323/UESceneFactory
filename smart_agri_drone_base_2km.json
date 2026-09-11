@@ -1,0 +1,305 @@
+{
+  "scene": {
+    "name": "SmartAgriDroneBase2km",
+    "target_level": "/Game/MapForgeTest/GB_SmartAgriDroneBase2km",
+    "description": "2km×2km(2016×2016m)智慧农林无人机作业基地 — 中央停机坪(原点) + 环形麦田(方环形内缘250m外缘550m,约110万株,LOD 100~500m剔除) + 散居村落(西北/东南各9栋共18栋,距原点约620m) + 塔站4座(高压电塔东西各一+通信塔东南西北各一) + 林带约4000棵杉树(南北西三条主林带+湖畔两片,cull 500~1500m) + 东北高斯雪山群(主峰150m,雪线70m以上积雪,连体山脉) + 西南草丘群(60m以下只长草不积雪) + 东部湖盆(直径500m,盆底-22m,水位+2m,水深24m) + 中央穹隆(全图抬升至+8m防淹) + 山溪8折点自雪山西坡蜿蜒入湖北岸 + 三条土路(西主干/东主干/湖畔支路,C++自动平整路基贴合地形) + 五层材质规则混合(基底土壤/泥地/雪线/草地/碎石) + 11种野草+50块散布岩石; 坐标约定: 停机坪中心=世界原点(0,0,0),+X东+Y北+Z上,地形覆盖±1008m; 所有height_pattern/weight_pattern坐标为地形局部坐标(左下角原点,米),局部=世界+1008"
+  },
+
+  "landscape": {
+    "_note": "【地形规格】32×32组件×63四边形=2016×2016m(scale=100→每quad=1m,顶点索引=局部米); location=[-100800,-100800,0]使局部(1008,1008)=世界原点(0,0,0); 【高度四特征精确叠加】①中央穹隆(1008,1008)r2000 h8m→全图抬至约+8m平顶,边缘平滑衰减,2m水位只灌湖盆不淹穹隆 ②东北高斯雪山群:主峰(1728,1728)r230 h150m+副峰A(1568,1868)r150 h100m+副峰B(1878,1568)r150 h110m+山麓丘(1888,1888)r180 h50m连体成脉,雪线70m以上常年积雪,主副峰半径互相重叠鞍部相连不互离 ③西南草丘群:草丘1(308,308)r170 h60m+草丘2(488,178)r140 h52m+草丘3(168,468)r120 h48m,均低于雪线70m→只长野草不积雪,与东北雪山形成『东北积雪西南青草』对称对比 ④东部湖盆(1628,1128)r250 d30 br130→盆底约-22m,水位+2m注入形成直径500m湖泊水深约24m,穹隆8m保证+2m水位只灌湖盆不外溢; 麦田东走廊(世界x 250~370)贴湖西缘(世界370)绕过,湖盆范围内麦田自然缺位; 不加noise_overlay/perturbation→高度由四特征精确叠加(用户明确要求非随机噪声),放置物Z值按穹隆高斯精确计算",
+    "material": "/Game/RuralHouse/Landscape/MI_Landscape",
+    "section_size_quads": 63,
+    "num_subsections": 1,
+    "component_count_x": 32,
+    "component_count_y": 32,
+    "location": [-100800, -100800, 0],
+    "rotation": [0, 0, 0],
+    "scale": [100, 100, 100],
+    "layers": [
+      {"_note": "Layer1 基底土壤: uniform权重0.5铺满全图,其他层权重为0处回退到此→防秃斑底色",
+       "info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer1_LayerInfo", "weight": 0.5},
+      {"_note": "Layer2 泥地: height_based(0~6m invert=true)→湖盆深处(h≤0,盆底-22m)权重1,0~6m渐减,≥6m为0; 仅湖盆范围内出泥地,其余区域权重为零",
+       "info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer2_LayerInfo", "weight": 1.0,
+       "weight_pattern": {
+         "pattern": "height_based",
+         "height_min_m": 0,
+         "height_max_m": 6,
+         "invert": true
+       }},
+      {"_note": "Layer3 雪线层: snow_line(70m transition10m max_slope0.6)→海拔>70m且坡度平缓处积雪; max_slope0.6→高海拔陡坡不积雪让位碎石层; 主峰150m/副峰110m/100m超雪线积雪,山麓丘50m与西南草丘60m以下不积雪",
+       "info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer3_LayerInfo", "weight": 1.0,
+       "weight_pattern": {
+         "pattern": "snow_line",
+         "snow_line_m": 70,
+         "transition_m": 10,
+         "max_slope": 0.6
+       }},
+      {"_note": "Layer4 草地: height_based(2.5~6m + fade_max75 fade_width15)→平地(穹隆8m)最密,2.5m以下(水位2m以下湖岸)无草,海拔60~75m逐渐稀疏,≥75m消失(60m草丘顶部仍有稀草); exclude_regions排除:6条麦带+停机坪核心区(世界±250m→局部758~1258)+两村宅基地→麦田/停机坪/宅基地内不长草; corridor_exclude=true→道路与河流走廊(宽×1.25)内权重清零; 局部坐标=世界+1008(顶点索引=局部米)",
+       "info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer4_LayerInfo", "weight": 1.0,
+       "weight_pattern": {
+         "pattern": "height_based",
+         "height_min_m": 2.5,
+         "height_max_m": 6,
+         "fade_max_m": 75,
+         "fade_width_m": 15,
+         "invert": false,
+         "corridor_exclude": true,
+         "exclude_regions": [
+           {"min_x": 748, "min_y": 748, "max_x": 1268, "max_y": 1268},
+           {"min_x": 458, "min_y": 1258, "max_x": 1358, "max_y": 1558},
+           {"min_x": 458, "min_y": 458, "max_x": 1558, "max_y": 758},
+           {"min_x": 458, "min_y": 1083, "max_x": 758, "max_y": 1258},
+           {"min_x": 458, "min_y": 758, "max_x": 758, "max_y": 933},
+           {"min_x": 1258, "min_y": 1083, "max_x": 1378, "max_y": 1258},
+           {"min_x": 1258, "min_y": 758, "max_x": 1378, "max_y": 933},
+           {"min_x": 348, "min_y": 1128, "max_x": 508, "max_y": 1288},
+           {"min_x": 1488, "min_y": 698, "max_x": 1648, "max_y": 858}
+         ]
+       }},
+      {"_note": "Layer5 碎石层: slope_based(0.35~0.9)→仅陡坡处出碎石(雪山陡坡/湖盆壁),平地与缓坡权重为零",
+       "info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer5_LayerInfo", "weight": 1.0,
+       "weight_pattern": {
+         "pattern": "slope_based",
+         "slope_min": 0.35,
+         "slope_max": 0.9
+       }},
+      {"_note": "Layer6 麦田: multi_region六条麦带构成方环形(外框1100m扣中央500m空洞): 北大带(世界y250~550,x-550~350东端避开雪山与湖)+南大带(y-550~-250,x-550~550)+西走廊南北两带(x-550~-250,y±75~250)+东走廊南北两带(x250~370贴湖西缘,y±75~250),走廊中缝(世界y±75m内)留给东西主干路; 总面积约0.75km²(扣除湖盆/雪山让位区,完整方环形0.96km²); exclude_regions排除两村宅基地东北/西北角与麦带重叠区→宅基地无麦; 麦田约110万株(面积×总密度1.48株/㎡); C++自动添加Wheat GrassOutput采样本层权重",
+       "info": "/Game/Generated/LIS_Wheat", "weight": 1.0,
+       "weight_pattern": {
+         "pattern": "multi_region",
+         "regions": [
+           {"min_x": 458, "min_y": 1258, "max_x": 1358, "max_y": 1558},
+           {"min_x": 458, "min_y": 458, "max_x": 1558, "max_y": 758},
+           {"min_x": 458, "min_y": 1083, "max_x": 758, "max_y": 1258},
+           {"min_x": 458, "min_y": 758, "max_x": 758, "max_y": 933},
+           {"min_x": 1258, "min_y": 1083, "max_x": 1378, "max_y": 1258},
+           {"min_x": 1258, "min_y": 758, "max_x": 1378, "max_y": 933}
+         ],
+         "exclude_regions": [
+           {"min_x": 348, "min_y": 1128, "max_x": 508, "max_y": 1288},
+           {"min_x": 1488, "min_y": 698, "max_x": 1648, "max_y": 858}
+         ]
+       }}
+    ],
+    "grass": {
+      "_note": "UE5原生草地(LandscapeGrassOutput): 11种野草网格混合(6高草Tall密度20+5矮草Beach密度6),配合LOD距离剔除(cull 20~100m); 草地密度由Layer4权重控制:平地最密,海拔60m以上递减,清零走廊与宅基地内不生成; 总密度120/10㎡",
+      "grass_type": "/Game/RuralHouse/Landscape/LandscapeFoliage/LGT_Grass",
+      "grass_mesh": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Tall_Wild_01a",
+      "layer_name": "Grass",
+      "density": 120.0
+    },
+    "wheat": {
+      "_note": "UE5原生麦田: C++自动在GrassOutput添加Wheat条目采样Layer6权重,区内触发麦穗生成; 需先运行gen_2km_scene.py的create_wheat_grass_type()生成/Game/Generated/LGT_Wheat与LIS_Wheat资产",
+      "type_path": "/Game/Generated/LGT_Wheat",
+      "layer_name": "Wheat"
+    },
+    "height_pattern": {
+      "_note": "features模式blend_mode=additive: 四特征(穹隆+雪山群+草丘群+湖盆)累加精确叠加; 山溪8折点自东北主峰西南坡(约130m高)沿自然下坡蜿蜒入湖北岸,路径不穿越山丘保证水面连续不断节,C++自动生成贴合地形的U型河床(下切成谷)+逐顶点采样地形沉入河谷的水面; 三条土路C++自动平整路基(余弦横截面+路肩缓过渡)+ribbon贴合地形高差; 5种岩石各10块共50块随机散布全图地表; 11种草+5种麦苗",
+      "type": "features",
+      "blend_mode": "additive",
+      "hills": [
+        {"_note": "特征一·中央穹隆: 中心(1008,1008)=世界原点,影响半径2000m覆盖整图(≥1008m),高8m→平地整体抬升至约+8m平顶高程,穹隆边缘平滑衰减无硬边; 作用:湖水水位+2m时只灌入东部湖盆,不淹没穹隆顶部大片平地(抬地防淹)", "center_x_m": 1008, "center_y_m": 1008, "radius_m": 2000, "height_m": 8},
+        {"_note": "特征二·东北雪山主峰: (1728,1728)=世界(720,720) r230 h150m→远超雪线70m,山顶常年积雪; 西坡(朝西南)承载山溪入湖", "center_x_m": 1728, "center_y_m": 1728, "radius_m": 230, "height_m": 150},
+        {"_note": "东北雪山副峰A: (1568,1868)=世界(560,860) r150 h100m→超雪线积雪; 距主峰中心266m<230+150→山体重叠鞍部相连不互离", "center_x_m": 1568, "center_y_m": 1868, "radius_m": 150, "height_m": 100},
+        {"_note": "东北雪山副峰B: (1878,1568)=世界(870,560) r150 h110m→超雪线积雪; 距主峰中心266m<380→与主峰连体; 东坡陡峭处由碎石层(slope_based)显露", "center_x_m": 1878, "center_y_m": 1568, "radius_m": 150, "height_m": 110},
+        {"_note": "东北山麓丘: (1888,1888)=世界(880,880) r180 h50m→低于雪线不积雪,衔接副峰A/B使山脉连体成脉(距A约144m<330,距B约144m<330)", "center_x_m": 1888, "center_y_m": 1888, "radius_m": 180, "height_m": 50},
+        {"_note": "特征三·西南草丘1: (308,308)=世界(-700,-700) r170 h60m→低于雪线70m只长野草不积雪", "center_x_m": 308, "center_y_m": 308, "radius_m": 170, "height_m": 60},
+        {"_note": "西南草丘2: (488,178)=世界(-520,-830) r140 h52m→低于雪线只长草; 距草丘1约222m<310→丘群连体", "center_x_m": 488, "center_y_m": 178, "radius_m": 140, "height_m": 52},
+        {"_note": "西南草丘3: (168,468)=世界(-840,-540) r120 h48m→低于雪线只长草; 距草丘1约212m<290→丘群连体; 三丘与东北雪山形成『东北积雪西南青草』对称对比", "center_x_m": 168, "center_y_m": 468, "radius_m": 120, "height_m": 48}
+      ],
+      "valleys": [
+        {"_note": "特征四·东部湖盆: (1628,1128)=世界(620,120)停机坪以东约620m外, r250 d30 br130→穹隆约7.6m-30m=盆底约-22m,注入水位+2m形成直径500m湖泊,湖水深约24m; 穹隆已抬平地至+8m→+2m水位只灌满湖盆不外溢淹地; 湖盆占东部地形,麦田东走廊贴其西缘(世界x370)绕过,湖盆范围内麦田自然缺位", "center_x_m": 1628, "center_y_m": 1128, "radius_m": 250, "depth_m": 30, "bottom_radius_m": 130}
+      ],
+      "water": {
+        "_note": "湖面水位+2m: 注入东部湖盆(中心1628,1128 盆底约-22m)形成500m直径湖泊; 穹隆8m确保湖水不外溢; 材质Water_Lake半透明水面",
+        "level_m": 2,
+        "material_path": "/Game/Modular_Rural_Cabin/Materials/Instances/Water_Lake"
+      },
+      "rivers": [
+        {"_note": "山溪(8折点): 自东北主峰西南坡(局部1598,1668=世界(590,660)约130m高)沿自然下坡蜿蜒而下,汇入东部湖泊北岸(局部1628,1378=世界(620,370)距湖心250m恰在湖缘); 折点严格沿自然下坡不穿越山丘→水面连续不断节; C++自动生成贴合地形的U型河床(下切成谷+余弦横截面岸边过渡)+逐顶点采样地形沉入河谷的水面(低于岸地形防悬浮); 宽8m", "points": [[1598,1668],[1568,1618],[1553,1568],[1563,1513],[1588,1463],[1608,1423],[1623,1393],[1628,1378]], "width_m": 8, "material_path": "/Game/Modular_Rural_Cabin/Materials/Instances/Water_Lake"}
+      ],
+      "roads": [
+        {"_note": "西主干路(9折点宽5m): 从停机坪边缘(世界(-30,0))向西沿麦田西走廊中缝(世界y≈0,走廊带间空隙)延伸,出麦区后(世界x<-550)向北折接入西北村口(世界(-580,190)); C++自动平整路基(余弦横截面+路肩缓过渡)+ribbon路面贴合地形高差; 沿途不穿麦田", "points": [[978,1008],[888,1013],[788,1003],[688,1013],[588,1003],[498,1008],[448,1048],[433,1118],[428,1198]], "width_m": 5, "material_path": "/Game/MapForgeTest/M_Road_Dirt"},
+        {"_note": "东主干路(9折点宽5m): 从停机坪边缘(世界(30,0))向东沿东走廊中缝到(世界(300,0)),绕开湖盆南岸(湖心世界(620,120)r250,路径距湖心≥325m)转向东南,终点接入东南村口(世界(590,-200)); 不穿麦田不进湖", "points": [[1038,1008],[1128,998],[1228,1018],[1308,1008],[1348,968],[1408,868],[1478,828],[1548,813],[1598,808]], "width_m": 5, "material_path": "/Game/MapForgeTest/M_Road_Dirt"},
+        {"_note": "湖畔支路(5折点宽4m): 从东主干路中段(世界(430,-160))分出向南转折,终点接到湖泊西南岸(世界(440,-60)距湖心254m岸上); 供基地前往湖畔的便道", "points": [[1438,848],[1446,883],[1452,915],[1450,935],[1448,948]], "width_m": 4, "material_path": "/Game/MapForgeTest/M_Road_Dirt"}
+      ],
+      "scatter": [
+        {"_note": "散布岩石A-01: 10块 scale1.0~2.5 随机朝向缩放,全图地表自然点缀", "mesh_path": "/Game/RuralHouse/Environment/Ground/SM_Rock_A_01", "count": 10, "seed": 301, "scale_min": 1.0, "scale_max": 2.5, "random_rotation": true},
+        {"_note": "散布岩石A-04: 10块 scale0.8~1.8", "mesh_path": "/Game/RuralHouse/Environment/Ground/SM_Rock_A_04", "count": 10, "seed": 302, "scale_min": 0.8, "scale_max": 1.8, "random_rotation": true},
+        {"_note": "苔藓岩石: 10块 湿润山体岩石", "mesh_path": "/Game/RuralHouse/Environment/Ground/SM_MossyRock_01", "count": 10, "seed": 303, "scale_min": 0.9, "scale_max": 2.0, "random_rotation": true},
+        {"_note": "散布岩石A-07: 10块 大块scale1.5~3.5", "mesh_path": "/Game/RuralHouse/Environment/Ground/SM_Rock_A_07", "count": 10, "seed": 304, "scale_min": 1.5, "scale_max": 3.5, "random_rotation": true},
+        {"_note": "散布岩石A-05: 10块 小块scale0.7~1.6; 5种合计50块随机散布全图", "mesh_path": "/Game/RuralHouse/Environment/Ground/SM_Rock_A_05", "count": 10, "seed": 305, "scale_min": 0.7, "scale_max": 1.6, "random_rotation": true}
+      ],
+      "grass_varieties": [
+        {"_note": "11种野草混合: 6种高草Tall密度20/10㎡(平地主草种)+5种矮草Beach密度6/10㎡(湖岸/林下矮草); LOD剔除20~100m; 密度受Layer4权重控制(平地最密/海拔递减/走廊宅基地清零)", "mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Tall_Wild_01a", "density": 20, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 10000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Tall_Wild_01b", "density": 20, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 10000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Tall_Wild_01c", "density": 20, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 10000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Tall_Wild_01d", "density": 20, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 10000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Tall_Wild_01e", "density": 20, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 10000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Tall_Wild_01f", "density": 20, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 10000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Beach_01a", "density": 6, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 10000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Beach_01b", "density": 6, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 10000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Beach_01c", "density": 6, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 10000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Beach_01d", "density": 6, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 10000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Beach_01e", "density": 6, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 10000}
+      ],
+      "wheat_varieties": [
+        {"_note": "五种麦苗网格按行交错混播(C++自动bUseGrid=true田垄行列式+random_rotation+jitter交错): 总密度(3+3+3+2.9+2.9)=14.8/10㎡≈1.48株/㎡×麦田面积约74.7万㎡≈110万株; 每株随机朝向与缩放,株高0.8~1.9m不等(网格原始高27.74m,scale0.029~0.068→0.80~1.89m); LOD在100~500m外剔除(start_cull10000 end_cull50000)控制性能; 需先运行gen_2km_scene.py生成/Game/Generated/LGT_Wheat", "mesh_path": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_001_wheat_texture_0", "density": 3.0, "scale_min": 0.029, "scale_max": 0.040, "jitter": 0.2, "random_rotation": true, "start_cull_dist": 10000, "end_cull_dist": 50000},
+        {"mesh_path": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_002_wheat_texture_0", "density": 3.0, "scale_min": 0.034, "scale_max": 0.047, "jitter": 0.2, "random_rotation": true, "start_cull_dist": 10000, "end_cull_dist": 50000},
+        {"mesh_path": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_003_wheat_texture_0", "density": 3.0, "scale_min": 0.039, "scale_max": 0.054, "jitter": 0.2, "random_rotation": true, "start_cull_dist": 10000, "end_cull_dist": 50000},
+        {"mesh_path": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_004_wheat_texture_0", "density": 2.9, "scale_min": 0.045, "scale_max": 0.062, "jitter": 0.2, "random_rotation": true, "start_cull_dist": 10000, "end_cull_dist": 50000},
+        {"mesh_path": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_wheat_texture_0", "density": 2.9, "scale_min": 0.051, "scale_max": 0.068, "jitter": 0.2, "random_rotation": true, "start_cull_dist": 10000, "end_cull_dist": 50000}
+      ]
+    }
+  },
+
+  "ground": {},
+
+  "placements": [
+    {"_note": "==================================================================="},
+    {"_note": "=== 第一区·起降核心区(世界±250m内穹隆顶部平地,地面高程约+8m=800cm) ==="},
+    {"_note": "==================================================================="},
+
+    {"_note": "中央停机坪: 37m标准直升机停机坪,10个组合件拼装缩放而成(rotation roll=-90平躺顶面朝上,scale 0.01将3728m缩至37m),居中放置于世界原点; z=800=穹隆顶8m",
+     "type": "group", "asset_prefix": "/Game/heliport/heliport_helipad_air_base_helicopter/StaticMeshes/Object_", "count": 10, "location": [0, 0, 800], "rotation": [0, 0, -90], "scale": [0.01, 0.01, 0.01]},
+
+    {"_note": "方形围栏(4边各25块面板共100块,50m见方): 每边一个HISM,实例局部坐标绕actor旋转; 面板Plane_004原点在中心zoff=110.98→实例z=800+111=911落地; 每边25块×间距200cm=5m+面板宽203.7cm≈覆盖50m边; 四边yaw分别0/180/90/270→面板正面统一朝围栏外侧,顶部弯折朝外(若实测弯折朝内,将各边yaw+180即可)",
+     "type": "instanced_grid", "asset": "/Game/WireFence/chainlink_fence_tileable/StaticMeshes/Plane_004_chainlink_fence_textures_0", "location": [0, 2500, 0], "rotation": [0, 0, 0], "grid": {"rows": 1, "cols": 25, "origin": [-2400, 0, 911], "spacing": [200, 0, 0]}},
+    {"type": "instanced_grid", "asset": "/Game/WireFence/chainlink_fence_tileable/StaticMeshes/Plane_004_chainlink_fence_textures_0", "location": [0, -2500, 0], "rotation": [0, 180, 0], "grid": {"rows": 1, "cols": 25, "origin": [-2400, 0, 911], "spacing": [200, 0, 0]}},
+    {"type": "instanced_grid", "asset": "/Game/WireFence/chainlink_fence_tileable/StaticMeshes/Plane_004_chainlink_fence_textures_0", "location": [2500, 0, 0], "rotation": [0, 90, 0], "grid": {"rows": 1, "cols": 25, "origin": [0, -2400, 911], "spacing": [0, 200, 0]}},
+    {"type": "instanced_grid", "asset": "/Game/WireFence/chainlink_fence_tileable/StaticMeshes/Plane_004_chainlink_fence_textures_0", "location": [-2500, 0, 0], "rotation": [0, 270, 0], "grid": {"rows": 1, "cols": 25, "origin": [0, -2400, 911], "spacing": [0, 200, 0]}},
+
+    {"_note": "围栏支柱(每边7根含角柱,4边共28根): Cylinder原点在中心zoff=590→实例z=800+590=1390落地; 柱高690cm",
+     "type": "instanced_grid", "asset": "/Game/WireFence/chainlink_fence_tileable/StaticMeshes/Cylinder_001_chainlink_fence_textures_0", "location": [0, 2500, 0], "rotation": [0, 0, 0], "grid": {"rows": 1, "cols": 7, "origin": [-2400, 0, 1390], "spacing": [800, 0, 0]}},
+    {"type": "instanced_grid", "asset": "/Game/WireFence/chainlink_fence_tileable/StaticMeshes/Cylinder_001_chainlink_fence_textures_0", "location": [0, -2500, 0], "rotation": [0, 180, 0], "grid": {"rows": 1, "cols": 7, "origin": [-2400, 0, 1390], "spacing": [800, 0, 0]}},
+    {"type": "instanced_grid", "asset": "/Game/WireFence/chainlink_fence_tileable/StaticMeshes/Cylinder_004_chainlink_fence_textures_0", "location": [2500, 0, 0], "rotation": [0, 90, 0], "grid": {"rows": 1, "cols": 7, "origin": [0, -2400, 1390], "spacing": [0, 800, 0]}},
+    {"type": "instanced_grid", "asset": "/Game/WireFence/chainlink_fence_tileable/StaticMeshes/Cylinder_004_chainlink_fence_textures_0", "location": [-2500, 0, 0], "rotation": [0, 270, 0], "grid": {"rows": 1, "cols": 7, "origin": [0, -2400, 1390], "spacing": [0, 800, 0]}},
+
+    {"_note": "南侧机库区(围栏南侧,朝北面向停机坪): 两栋砖砌农舍+一栋传统民居; 两种蓝图结构不同区别处理: 砖砌农舍可见网格底面高出Actor原点约180cm→Z值下调180cm贴地(z=800-180=620); 传统民居网格自带5倍缩放已达Actor原点→Z值不变贴地(z=800)",
+     "type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_RuralBrickFarm", "location": [-22000, -45000, 620], "rotation": [0, 0, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_Traditional", "location": [0, -50000, 800], "rotation": [0, 0, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_RuralBrickFarm", "location": [22000, -45000, 620], "rotation": [0, 0, 0]},
+
+    {"_note": "机库区配套设施: 发电机/空调外机/电箱散布机库周围(spawn_mesh自带Z自动修正落地,z=800)",
+     "type": "static", "asset": "/Game/RuralHouse/Props/SM_DieselGenerator", "location": [-10000, -58000, 800]},
+    {"type": "static", "asset": "/Game/RuralHouse/Props/SM_AirConditioner", "location": [-28000, -40000, 800]},
+    {"type": "static", "asset": "/Game/RuralHouse/Props/SM_ElectricBox", "location": [28000, -38000, 800]},
+
+    {"_note": "充电桩×4: 核心区东南侧沿纵列排布(x=+60m,y从-5m到-35m间隔10m)",
+     "type": "static", "asset": "/Game/RuralHouse/Props/SM_ElectricBox", "location": [60000, -500, 800]},
+    {"type": "static", "asset": "/Game/RuralHouse/Props/SM_ElectricBox", "location": [60000, -1500, 800]},
+    {"type": "static", "asset": "/Game/RuralHouse/Props/SM_ElectricBox", "location": [60000, -2500, 800]},
+    {"type": "static", "asset": "/Game/RuralHouse/Props/SM_ElectricBox", "location": [60000, -3500, 800]},
+
+    {"_note": "光伏阵列(核心区北部东、西两翼各一组10×8=80块): 停机坪北侧两翼分列; 面板pitch=-15倾斜,HISM无Z自动修正→origin z=850(面板底面高于地面800约10cm); 间距600cm",
+     "type": "instanced_grid", "asset": "/Game/Photovoltaic/-photovoltaic_panels/StaticMeshes/Material2", "location": [0, 0, 0], "grid": {"rows": 10, "cols": 8, "origin": [-13000, 8500, 850], "spacing": [600, 600, 0], "pitch": -15, "scale_min": [1, 1, 1], "scale_max": [1, 1, 1]}},
+    {"type": "instanced_grid", "asset": "/Game/Photovoltaic/-photovoltaic_panels/StaticMeshes/Material2", "location": [0, 0, 0], "grid": {"rows": 10, "cols": 8, "origin": [8000, 8500, 850], "spacing": [600, 600, 0], "pitch": -15, "scale_min": [1, 1, 1], "scale_max": [1, 1, 1]}},
+
+    {"_note": "==================================================================="},
+    {"_note": "=== 第三区·散居村落(西北/东南各9栋共18栋,距停机坪约620m草环带上, ==="},
+    {"_note": "=== 地面高程约+7.6m: 农舍z=760-180=580,民居z=760;手工错落不排排坐) ==="},
+    {"_note": "==================================================================="},
+
+    {"_note": "西北村(中心世界(-580,200),宅基地世界x-660~-500 y120~280): 砖砌农舍与传统民居交错混排,朝向位置手工错落(随机间距8~20m,随机朝向0~360°)",
+     "type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_RuralBrickFarm", "location": [-64000, 25000, 580], "rotation": [0, 20, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_Traditional", "location": [-61500, 21500, 760], "rotation": [0, -35, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_RuralBrickFarm", "location": [-64500, 18000, 580], "rotation": [0, 160, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_Traditional", "location": [-59000, 16500, 760], "rotation": [0, 10, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_RuralBrickFarm", "location": [-56000, 23500, 580], "rotation": [0, -15, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_Traditional", "location": [-54500, 19500, 760], "rotation": [0, 150, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_RuralBrickFarm", "location": [-59000, 25500, 580], "rotation": [0, 200, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_Traditional", "location": [-52500, 23500, 760], "rotation": [0, -70, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_RuralBrickFarm", "location": [-51500, 17500, 580], "rotation": [0, 45, 0]},
+
+    {"_note": "东南村(中心世界(560,-230),宅基地世界x480~640 y-310~-150,距湖岸最近约21m): 农舍民居交错混排错落布置",
+     "type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_RuralBrickFarm", "location": [50000, -27000, 580], "rotation": [0, 15, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_Traditional", "location": [53000, -24000, 760], "rotation": [0, -40, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_RuralBrickFarm", "location": [50500, -20500, 580], "rotation": [0, 170, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_Traditional", "location": [55500, -19000, 760], "rotation": [0, 5, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_RuralBrickFarm", "location": [58000, -26000, 580], "rotation": [0, -20, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_Traditional", "location": [60000, -22500, 760], "rotation": [0, 145, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_RuralBrickFarm", "location": [54500, -28500, 580], "rotation": [0, 195, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_Traditional", "location": [61500, -19500, 760], "rotation": [0, -65, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_RuralBrickFarm", "location": [62500, -26000, 580], "rotation": [0, 40, 0]},
+
+    {"_note": "==================================================================="},
+    {"_note": "=== 第四区·塔站(4座,麦田外草环带上距原点约620m) ==="},
+    {"_note": "==================================================================="},
+
+    {"_note": "高压电塔·西(世界(-620,-80),距原点625m): 20个Object组合,group内部spawn_mesh自带Z自动修正→z=760当地地面高程",
+     "type": "group", "asset_prefix": "/Game/HighVoltageTower/high_voltage_tower_wired/StaticMeshes/Object_", "count": 20, "location": [-62000, -8000, 760], "rotation": [0, 0, 0], "scale": [1, 1, 1]},
+    {"_note": "高压电塔·东(世界(700,-150),距原点716m,避湖(距湖心282m>250)避东南村宅基地)",
+     "type": "group", "asset_prefix": "/Game/HighVoltageTower/high_voltage_tower_wired/StaticMeshes/Object_", "count": 20, "location": [70000, -15000, 750], "rotation": [0, 0, 0], "scale": [1, 1, 1]},
+    {"_note": "通信塔·西北(世界(-300,580)): telecom塔6件,最高件20.6m,scale1.2→约24.7m城市基站高度; z=760",
+     "type": "group", "asset_prefix": "/Game/CommunicationTower/telecommunication_tower_low-poly_free/StaticMeshes/Object_", "count": 6, "location": [-30000, 58000, 760], "rotation": [0, 0, 0], "scale": [1.2, 1.2, 1.2]},
+    {"_note": "通信塔·东南(世界(300,-600)): 同款scale1.2→24.7m; z=760",
+     "type": "group", "asset_prefix": "/Game/CommunicationTower/telecommunication_tower_low-poly_free/StaticMeshes/Object_", "count": 6, "location": [30000, -60000, 760], "rotation": [0, 0, 0], "scale": [1.2, 1.2, 1.2]},
+
+    {"_note": "==================================================================="},
+    {"_note": "=== 第五区·林带(南北西三条主林带+湖畔两片,共约4000棵杉树) ==="},
+    {"_note": "=== 全部启用远距离LOD剔除cull 500~1500m;HISM无Z自动修正,origin z取带内==="},
+    {"_note": "=== 最低地面高程(树根微入土0~0.7m避免悬浮);随机Yaw+缩放打散阵列感 ==="},
+    {"_note": "==================================================================="},
+
+    {"_note": "北林带(约1665棵,世界y620~692m,北麦田带外缘与地形边缘之间): x从-900到396m,东端避开东北雪山山麓(主峰覆盖x≥490); 大杉3种各5×55+小杉2种各5×74+枯杉1种2×55; 地面高程6.86~7.53m→z=700(树根入土0~0.53m)",
+     "type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_FirTree_01", "location": [0, 0, 0], "grid": {"rows": 5, "cols": 55, "origin": [-90000, 62000, 700], "spacing": [2400, 1800, 0], "jitter": 600, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.25, 1.25, 1.25], "cull_start": 50000, "cull_end": 150000}},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_FirTree_02", "location": [0, 0, 0], "grid": {"rows": 5, "cols": 55, "origin": [-90000, 62500, 700], "spacing": [2400, 1800, 0], "jitter": 600, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.25, 1.25, 1.25], "cull_start": 50000, "cull_end": 150000}},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_FirTree_03", "location": [0, 0, 0], "grid": {"rows": 5, "cols": 54, "origin": [-89500, 62200, 700], "spacing": [2400, 1800, 0], "jitter": 600, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.25, 1.25, 1.25], "cull_start": 50000, "cull_end": 150000}},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_SmallFir_01", "location": [0, 0, 0], "grid": {"rows": 5, "cols": 74, "origin": [-90000, 63200, 700], "spacing": [1800, 1500, 0], "jitter": 400, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.3, 1.3, 1.3], "cull_start": 50000, "cull_end": 150000}},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_SmallFir_02", "location": [0, 0, 0], "grid": {"rows": 5, "cols": 73, "origin": [-89600, 63500, 700], "spacing": [1800, 1500, 0], "jitter": 400, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.3, 1.3, 1.3], "cull_start": 50000, "cull_end": 150000}},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_FirTreeDead_01", "location": [0, 0, 0], "grid": {"rows": 2, "cols": 55, "origin": [-90000, 62600, 700], "spacing": [2400, 2000, 0], "jitter": 500, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.2, 1.2, 1.2], "cull_start": 50000, "cull_end": 150000}},
+
+    {"_note": "南林带(约1722棵,世界y-695~-627m,南麦田带外缘与地形边缘之间): x从-450到936m,西端避开西南草丘群(草丘覆盖x≤478局部); 地面高程6.81~7.46m→z=690",
+     "type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_FirTree_01", "location": [0, 0, 0], "grid": {"rows": 5, "cols": 56, "origin": [-45000, -69000, 690], "spacing": [2400, 1800, 0], "jitter": 600, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.25, 1.25, 1.25], "cull_start": 50000, "cull_end": 150000}},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_FirTree_02", "location": [0, 0, 0], "grid": {"rows": 5, "cols": 56, "origin": [-45000, -68500, 690], "spacing": [2400, 1800, 0], "jitter": 600, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.25, 1.25, 1.25], "cull_start": 50000, "cull_end": 150000}},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_FirTree_03", "location": [0, 0, 0], "grid": {"rows": 5, "cols": 55, "origin": [-44600, -68800, 690], "spacing": [2400, 1800, 0], "jitter": 600, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.25, 1.25, 1.25], "cull_start": 50000, "cull_end": 150000}},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_SmallFir_03", "location": [0, 0, 0], "grid": {"rows": 5, "cols": 78, "origin": [-45000, -69500, 690], "spacing": [1800, 1500, 0], "jitter": 400, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.3, 1.3, 1.3], "cull_start": 50000, "cull_end": 150000}},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_SmallFir_04", "location": [0, 0, 0], "grid": {"rows": 5, "cols": 77, "origin": [-44700, -69200, 690], "spacing": [1800, 1500, 0], "jitter": 400, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.3, 1.3, 1.3], "cull_start": 50000, "cull_end": 150000}},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_FirTreeDead_01", "location": [0, 0, 0], "grid": {"rows": 2, "cols": 56, "origin": [-45000, -68700, 690], "spacing": [2400, 2000, 0], "jitter": 500, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.2, 1.2, 1.2], "cull_start": 50000, "cull_end": 150000}},
+
+    {"_note": "西林带(约491棵,东西向横贯场景西部): 世界x-960~-576m,y-420~-366m(南麦田带西侧外的草环带,距南带西缘20m); 地面高程6.94~7.55m→z=710",
+     "type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_FirTree_01", "location": [0, 0, 0], "grid": {"rows": 4, "cols": 25, "origin": [-96000, -42000, 710], "spacing": [1600, 1500, 0], "jitter": 400, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.25, 1.25, 1.25], "cull_start": 50000, "cull_end": 150000}},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_FirTree_02", "location": [0, 0, 0], "grid": {"rows": 4, "cols": 24, "origin": [-95700, -41700, 710], "spacing": [1600, 1500, 0], "jitter": 400, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.25, 1.25, 1.25], "cull_start": 50000, "cull_end": 150000}},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_SmallFir_05", "location": [0, 0, 0], "grid": {"rows": 5, "cols": 30, "origin": [-96000, -41800, 710], "spacing": [1300, 1300, 0], "jitter": 300, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.3, 1.3, 1.3], "cull_start": 50000, "cull_end": 150000}},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_SmallFirDead_01", "location": [0, 0, 0], "grid": {"rows": 5, "cols": 29, "origin": [-95800, -41500, 710], "spacing": [1300, 1300, 0], "jitter": 300, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.2, 1.2, 1.2], "cull_start": 50000, "cull_end": 150000}},
+
+    {"_note": "湖畔西南片(48棵): 世界x320~425,y-200~-167,湖西南岸岸上(最近点距湖心283m>250),距湖畔支路36m以上; 地面约7.9m→z=780",
+     "type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_FirTree_03", "location": [0, 0, 0], "grid": {"rows": 3, "cols": 8, "origin": [32000, -20000, 780], "spacing": [1500, 1800, 0], "jitter": 400, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.25, 1.25, 1.25], "cull_start": 50000, "cull_end": 150000}},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_SmallFir_01", "location": [0, 0, 0], "grid": {"rows": 3, "cols": 8, "origin": [32500, -19500, 780], "spacing": [1400, 1400, 0], "jitter": 300, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.3, 1.3, 1.3], "cull_start": 50000, "cull_end": 150000}},
+
+    {"_note": "湖畔东北片(39棵): 世界x800~896,y320~416,湖东北岸岸上(最近点距湖心269m>250),避东北山麓(主峰覆盖y≥490); 地面约7.2m→z=690",
+     "type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_FirTree_02", "location": [0, 0, 0], "grid": {"rows": 3, "cols": 7, "origin": [80000, 32000, 690], "spacing": [1600, 1600, 0], "jitter": 400, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.25, 1.25, 1.25], "cull_start": 50000, "cull_end": 150000}},
+    {"type": "instanced_grid", "asset": "/Game/RuralHouse/Environment/Trees/SM_SmallFir_02", "location": [0, 0, 0], "grid": {"rows": 3, "cols": 6, "origin": [80500, 32500, 690], "spacing": [1500, 1500, 0], "jitter": 300, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.3, 1.3, 1.3], "cull_start": 50000, "cull_end": 150000}}
+  ],
+
+  "lighting": {
+    "_note": "光照: 太阳斜射(俯角15° yaw60°)暖色光增强雪山阴影立体感 + 天空光冷色补光 + 大气层 + 轻雾空气透视",
+    "directional_light": {
+      "location": [0, 0, 3000],
+      "rotation": [-15, 60, 0],
+      "intensity": 10.0,
+      "color": [1.0, 0.85, 0.7],
+      "cast_shadows": true
+    },
+    "sky_light": {
+      "location": [0, 0, 3000],
+      "intensity": 1.0,
+      "color": [0.75, 0.85, 1.0]
+    },
+    "sky_atmosphere": {
+      "location": [0, 0, 0]
+    },
+    "height_fog": {
+      "location": [0, 0, 0],
+      "density": 0.0001,
+      "color": [0.7, 0.8, 0.9]
+    }
+  },
+
+  "weather": {
+    "_note": "体积云: UE5原生VolumetricCloud,150m雪山主峰穿云效果增强高山氛围",
+    "volumetric_clouds": {
+      "location": [0, 0, 2000]
+    }
+  }
+}

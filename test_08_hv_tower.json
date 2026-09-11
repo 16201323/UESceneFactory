@@ -1,0 +1,31 @@
+{
+  "scene": {
+    "name": "Test_08_HVTower",
+    "target_level": "/Game/MapForgeTest/GB_Test_08_HVTower_v2",
+    "description": "单资产验证场景 — 高压电塔(2座). 碰撞状态: ✓完整碰撞(20 Object全部简化碰撞, 玩家无法穿透)"
+  },
+
+  "ground": {
+    "_note": "草地地面: SM_House_FloorPlane_03 scale[20,40,1]→194m×200m, 高压塔高77.5m需更大地面范围",
+    "asset": "/Game/RuralHouse/House/Meshes/ModularParts/SM_House_FloorPlane_03",
+    "location": [0, 0, 0],
+    "scale": [20, 40, 1],
+    "material_override": "/Game/Foliage_Sets/ground_materials/materials/M_grass_simple_a"
+  },
+
+  "placements": [
+    {"_note": "=== Tower A: 高压电塔(20个Object组合, Object_0 dims[991.87,183.5,7745.3]原竖立77.5m) ==="},
+    {"_note": "电线连接修复: 两塔原沿X分开(±30m)+同rotation[0,0,-90]→电线同向平行永不相交. 现改沿Y轴布置, A保持原朝向(yaw=0)作为方向基准, B加yaw180°翻转电线使其相向. P8三连保留: roll-90竖立+skip_z_fix跳过独立Z修正(Object_10 bounds_origin.z=-3991独立Z修正会错位)+ground_assembly整组贴地"},
+    {"type": "group", "asset_prefix": "/Game/HighVoltageTower/high_voltage_tower_wired/StaticMeshes/Object_", "count": 20, "location": [0, -1500, 0], "rotation": [0, 0, -90], "scale": [1, 1, 1], "skip_z_fix": true, "ground_assembly": true},
+
+    {"_note": "=== Tower B: 高压电塔(第2座, yaw180°翻转电线相向) — 诊断兼修复: 若构建后两塔电线中段相会=方向猜对(完成); 若各自朝外=方向相反, 下次把yaw换到Tower A重建 ==="},
+    {"type": "group", "asset_prefix": "/Game/HighVoltageTower/high_voltage_tower_wired/StaticMeshes/Object_", "count": 20, "location": [0, 1500, 0], "rotation": [0, 180, -90], "scale": [1, 1, 1], "skip_z_fix": true, "ground_assembly": true}
+  ],
+
+  "lighting": {
+    "_note": "基础日光: 太阳45°俯角暖白光投射阴影 + 天空光冷色 + 大气层",
+    "directional_light": {"location": [0, 0, 3000], "rotation": [-45, 35, 0], "intensity": 10.0, "color": [1.0, 0.94, 0.78], "cast_shadows": true},
+    "sky_light": {"location": [0, 0, 3000], "intensity": 1.0, "color": [0.78, 0.86, 1.0]},
+    "sky_atmosphere": {"location": [0, 0, 0]}
+  }
+}

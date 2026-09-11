@@ -1,0 +1,45 @@
+{
+  "scene": {
+    "name": "karst_peak_forest_test",
+    "description": "模块3喀斯特峰林模式测试: 泊松盘采样40峰 + 8溶斗",
+    "target_level": "/Game/MapForgeTest/GB_KarstTest"
+  },
+  "landscape": {
+    "location": [0, 0, 0],
+    "rotation": [0, 0, 0],
+    "scale": [100, 100, 100],
+    "section_size_quads": 63,
+    "num_subsections": 1,
+    "component_count_x": 1,
+    "component_count_y": 1,
+    "material": "/Game/RuralHouse/Landscape/MI_Landscape",
+    "layers": [
+      { "info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer1_LayerInfo", "weight": 0.6 },
+      { "info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer2_LayerInfo", "weight": 0.4 }
+    ],
+    "height_pattern": {
+      "type": "karst",
+      "peak_count": 40,
+      "min_distance_m": 60,
+      "peak_height_min_m": 15,
+      "peak_height_max_m": 45,
+      "peak_radius_m": 25,
+      "doline_count": 8,
+      "doline_depth_m": 6,
+      "doline_radius_m": 18,
+      "seed": 42,
+      "blend_mode": "additive",
+      "perturbation_strength": 0.4,
+      "perturbation_scale": 0.04,
+      "perturbation_seed": 13,
+      "noise_overlay": { "amplitude_m": 0.5, "frequency": 0.03, "octaves": 3, "seed": 11 }
+    }
+  },
+  "ground": {},
+  "placements": [],
+  "lighting": {
+    "directional_light": { "location": [0, 0, 5000], "rotation": [-45, 0, 0], "intensity": 3.0, "color": [1, 1, 1] },
+    "sky_light": { "intensity": 1.0, "color": [0.8, 0.9, 1.0] }
+  },
+  "weather": { "volumetric_clouds": { "location": [0, 0, 2000] } }
+}

@@ -1,0 +1,243 @@
+{
+  "scene": {
+    "name": "JiangnanPaddyRiver",
+    "target_level": "/Game/Maps/Generated/JiangnanPaddyRiver",
+    "description": "江南水乡稻田+河流: 504m×504m 低平水网平原 — 主干蜿蜒河(西→东 宽6→12m下游渐宽) + 南北2支流汇入形成三河交汇河网 + 8块稻田成片(水田泥+稻穗) + 2座江南小丘陵(6m/5m点缀) + 河岸田埂草地 + 暖色午后光照 + 轻雾烟雨"
+  },
+
+  "landscape": {
+    "_note": "【江南水乡布局】504m低平平原: 基础微隆2m确保陆地微高于河面形成低洼平原; 2座小丘陵(西南(70,440)h6m+东北(440,70)h5m)点缀江南丘陵,均避开河流与稻田; 主干河自西向东蜿蜒(Y260→200)宽6→12m下游渐宽+南北2支流汇入构成典型江南河网(三河交汇); 8块稻田(每块约70-140m)成片分布于河网间平地,田内=水田泥Layer2+稻穗Layer6双权重,田外无杂草(Layer4草地exclude_regions同步排除8块田); 河岸/田埂/平地草地Layer4(height_based 0~5m低地满草+corridor_exclude河走廊清零+exclude稻田); noise_overlay(amp1.5)低平微起伏+perturbation消除人工平整感; 稻穗需先运行gen_2km_scene.py生成/Game/Generated/LGT_Wheat与LIS_Wheat,否则C++仅Warning跳过(河流+水田泥+草地仍正常显示)",
+    "material": "/Game/RuralHouse/Landscape/MI_Landscape",
+    "section_size_quads": 63,
+    "num_subsections": 2,
+    "component_count_x": 4,
+    "component_count_y": 4,
+    "location": [-25200, -25200, 0],
+    "rotation": [0, 0, 0],
+    "scale": [100, 100, 100],
+    "layers": [
+      {
+        "_note": "Layer1 TrailSoil基底: uniform权重0.5,旱地/田埂底土,其他层权重0处回退到此,确保全图无秃斑",
+        "info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer1_LayerInfo",
+        "weight": 0.5
+      },
+      {
+        "_note": "Layer2 Mud水田泥: multi_region=8块稻田→田内权重1湿泥模拟水田积水土壤,田外权重0回退Layer1旱土; 与Layer6稻穗同区(泥+稻双层叠加)",
+        "info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer2_LayerInfo",
+        "weight": 1.0,
+        "weight_pattern": {
+          "pattern": "multi_region",
+          "regions": [
+            {"min_x": 30, "min_y": 30, "max_x": 150, "max_y": 95},
+            {"min_x": 30, "min_y": 105, "max_x": 150, "max_y": 175},
+            {"min_x": 270, "min_y": 30, "max_x": 395, "max_y": 95},
+            {"min_x": 270, "min_y": 105, "max_x": 395, "max_y": 175},
+            {"min_x": 30, "min_y": 290, "max_x": 150, "max_y": 370},
+            {"min_x": 160, "min_y": 290, "max_x": 300, "max_y": 480},
+            {"min_x": 395, "min_y": 290, "max_x": 490, "max_y": 380},
+            {"min_x": 395, "min_y": 390, "max_x": 490, "max_y": 480}
+          ]
+        }
+      },
+      {
+        "_note": "Layer4 Grass草地: height_based(0~5m+fade7m)→低平地(河岸/田埂/空地)满草,丘陵>5m渐稀至7m无草; corridor_exclude=true→河流走廊(河宽×1.25)内权重清零,河面/河床无草; exclude_regions=8块稻田→田内无杂草(纯稻穗); 形成田埂/河岸自然草地",
+        "info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer4_LayerInfo",
+        "weight": 1.0,
+        "weight_pattern": {
+          "pattern": "height_based",
+          "height_min_m": 0,
+          "height_max_m": 5,
+          "fade_max_m": 7,
+          "fade_width_m": 2,
+          "invert": false,
+          "corridor_exclude": true,
+          "exclude_regions": [
+            {"min_x": 30, "min_y": 30, "max_x": 150, "max_y": 95},
+            {"min_x": 30, "min_y": 105, "max_x": 150, "max_y": 175},
+            {"min_x": 270, "min_y": 30, "max_x": 395, "max_y": 95},
+            {"min_x": 270, "min_y": 105, "max_x": 395, "max_y": 175},
+            {"min_x": 30, "min_y": 290, "max_x": 150, "max_y": 370},
+            {"min_x": 160, "min_y": 290, "max_x": 300, "max_y": 480},
+            {"min_x": 395, "min_y": 290, "max_x": 490, "max_y": 380},
+            {"min_x": 395, "min_y": 390, "max_x": 490, "max_y": 480}
+          ]
+        }
+      },
+      {
+        "_note": "Layer6 Wheat稻穗: multi_region=8块稻田→田内权重1触发稻穗生成; 与Layer2水田泥同区(泥底+稻穗); 需先gen_2km_scene.py生成LIS_Wheat,否则C++仅Warning跳过(稻田显示为水田泥无稻穗)",
+        "info": "/Game/Generated/LIS_Wheat",
+        "weight": 1.0,
+        "weight_pattern": {
+          "pattern": "multi_region",
+          "regions": [
+            {"min_x": 30, "min_y": 30, "max_x": 150, "max_y": 95},
+            {"min_x": 30, "min_y": 105, "max_x": 150, "max_y": 175},
+            {"min_x": 270, "min_y": 30, "max_x": 395, "max_y": 95},
+            {"min_x": 270, "min_y": 105, "max_x": 395, "max_y": 175},
+            {"min_x": 30, "min_y": 290, "max_x": 150, "max_y": 370},
+            {"min_x": 160, "min_y": 290, "max_x": 300, "max_y": 480},
+            {"min_x": 395, "min_y": 290, "max_x": 490, "max_y": 380},
+            {"min_x": 395, "min_y": 390, "max_x": 490, "max_y": 480}
+          ]
+        }
+      }
+    ],
+    "grass": {
+      "_note": "UE5原生草地: C++自动在GrassOutput添加Grass条目采样Layer4权重; Layer4=height_based(0~5m)+corridor_exclude+exclude稻田→河岸/田埂/平地草地,河面/稻田无草; 4种VOL22_WildGrass混合(2高草密度40+2矮草密度15); 总密度110/10㎡",
+      "grass_type": "/Game/RuralHouse/Landscape/LandscapeFoliage/LGT_Grass",
+      "grass_mesh": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Tall_Wild_01a",
+      "layer_name": "Grass",
+      "density": 110.0
+    },
+    "wheat": {
+      "_note": "UE5原生稻穗(复用麦田系统): C++自动在GrassOutput添加Wheat条目,连接LandscapeLayerSample(ParameterName=Wheat)采样Layer6权重; Layer6=multi_region→8块稻田区内=1触发稻穗,区外=0无稻; 需先运行gen_2km_scene.py生成/Game/Generated/LGT_Wheat与LIS_Wheat资产,否则C++加载失败仅Warning跳过(不影响河流/水田泥/草地)",
+      "type_path": "/Game/Generated/LGT_Wheat",
+      "layer_name": "Wheat"
+    },
+    "height_pattern": {
+      "_note": "features模式blend_mode=additive: 基础微隆2m+2座江南小丘陵(6m/5m)累加; 主干河+南北2支流形成三河交汇河网(C++每段细分+俯仰贴合+转角盖片+抬升50cm→连续水面不断节); 8块稻田区水田泥+稻穗; 河岸田埂草地; noise_overlay(amp1.5)低平微起伏+perturbation消除平整感; 4种草+5种稻穗变体",
+      "type": "features",
+      "blend_mode": "additive",
+      "hills": [
+        {
+          "_note": "基础微隆: 中心(252,252)半径400m高2m→全图微抬约2m,陆地微高于河面形成低平江南平原(半径覆盖全图)",
+          "center_x_m": 252, "center_y_m": 252, "radius_m": 400, "height_m": 2
+        },
+        {
+          "_note": "江南小丘陵(西南): (70,440) r45 h6m→西南角小丘点缀地形变化; 选址避开主干河(Y200-260)/南支流(X378)/全部稻田(西南稻田X30-150含此区?否,稻田P5/P6 X30-300但Y290-480含(70,440)→冲突! 故此丘移至稻田外)实际(70,440)落在P6稻田(160-300,290-480)外(X70<160)且P5(30-150,290-370)外(Y440>370),安全",
+          "center_x_m": 70, "center_y_m": 440, "radius_m": 45, "height_m": 6
+        },
+        {
+          "_note": "江南小丘陵(东北): (440,70) r40 h5m→东北角小丘; 选址避开主干河(Y200-260)/北支流(X200-250)/稻田P3/P4(270-395,30-175)(X440>395)安全",
+          "center_x_m": 440, "center_y_m": 70, "radius_m": 40, "height_m": 5
+        }
+      ],
+      "rivers": [
+        {
+          "_note": "主干河: 自西(0,260)蜿蜒向东(504,200),5折点宽6m→width_end 12m下游渐宽(江南主河道东流入海渐宽); bed_depth1.5m V型河床; C++每段≤10m细分+俯仰角贴合地形坡度+转角盖片补缝+抬升50cm防Z-fighting→连续水面不断节; 路径Y200-260走在南北稻田(北Y<175/南Y>290)之间的缓冲带",
+          "points": [[0, 260], [120, 240], [250, 220], [380, 210], [504, 200]],
+          "width_m": 6,
+          "width_end_m": 12,
+          "bed_depth_m": 1.5,
+          "profile": "V",
+          "material_path": "/Game/Modular_Rural_Cabin/Materials/Instances/Water_Lake"
+        },
+        {
+          "_note": "北支流: 自北(200,0)蜿蜒向南汇入主干河(250,220),4折点宽2m→4m汇口渐宽; bed_depth1.0m; 与主干形成丁字汇流(江南河网典型交汇); 路径X200-250走在NW稻田(X<150)与NE稻田(X>270)之间缓冲带",
+          "points": [[200, 0], [210, 80], [225, 150], [250, 220]],
+          "width_m": 2,
+          "width_end_m": 4,
+          "bed_depth_m": 1.0,
+          "profile": "V",
+          "material_path": "/Game/Modular_Rural_Cabin/Materials/Instances/Water_Lake"
+        },
+        {
+          "_note": "南支流: 自南(380,504)蜿蜒向北汇入主干河(380,210),4折点宽2m→4m; bed_depth1.0m; 与主干+北支流构成三河交汇河网; 路径X378-380走在SW/中稻田(X<300)与SE稻田(X>395)之间缓冲带",
+          "points": [[380, 504], [378, 400], [379, 300], [380, 210]],
+          "width_m": 2,
+          "width_end_m": 4,
+          "bed_depth_m": 1.0,
+          "profile": "V",
+          "material_path": "/Game/Modular_Rural_Cabin/Materials/Instances/Water_Lake"
+        }
+      ],
+      "noise_overlay": {
+        "_note": "自然起伏: amp1.5m freq0.01 oct3 seed42→低平江南平原微起伏,消除人工平整感(振幅小保持低平水乡特征)",
+        "amplitude_m": 1.5,
+        "frequency": 0.01,
+        "octaves": 3,
+        "seed": 42
+      },
+      "perturbation_strength": 0.25,
+      "perturbation_scale": 0.015,
+      "perturbation_seed": 42,
+      "grass_varieties": [
+        {
+          "_note": "高草01a: 密度40/10㎡,河岸/田埂主草种,scale0.8~1.2; start_cull3000 end_cull30000(3m全显30m渐隐)",
+          "mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Tall_Wild_01a",
+          "density": 40, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true,
+          "start_cull_dist": 3000, "end_cull_dist": 30000
+        },
+        {
+          "_note": "高草01b: 密度40/10㎡,与01a混合增加草种多样性",
+          "mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Tall_Wild_01b",
+          "density": 40, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true,
+          "start_cull_dist": 3000, "end_cull_dist": 30000
+        },
+        {
+          "_note": "矮草Beach01a: 密度15/10㎡,低洼河岸矮草种",
+          "mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Beach_01a",
+          "density": 15, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true,
+          "start_cull_dist": 3000, "end_cull_dist": 30000
+        },
+        {
+          "_note": "矮草Beach01b: 密度15/10㎡,与Beach01a混合",
+          "mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Beach_01b",
+          "density": 15, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true,
+          "start_cull_dist": 3000, "end_cull_dist": 30000
+        }
+      ],
+      "wheat_varieties": [
+        {
+          "_note": "稻穗变体(复用麦穗网格): 5种,密度180/10㎡,scale0.032~0.040(网格原始大需缩小); C++自动bUseGrid=true田垄行列式排列; start_cull3000 end_cull50000; 需先gen_2km_scene.py生成LGT_Wheat",
+          "mesh_path": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_001_wheat_texture_0",
+          "density": 180, "scale_min": 0.032, "scale_max": 0.040, "jitter": 0.2, "random_rotation": true,
+          "start_cull_dist": 3000, "end_cull_dist": 50000
+        },
+        {
+          "mesh_path": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_002_wheat_texture_0",
+          "density": 180, "scale_min": 0.042, "scale_max": 0.052, "jitter": 0.2, "random_rotation": true,
+          "start_cull_dist": 3000, "end_cull_dist": 50000
+        },
+        {
+          "mesh_path": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_003_wheat_texture_0",
+          "density": 180, "scale_min": 0.028, "scale_max": 0.034, "jitter": 0.2, "random_rotation": true,
+          "start_cull_dist": 3000, "end_cull_dist": 50000
+        },
+        {
+          "mesh_path": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_004_wheat_texture_0",
+          "density": 180, "scale_min": 0.045, "scale_max": 0.055, "jitter": 0.2, "random_rotation": true,
+          "start_cull_dist": 3000, "end_cull_dist": 50000
+        },
+        {
+          "mesh_path": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_wheat_texture_0",
+          "density": 180, "scale_min": 0.032, "scale_max": 0.040, "jitter": 0.2, "random_rotation": true,
+          "start_cull_dist": 3000, "end_cull_dist": 50000
+        }
+      ]
+    }
+  },
+
+  "ground": {},
+
+  "lighting": {
+    "_note": "江南午后暖光: 太阳斜射(俯角25° yaw50°)暖白光增强水田反光与树荫立体感 + 天空光冷蓝补光 + 大气层 + 轻雾(density0.0008)营造江南烟雨空气透视",
+    "directional_light": {
+      "location": [0, 0, 3000],
+      "rotation": [-25, 50, 0],
+      "intensity": 8.0,
+      "color": [1.0, 0.9, 0.78],
+      "cast_shadows": true
+    },
+    "sky_light": {
+      "location": [0, 0, 3000],
+      "intensity": 1.0,
+      "color": [0.75, 0.85, 1.0]
+    },
+    "sky_atmosphere": {
+      "location": [0, 0, 0]
+    },
+    "height_fog": {
+      "location": [0, 0, 0],
+      "density": 0.0008,
+      "color": [0.7, 0.8, 0.9]
+    }
+  },
+
+  "weather": {
+    "_note": "江南多云: 体积云(VolumetricCloud)营造江南水乡多云天气",
+    "volumetric_clouds": {
+      "location": [0, 0, 2000]
+    }
+  }
+}

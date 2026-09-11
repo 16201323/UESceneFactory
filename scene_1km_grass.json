@@ -1,0 +1,70 @@
+{
+  "scene": {
+    "name": "GrassField1km",
+    "target_level": "/Game/Maps/Generated/GrassField1km",
+    "description": "1km x 1km 草地场景: 完全复刻智慧农林2km已验证配方 — UE5 Landscape 平地 + MI_Landscape 纹理材质(Layer4=GrassGround草地纹理全权重) + UE5原生草地自动生成(LandscapeGrassOutput/LGT_Grass/SM_Grass_01/密度200) + 体积云 + 轻雾"
+  },
+
+  "landscape": {
+    "_note": "复刻2km已验证配方: MI_Landscape 材质实例(其父材质 MM_LandscapeBase 含 LandscapeGrassOutput 节点); 8×8 Component × 127 quad = 1016×1016m≈1km×1km; location 偏移 -50800cm(=半边长101600/2)使地形中心对齐原点, 与2km的 -100800 居中逻辑一致; 5个图层中仅 Layer4 权重=1.0(其余0), Layer4 对应 GrassGround 草地纹理, 使地面显示真实草地贴图并触发草实例生成",
+    "material": "/Game/RuralHouse/Landscape/MI_Landscape",
+    "location": [-50800.0, -50800.0, 0.0],
+    "rotation": [0.0, 0.0, 0.0],
+    "scale": [100.0, 100.0, 100.0],
+    "section_size_quads": 127,
+    "num_subsections": 1,
+    "component_count_x": 8,
+    "component_count_y": 8,
+
+    "layers": [
+      {"info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer1_LayerInfo", "weight": 0.0},
+      {"info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer2_LayerInfo", "weight": 0.0},
+      {"info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer3_LayerInfo", "weight": 0.0},
+      {"info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer4_LayerInfo", "weight": 1.0},
+      {"info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer5_LayerInfo", "weight": 0.0}
+    ],
+
+    "grass": {
+      "_note": "UE5原生草地自动生成: MI_Landscape 父材质的 GrassOutput 'Grass' 条目已引用 LGT_Grass(Input已连接→插件保持原配置, 不自动添加条目以免材质编译失败); 材质内 LandscapeLayerSample_2 采样 Layer4 权重控制草分布; grass_type 必须传 RuralHouse 的 LGT_Grass 与材质引用一致, 插件清空并重填其变体(单变体回退通道: GrassMeshPath+GrassDensity); 密度200/10㎡与2km配方一致",
+      "grass_type": "/Game/RuralHouse/Landscape/LandscapeFoliage/LGT_Grass",
+      "grass_mesh": "/Game/RuralHouse/Environment/Foliage/SM_Grass_01",
+      "layer_name": "Grass",
+      "density": 200.0
+    },
+
+    "height_pattern": {
+      "type": "flat"
+    }
+  },
+
+  "lighting": {
+    "_note": "与2km配方完全一致: 平行光斜射(-15,60,0)增强草地立体感; 雾气密度0.0001(旧值0.01过浓100倍导致画面发白)",
+    "directional_light": {
+      "location": [0.0, 0.0, 3000.0],
+      "rotation": [-15.0, 60.0, 0.0],
+      "intensity": 10.0,
+      "color": [1.0, 0.85, 0.7],
+      "cast_shadows": true
+    },
+    "sky_light": {
+      "location": [0.0, 0.0, 3000.0],
+      "intensity": 1.0,
+      "color": [0.75, 0.85, 1.0]
+    },
+    "sky_atmosphere": {
+      "location": [0.0, 0.0, 0.0]
+    },
+    "height_fog": {
+      "location": [0.0, 0.0, 0.0],
+      "density": 0.0001,
+      "color": [0.7, 0.8, 0.9]
+    }
+  },
+
+  "weather": {
+    "_note": "体积云: 与2km配方一致, UE5原生 VolumetricCloud 组件配合 SkyAtmosphere 渲染真实3D云层",
+    "volumetric_clouds": {
+      "location": [0.0, 0.0, 2000.0]
+    }
+  }
+}

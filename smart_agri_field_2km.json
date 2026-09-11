@@ -1,0 +1,105 @@
+{
+  "scene": {
+    "name": "SmartAgriField2km",
+    "target_level": "/Game/MapForgeTest/GB_SmartAgriField2km",
+    "description": "智慧农林无人机起降场 2km×2km — UE5正式Landscape地形 + 填充图层权重(绿色草坪地面) + UE5原生草地自动生成机制(LandscapeGrassOutput); 移除地面砖和Python实例草(原2.6M实例致370MB); 体积云"
+  },
+
+  "landscape": {
+    "_note": "UE5 正式 Landscape 地形: 32×32 Component, 每个63 quad, 共2016×2016m≈2km×2km; 平地高度32768; MI_Landscape材质(父材质MM_LandscapeBase含LandscapeGrassOutput节点); 位置偏移-100800cm使地形中心对齐原点; Z=0(已移除地面砖,无Z-fighting); 新增layers图层权重配置(填充Layer4全权重=绿色草坪)+grass原生草地配置(LGT_Grass+SM_Grass_Tall_Wild_01a)",
+    "material": "/Game/RuralHouse/Landscape/MI_Landscape",
+    "section_size_quads": 63,
+    "num_subsections": 1,
+    "component_count_x": 32,
+    "component_count_y": 32,
+    "location": [-100800, -100800, 0],
+    "rotation": [0, 0, 0],
+    "scale": [100, 100, 100],
+    "layers": [
+      {"info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer1_LayerInfo", "weight": 0.0},
+      {"info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer2_LayerInfo", "weight": 0.0},
+      {"info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer3_LayerInfo", "weight": 0.0},
+      {"info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer4_LayerInfo", "weight": 1.0},
+      {"info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer5_LayerInfo", "weight": 0.0}
+    ],
+    "grass": {
+      "_note": "UE5原生草地自动生成: 材质GrassOutput 'Grass'条目(已配置LGT_Grass,Input已连接)→StaticSwitch 'Prototype Only'=False→LandscapeLayerSample_2→采样Layer4权重; Layer4=GrassGround草地纹理; 设Layer4权重=1.0使地面显示草地+触发草实例生成; 使用VOL22_WildGrass野生草(UE自带,非RuralHouse下载资产); 默认草mesh=SM_Grass_Tall_Wild_01a; 密度200/10㎡",
+      "grass_type": "/Game/RuralHouse/Landscape/LandscapeFoliage/LGT_Grass",
+      "grass_mesh": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Tall_Wild_01a",
+      "layer_name": "Grass",
+      "density": 200.0
+    },
+    "height_pattern": {
+      "_note": "草地变体配置: 使用VOL22_WildGrass野生草资产(UE自带,非RuralHouse下载包): 10种高草(SM_Grass_Tall_Wild_01a~01j,密度30×10=300主覆盖)+14种海滩草(SM_Grass_Beach_01a~01n,密度10×14=140填充)+8种枯萎植物(SM_Dead_Plants_01a~01h,密度5×8=40点缀)=32种混合; 总密度≈480/10㎡确保地面完全被草遮蔽; 增大剔除距离(2000~10000)使草地远距离可见",
+      "grass_varieties": [
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Tall_Wild_01a", "density": 30, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 10000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Tall_Wild_01b", "density": 30, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 10000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Tall_Wild_01c", "density": 30, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 10000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Tall_Wild_01d", "density": 30, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 10000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Tall_Wild_01e", "density": 30, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 10000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Tall_Wild_01f", "density": 30, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 10000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Tall_Wild_01g", "density": 30, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 10000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Tall_Wild_01h", "density": 30, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 10000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Tall_Wild_01i", "density": 30, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 10000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Tall_Wild_01j", "density": 30, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 10000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Beach_01a", "density": 10, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 10000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Beach_01b", "density": 10, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 10000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Beach_01c", "density": 10, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 10000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Beach_01d", "density": 10, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 10000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Beach_01e", "density": 10, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 10000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Beach_01f", "density": 10, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 10000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Beach_01g", "density": 10, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 10000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Beach_01h", "density": 10, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 10000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Beach_01i", "density": 10, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 10000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Beach_01j", "density": 10, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 10000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Beach_01k", "density": 10, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 10000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Beach_01l", "density": 10, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 10000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Beach_01m", "density": 10, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 10000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Beach_01n", "density": 10, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 10000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Dead_Plants_01a", "density": 5, "scale_min": 0.7, "scale_max": 1.1, "jitter": 0.6, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 10000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Dead_Plants_01b", "density": 5, "scale_min": 0.7, "scale_max": 1.1, "jitter": 0.6, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 10000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Dead_Plants_01c", "density": 5, "scale_min": 0.7, "scale_max": 1.1, "jitter": 0.6, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 10000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Dead_Plants_01d", "density": 5, "scale_min": 0.7, "scale_max": 1.1, "jitter": 0.6, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 10000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Dead_Plants_01e", "density": 5, "scale_min": 0.7, "scale_max": 1.1, "jitter": 0.6, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 10000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Dead_Plants_01f", "density": 5, "scale_min": 0.7, "scale_max": 1.1, "jitter": 0.6, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 10000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Dead_Plants_01g", "density": 5, "scale_min": 0.7, "scale_max": 1.1, "jitter": 0.6, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 10000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Dead_Plants_01h", "density": 5, "scale_min": 0.7, "scale_max": 1.1, "jitter": 0.6, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 10000}
+      ]
+    }
+  },
+
+  "ground": {},
+
+  "placements": [],
+
+  "lighting": {
+    "_note": "基础光照: 平行光(太阳) + 天空光 + 大气层 + 轻雾, 确保地面和草地可见不黑屏; 阳光斜射使草地阴影增强立体感",
+    "directional_light": {
+      "location": [0, 0, 3000],
+      "rotation": [-15, 60, 0],
+      "intensity": 10.0,
+      "color": [1.0, 0.85, 0.7],
+      "cast_shadows": true
+    },
+    "sky_light": {
+      "location": [0, 0, 3000],
+      "intensity": 1.0,
+      "color": [0.75, 0.85, 1.0]
+    },
+    "sky_atmosphere": {
+      "location": [0, 0, 0]
+    },
+    "height_fog": {
+      "location": [0, 0, 0],
+      "density": 0.0001,
+      "color": [0.7, 0.8, 0.9]
+    }
+  },
+
+  "weather": {
+    "_note": "体积云: UE5原生VolumetricCloud组件, 配合SkyAtmosphere渲染真实3D云层; 设为MOVABLE确保实时渲染",
+    "volumetric_clouds": {
+      "location": [0, 0, 2000]
+    }
+  }
+}

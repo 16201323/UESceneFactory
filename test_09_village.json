@@ -1,0 +1,40 @@
+{
+  "scene": {
+    "name": "Test_09_Village",
+    "target_level": "/Game/MapForgeTest/GB_Test_09_Village",
+    "description": "单资产验证场景 — 村落建筑(2种蓝图). 碰撞状态: ✓完整碰撞(BP蓝图自带碰撞, 玩家无法穿墙)"
+  },
+
+  "ground": {
+    "_note": "草地地面: SM_House_FloorPlane_03 scale[10,20,1]→97m×100m, 北侧5栋RuralBrickFarm+南侧5栋Traditional, 间距2000cm=20m",
+    "asset": "/Game/RuralHouse/House/Meshes/ModularParts/SM_House_FloorPlane_03",
+    "location": [0, 0, 0],
+    "scale": [10, 20, 1],
+    "material_override": "/Game/Foliage_Sets/ground_materials/materials/M_grass_simple_a"
+  },
+
+  "placements": [
+    {"_note": "=== 北排(Y=+1500): 5栋RuralBrickFarm, X=-4000到+4000间距2000cm, 交替朝向 ==="},
+    {"_note": "BP_House_RuralBrickFarm: spawn_blueprint自带Z自动修正底部对齐z=0; 碰撞✓完整碰撞(蓝图自带墙体碰撞)"},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_RuralBrickFarm", "location": [-4000, 1500, 0], "rotation": [0, 0, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_RuralBrickFarm", "location": [-2000, 1500, 0], "rotation": [0, 180, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_RuralBrickFarm", "location": [0, 1500, 0], "rotation": [0, 0, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_RuralBrickFarm", "location": [2000, 1500, 0], "rotation": [0, 180, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_RuralBrickFarm", "location": [4000, 1500, 0], "rotation": [0, 0, 0]},
+
+    {"_note": "=== 南排(Y=-1500): 5栋Traditional, X=-4000到+4000间距2000cm, 交替朝向 ==="},
+    {"_note": "BP_House_Traditional: spawn_blueprint自带Z自动修正; 碰撞✓完整碰撞"},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_Traditional", "location": [-4000, -1500, 0], "rotation": [0, 0, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_Traditional", "location": [-2000, -1500, 0], "rotation": [0, 180, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_Traditional", "location": [0, -1500, 0], "rotation": [0, 0, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_Traditional", "location": [2000, -1500, 0], "rotation": [0, 180, 0]},
+    {"type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_Traditional", "location": [4000, -1500, 0], "rotation": [0, 0, 0]}
+  ],
+
+  "lighting": {
+    "_note": "基础日光: 太阳45°俯角暖白光投射阴影 + 天空光冷色 + 大气层",
+    "directional_light": {"location": [0, 0, 3000], "rotation": [-45, 35, 0], "intensity": 10.0, "color": [1.0, 0.94, 0.78], "cast_shadows": true},
+    "sky_light": {"location": [0, 0, 3000], "intensity": 1.0, "color": [0.78, 0.86, 1.0]},
+    "sky_atmosphere": {"location": [0, 0, 0]}
+  }
+}

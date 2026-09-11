@@ -1,0 +1,45 @@
+{
+  "scene": {
+    "name": "Test_02_Wirefence",
+    "target_level": "/Game/MapForgeTest/GB_Test_02_Wirefence",
+    "description": "单资产验证场景 — 铁丝网围栏(3种mesh圆形阵列). 碰撞状态: Plane_004面板=✓完整碰撞(简化4convex+复杂), Cylinder_001支柱=△仅复杂(穿透), Cylinder_004支柱=△仅复杂(穿透)"
+  },
+
+  "ground": {
+    "_note": "草地地面: SM_House_FloorPlane_03原尺寸969×500cm, scale[10,20,1]→97m×100m, 足够放置R=25m圆形围栏",
+    "asset": "/Game/RuralHouse/House/Meshes/ModularParts/SM_House_FloorPlane_03",
+    "location": [0, 0, 0],
+    "scale": [10, 20, 1],
+    "material_override": "/Game/Foliage_Sets/ground_materials/materials/M_grass_simple_a"
+  },
+
+  "placements": [
+    {"_note": "铁丝网围栏环: R=2500cm(25m半径), 24实例(缩减自原52以减轻测试负载), 面板Plane_004原点在中心dim_z=236cm, z_offset=111使底部落地; face_center=true使面板朝向圆心, yaw_offset=90修正朝向"},
+    {"type": "instanced_grid", "asset": "/Game/WireFence/chainlink_fence_tileable/StaticMeshes/Plane_004_chainlink_fence_textures_0", "location": [0, 0, 0], "grid": {"pattern": "circle", "count": 24, "radius": 2500, "center": [0, 0, 0], "face_center": true, "yaw_offset": 90, "z_offset": 111}},
+
+    {"_note": "围栏支柱A: Cylinder_001原点在中心dim_z=690cm, z_offset=590使底部落地; face_center=false支柱不旋转"},
+    {"type": "instanced_grid", "asset": "/Game/WireFence/chainlink_fence_tileable/StaticMeshes/Cylinder_001_chainlink_fence_textures_0", "location": [0, 0, 0], "grid": {"pattern": "circle", "count": 24, "radius": 2500, "center": [0, 0, 0], "face_center": false, "z_offset": 590}},
+
+    {"_note": "围栏支柱B: Cylinder_004与Cylinder_001相同参数, 双柱增强结构感"},
+    {"type": "instanced_grid", "asset": "/Game/WireFence/chainlink_fence_tileable/StaticMeshes/Cylinder_004_chainlink_fence_textures_0", "location": [0, 0, 0], "grid": {"pattern": "circle", "count": 24, "radius": 2500, "center": [0, 0, 0], "face_center": false, "z_offset": 590}}
+  ],
+
+  "lighting": {
+    "_note": "基础日光: 太阳45°俯角暖白光投射阴影 + 天空光冷色 + 大气层",
+    "directional_light": {
+      "location": [0, 0, 3000],
+      "rotation": [-45, 35, 0],
+      "intensity": 10.0,
+      "color": [1.0, 0.94, 0.78],
+      "cast_shadows": true
+    },
+    "sky_light": {
+      "location": [0, 0, 3000],
+      "intensity": 1.0,
+      "color": [0.78, 0.86, 1.0]
+    },
+    "sky_atmosphere": {
+      "location": [0, 0, 0]
+    }
+  }
+}

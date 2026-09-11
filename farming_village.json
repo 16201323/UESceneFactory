@@ -1,0 +1,68 @@
+{
+  "scene": {
+    "name": "FarmingVillage",
+    "target_level": "/Game/MapForgeTest/GB_FarmingVillage",
+    "description": "仿真实社会农林环境(模块农舍+麦田+防护林+野花+围栏+光照天气)"
+  },
+  "ground": {
+    "asset": "/Game/RuralHouse/House/Meshes/ModularParts/SM_House_FloorPlane_03",
+    "location": [0, 0, 0],
+    "scale": [15, 15, 1]
+  },
+  "placements": [
+    {"asset": "/Game/RuralHouse/House/Meshes/ModularParts/SM_House_Base_300CM", "location": [0, 0, 0]},
+    {"asset": "/Game/RuralHouse/House/Meshes/ModularParts/SM_House_ExtWall_Door_A", "location": [0, 150, 0], "rotation": [0, 0, 0]},
+    {"asset": "/Game/RuralHouse/House/Meshes/ModularParts/SM_House_ExtWall_300CM", "location": [0, -150, 0], "rotation": [0, 180, 0]},
+    {"asset": "/Game/RuralHouse/House/Meshes/ModularParts/SM_House_ExtWall_300CM", "location": [-150, 0, 0], "rotation": [0, 90, 0]},
+    {"asset": "/Game/RuralHouse/House/Meshes/ModularParts/SM_House_ExtWall_300CM", "location": [150, 0, 0], "rotation": [0, -90, 0]},
+    {"asset": "/Game/RuralHouse/House/Meshes/ModularParts/SM_House_ExtWall_Corner_A", "location": [150, 150, 0]},
+    {"asset": "/Game/RuralHouse/House/Meshes/ModularParts/SM_House_ExtWall_Corner_A", "location": [-150, 150, 0], "rotation": [0, 90, 0]},
+    {"asset": "/Game/RuralHouse/House/Meshes/ModularParts/SM_House_ExtWall_Corner_A", "location": [-150, -150, 0], "rotation": [0, 180, 0]},
+    {"asset": "/Game/RuralHouse/House/Meshes/ModularParts/SM_House_ExtWall_Corner_A", "location": [150, -150, 0], "rotation": [0, -90, 0]},
+    {"asset": "/Game/RuralHouse/House/Meshes/ModularParts/SM_House_FrontEntranceRoof_A", "location": [0, 0, 300]},
+    {"asset": "/Game/RuralHouse/House/Meshes/ModularParts/SM_House_ExtWall_Window_A", "location": [150, 0, 150], "rotation": [0, -90, 0]},
+    {"asset": "/Game/RuralHouse/House/Meshes/ModularParts/SM_House_ExtWall_Window_A", "location": [-150, 0, 150], "rotation": [0, 90, 0]},
+    {"asset": "/Game/RuralHouse/Environment/Foliage/SM_Grass_01", "grid": {"rows": 10, "cols": 14, "origin": [-600, 600, 0], "spacing": [85, 85, 0], "jitter": 25}},
+    {"asset": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Dead_Plants_01a", "grid": {"rows": 4, "cols": 6, "origin": [-500, 500, 0], "spacing": [200, 200, 0], "jitter": 60}},
+    {"asset": "/Game/Modular_Rural_Cabin/Meshes/Foliage/SM_Pine_Tree_01", "grid": {"rows": 1, "cols": 10, "origin": [-1350, -800, 0], "spacing": [300, 0, 0], "jitter": 50}},
+    {"asset": "/Game/Modular_Rural_Cabin/Meshes/Foliage/SM_Pine_Tree_03", "grid": {"rows": 1, "cols": 8, "origin": [-1100, -1100, 0], "spacing": [315, 0, 0], "jitter": 70}},
+    {"asset": "/Game/RuralHouse/Environment/Foliage/SM_Dandelion_A", "grid": {"rows": 6, "cols": 6, "origin": [500, -200, 0], "spacing": [130, 130, 0], "jitter": 50}},
+    {"asset": "/Game/RuralHouse/Environment/Foliage/SM_Fern_01", "grid": {"rows": 4, "cols": 5, "origin": [-900, 300, 0], "spacing": [160, 160, 0], "jitter": 55}},
+    {"asset": "/Game/RuralHouse/Environment/Foliage/SM_Shrub_A_01", "grid": {"rows": 3, "cols": 4, "origin": [700, 700, 0], "spacing": [220, 220, 0], "jitter": 70}},
+    {"asset": "/Game/RuralHouse/Environment/Foliage/SM_Grass_02", "grid": {"rows": 8, "cols": 8, "origin": [-1000, -300, 0], "spacing": [110, 110, 0], "jitter": 45}},
+    {"asset": "/Game/RuralHouse/House/Meshes/Fence/SM_Fence_A", "grid": {"rows": 1, "cols": 8, "origin": [-1050, 450, 0], "spacing": [300, 0, 0]}},
+    {"asset": "/Game/RuralHouse/House/Meshes/Fence/SM_Fence_A", "grid": {"rows": 1, "cols": 8, "origin": [-1050, -450, 0], "spacing": [300, 0, 0], "rotation": [0, 180, 0]}},
+    {"asset": "/Game/RuralHouse/House/Meshes/Fence/SM_Fence_A", "grid": {"rows": 4, "cols": 1, "origin": [-1050, -450, 0], "spacing": [0, 300, 0], "rotation": [0, 90, 0]}},
+    {"asset": "/Game/RuralHouse/House/Meshes/Fence/SM_Fence_A", "grid": {"rows": 4, "cols": 1, "origin": [1050, -450, 0], "spacing": [0, 300, 0], "rotation": [0, -90, 0]}}
+  ],
+  "lighting": {
+    "directional_light": {
+      "location": [0, 0, 3000],
+      "rotation": [-45, 35, 0],
+      "_intensity_note": "UE5编辑器默认太阳强度10.0 lux, 之前100.0过亮导致地面发白",
+      "intensity": 10.0,
+      "color": [1.0, 0.93, 0.76],
+      "cast_shadows": true
+    },
+    "sky_light": {
+      "location": [0, 0, 3000],
+      "_intensity_note": "UE5编辑器默认天空光强度1.0, 之前15.0过亮叠加导致发白",
+      "intensity": 1.0,
+      "color": [0.75, 0.85, 1.0]
+    },
+    "sky_atmosphere": {
+      "location": [0, 0, 0],
+      "_note": "删除 sky_luminance_factor/multi_scattering_factor/render_in_main_pass, 全部用UE5默认值(1.0), 之前2.0放大天空亮度导致天空发白"
+    },
+    "height_fog": {
+      "location": [0, 0, 0],
+      "density": 0.02,
+      "color": [0.7, 0.8, 0.9]
+    }
+  },
+  "weather": {
+    "volumetric_clouds": {
+      "location": [0, 0, 2000]
+    }
+  }
+}

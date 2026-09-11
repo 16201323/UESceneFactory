@@ -1,0 +1,42 @@
+{
+  "scene": {
+    "name": "Test_04_Charging",
+    "target_level": "/Game/MapForgeTest/GB_Test_04_Charging",
+    "description": "单资产验证场景 — 充电桩(4个SM_ElectricBox直线排列). 碰撞状态: SM_ElectricBox=✓完整碰撞(简化1box+复杂, 玩家阻挡)"
+  },
+
+  "ground": {
+    "_note": "草地地面: SM_House_FloorPlane_03原尺寸969×500cm, scale[10,20,1]→97m×100m, 足够放置4个充电桩",
+    "asset": "/Game/RuralHouse/House/Meshes/ModularParts/SM_House_FloorPlane_03",
+    "location": [0, 0, 0],
+    "scale": [10, 20, 1],
+    "material_override": "/Game/Foliage_Sets/ground_materials/materials/M_grass_simple_a"
+  },
+
+  "placements": [
+    {"_note": "4个充电桩(SM_ElectricBox)沿Y轴直线排列, 间距600cm(6m), 以原点为中心对称分布; center原点zoff=50.49, spawn_mesh自带Z自动修正落地"},
+    {"asset": "/Game/RuralHouse/Props/SM_ElectricBox", "location": [0, -900, 0]},
+    {"asset": "/Game/RuralHouse/Props/SM_ElectricBox", "location": [0, -300, 0]},
+    {"asset": "/Game/RuralHouse/Props/SM_ElectricBox", "location": [0, 300, 0]},
+    {"asset": "/Game/RuralHouse/Props/SM_ElectricBox", "location": [0, 900, 0]}
+  ],
+
+  "lighting": {
+    "_note": "基础日光: 太阳45°俯角暖白光投射阴影 + 天空光冷色 + 大气层",
+    "directional_light": {
+      "location": [0, 0, 3000],
+      "rotation": [-45, 35, 0],
+      "intensity": 10.0,
+      "color": [1.0, 0.94, 0.78],
+      "cast_shadows": true
+    },
+    "sky_light": {
+      "location": [0, 0, 3000],
+      "intensity": 1.0,
+      "color": [0.78, 0.86, 1.0]
+    },
+    "sky_atmosphere": {
+      "location": [0, 0, 0]
+    }
+  }
+}

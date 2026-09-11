@@ -1,0 +1,41 @@
+{
+  "scene": {
+    "name": "terraced_field_test",
+    "description": "模块3梯田模式测试: 沿Y轴递进多级台阶",
+    "target_level": "/Game/MapForgeTest/GB_TerracedTest"
+  },
+  "landscape": {
+    "location": [0, 0, 0],
+    "rotation": [0, 0, 0],
+    "scale": [100, 100, 100],
+    "section_size_quads": 63,
+    "num_subsections": 1,
+    "component_count_x": 1,
+    "component_count_y": 1,
+    "material": "/Game/RuralHouse/Landscape/MI_Landscape",
+    "layers": [
+      { "info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer1_LayerInfo", "weight": 0.7 },
+      { "info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer2_LayerInfo", "weight": 0.3 }
+    ],
+    "height_pattern": {
+      "type": "terraced",
+      "direction_deg": 90,
+      "step_height_m": 3.0,
+      "step_width_m": 12.0,
+      "bank_ratio": 0.2,
+      "base_height_m": 0.0,
+      "blend_mode": "additive",
+      "perturbation_strength": 0.3,
+      "perturbation_scale": 0.05,
+      "perturbation_seed": 7,
+      "noise_overlay": { "amplitude_m": 0.3, "frequency": 0.02, "octaves": 3, "seed": 5 }
+    }
+  },
+  "ground": {},
+  "placements": [],
+  "lighting": {
+    "directional_light": { "location": [0, 0, 5000], "rotation": [-45, 0, 0], "intensity": 3.0, "color": [1, 1, 1] },
+    "sky_light": { "intensity": 1.0, "color": [0.8, 0.9, 1.0] }
+  },
+  "weather": { "volumetric_clouds": { "location": [0, 0, 2000] } }
+}

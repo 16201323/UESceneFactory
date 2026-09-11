@@ -1,0 +1,34 @@
+### 8.4 模板 P5 — 太阳能光伏板
+
+- 文件：`templates/template_p5_pv_solar.json`
+- 资产目录：`/Game/Photovoltaic/-photovoltaic_panels/StaticMeshes/Material*`
+- 资产特点：非序列命名（Material2、Material3、Material21~29、Material31~32、Material210~226），共30个，其中6个空几何体
+
+**group 加载全部（核心用法）：**
+
+`asset_prefix` 设为 `/Game/Photovoltaic/-photovoltaic_panels/StaticMeshes/Material`，`count=227`，build_scene.py 生成 Material0~Material226 共227个候选路径，对不存在的资产自动 GROUP_SKIP 跳过（197个），实际加载30个。
+
+| 参数 | 值 | 说明 |
+|------|-----|------|
+| type | group | 多部件同坐标组装 |
+| asset_prefix | .../Material | 路径前缀，生成 prefix+str(k) |
+| count | 227 | 覆盖最大编号 Material226 |
+| scale | [0.01,0.01,0.01] | 缩到1%（如 Material3: 411m→4.1m） |
+| rotation | [0,0,-90] | roll -90°（滚动-90度） |
+| skip_z_fix | true | 跳过单部件Z修正（原点类型混用） |
+| ground_assembly | true | 整组生成后统计最低Z平移贴地 |
+
+**非序列命名资产处理要点：**
+
+group 类型按 `prefix + str(k)` 顺序生成路径，k 从0到 count-1。当资产编号不连续时（如本例 Material4~20 不存在），不存在的会被 `load_asset` 返回 None 而 GROUP_SKIP 跳过，不影响存在的资产加载。`count` 需设为"最大编号+1"以覆盖全部。
+
+**地面配置：**
+
+`SM_House_FloorPlane_03`（基础 9.69m×5m），scale [10,10,1] = 97m×50m 草地平面，足够容纳缩到1%的光伏阵列。
+
+**注意事项：**
+- 30个资产全部堆叠在原点 [0,0,0]，尺寸差异大（Material2 缩放后仅2.7cm，Material3 达4.1m），可能互相穿插
+- 6个空几何体资产（Material210/211/212/217/28/29）加载成功但不可见
+- roll -90 对"mixed"朝向资产的效果需在编辑器中实测确认
+
+### 8.5 派生要点

@@ -1,0 +1,42 @@
+# MapForge 最简场景 spec (YAML 格式)
+# 场景: 地形 + 默认天空/光照 + 原点 4 个方块 + PlayerStart + NavMesh
+# 说明: MapForge 是灰盒工具, 方块天生灰色; 生成后需在编辑器里给方块 Override Materials 上色
+spec_version: 2
+levels:
+  - id: SimpleScene
+    name: MapForgeTest Simple Scene
+    target_level: /Game/MapForgeTest/GB_SimpleScene
+    description: 最简场景-地形+天空+光照+原点4方块
+    # 地形: 一块大地面 (20m x 20m, 厚 0.2m)
+    floor_blocks:
+      - name: GB_Floor_Ground
+        center: [0, 0, -10]
+        size: [2000, 2000, 20]
+        notes: 地形地面
+    # 原点附近的 4 个方块 (待编辑器上色为红/绿/蓝/黄)
+    props:
+      - name: GB_Cube_Red
+        center: [0, 0, 60]
+        size: [100, 100, 100]
+        notes: 红色方块-待上色
+      - name: GB_Cube_Green
+        center: [250, 0, 60]
+        size: [100, 100, 100]
+        notes: 绿色方块-待上色
+      - name: GB_Cube_Blue
+        center: [-250, 0, 60]
+        size: [100, 100, 100]
+        notes: 蓝色方块-待上色
+      - name: GB_Cube_Yellow
+        center: [0, 250, 60]
+        size: [100, 100, 100]
+        notes: 黄色方块-待上色
+    # 玩家出生点
+    markers:
+      - id: PlayerStart
+        type: player_start
+        location: [0, -500, 100]
+    # NavMesh 边界 (覆盖整个场景)
+    navmesh_bounds:
+      center: [0, 0, 100]
+      size: [2400, 2400, 400]

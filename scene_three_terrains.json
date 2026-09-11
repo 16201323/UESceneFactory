@@ -1,0 +1,281 @@
+{
+  "scene": {
+    "_note": "三地形组合场景: 左(梯田 ridges) + 中(喀斯特 hills+valleys) + 右(沟壑 rivers), 1km×1km。因 height_pattern.type 只能选一个值, 三种专用模式(terraced/karst/gully)不能同时使用, 故用 features 模式近似: 梯田→多组平行山脊叠加, 喀斯特→人工散布30座山峰+5个溶斗, 沟壑→4条蜿蜒河流利用C++自动河床切削产生沟壑通道",
+    "name": "ThreeTerrains",
+    "target_level": "/Game/MapForgeTest/GB_ThreeTerrains",
+    "description": "组合三种地形: 梯田(西区 ridges) + 喀斯特峰林(中区 30峰+5溶斗) + 黄土沟壑(东区 4条蜿蜒河流), 1km×1km"
+  },
+
+  "landscape": {
+    "_note": "16×16 Component × 63 quads = 1008×1008m≈1km×1km; location 偏移 -50400cm(半边长)使地形中心对齐原点",
+    "material": "/Game/RuralHouse/Landscape/MI_Landscape",
+    "section_size_quads": 63,
+    "num_subsections": 1,
+    "component_count_x": 16,
+    "component_count_y": 16,
+    "location": [-50400.0, -50400.0, 0.0],
+    "rotation": [0.0, 0.0, 0.0],
+    "scale": [100.0, 100.0, 100.0],
+
+    "layers": [
+      {
+        "_note": "Layer1 基底土: uniform权重0.5, 全地形基底泥土材质",
+        "info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer1_LayerInfo",
+        "weight": 0.5
+      },
+      {
+        "_note": "Layer2 泥地: uniform权重0.3, 沟底/溶斗低洼处泥地材质",
+        "info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer2_LayerInfo",
+        "weight": 0.3
+      },
+      {
+        "_note": "Layer4 草地: uniform权重0.2, 草地区域触发草地生成",
+        "info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer4_LayerInfo",
+        "weight": 0.2
+      }
+    ],
+
+    "height_pattern": {
+      "_note": "features 模式: 组合 ridges(梯田) + hills(喀斯特峰) + valleys(溶斗) + rivers(沟壑河床) + grass_varieties(草地) + scatter(碎石); blend_mode=additive 叠加所有特征高度; perturbation 扭曲等高线消除几何痕迹; noise_overlay 叠加自然微起伏",
+      "type": "features",
+      "blend_mode": "additive",
+
+      "ridges": [
+        {
+          "_note": "梯田区-主台阶: 南北向山脊(方向0°)横跨西区x=0~350m, amp=5m freq=0.02 约50m间距, 模拟梯田主台阶",
+          "region_min_x_m": 0.0,
+          "region_min_y_m": 0.0,
+          "region_max_x_m": 350.0,
+          "region_max_y_m": 1008.0,
+          "amplitude_m": 5.0,
+          "frequency": 0.02,
+          "direction_deg": 0
+        },
+        {
+          "_note": "梯田区-次级台阶: 更高频山脊(amp=2.5m freq=0.06)在主台阶上叠加细节, 增强梯田层次感",
+          "region_min_x_m": 0.0,
+          "region_min_y_m": 0.0,
+          "region_max_x_m": 350.0,
+          "region_max_y_m": 1008.0,
+          "amplitude_m": 2.5,
+          "frequency": 0.06,
+          "direction_deg": 0
+        },
+        {
+          "_note": "梯田区-微起伏: 高频低幅(amp=1m freq=0.15)模拟田埂间微地形, 消除人工平整感",
+          "region_min_x_m": 0.0,
+          "region_min_y_m": 0.0,
+          "region_max_x_m": 350.0,
+          "region_max_y_m": 1008.0,
+          "amplitude_m": 1.0,
+          "frequency": 0.15,
+          "direction_deg": 0
+        }
+      ],
+
+      "hills": [
+        {"_note": "喀斯特峰林区(中区 x:350~700m): 30座山峰, 泊松盘分布, 高15~45m, 半径20~32m, 高斯锥凸起模拟桂林/云南峰林", "center_x_m": 380.0, "center_y_m": 80.0, "radius_m": 25.0, "height_m": 30.0},
+        {"center_x_m": 430.0, "center_y_m": 150.0, "radius_m": 22.0, "height_m": 25.0},
+        {"center_x_m": 490.0, "center_y_m": 80.0, "radius_m": 28.0, "height_m": 38.0},
+        {"center_x_m": 550.0, "center_y_m": 140.0, "radius_m": 20.0, "height_m": 20.0},
+        {"center_x_m": 610.0, "center_y_m": 70.0, "radius_m": 30.0, "height_m": 42.0},
+        {"center_x_m": 670.0, "center_y_m": 130.0, "radius_m": 24.0, "height_m": 28.0},
+        {"center_x_m": 390.0, "center_y_m": 250.0, "radius_m": 26.0, "height_m": 35.0},
+        {"center_x_m": 460.0, "center_y_m": 280.0, "radius_m": 22.0, "height_m": 22.0},
+        {"center_x_m": 530.0, "center_y_m": 240.0, "radius_m": 32.0, "height_m": 45.0},
+        {"center_x_m": 600.0, "center_y_m": 290.0, "radius_m": 25.0, "height_m": 32.0},
+        {"center_x_m": 660.0, "center_y_m": 250.0, "radius_m": 20.0, "height_m": 18.0},
+        {"center_x_m": 380.0, "center_y_m": 400.0, "radius_m": 28.0, "height_m": 40.0},
+        {"center_x_m": 450.0, "center_y_m": 420.0, "radius_m": 24.0, "height_m": 28.0},
+        {"center_x_m": 520.0, "center_y_m": 390.0, "radius_m": 26.0, "height_m": 33.0},
+        {"center_x_m": 590.0, "center_y_m": 430.0, "radius_m": 30.0, "height_m": 44.0},
+        {"center_x_m": 660.0, "center_y_m": 400.0, "radius_m": 22.0, "height_m": 26.0},
+        {"center_x_m": 410.0, "center_y_m": 550.0, "radius_m": 25.0, "height_m": 36.0},
+        {"center_x_m": 480.0, "center_y_m": 580.0, "radius_m": 28.0, "height_m": 42.0},
+        {"center_x_m": 550.0, "center_y_m": 560.0, "radius_m": 20.0, "height_m": 19.0},
+        {"center_x_m": 620.0, "center_y_m": 590.0, "radius_m": 32.0, "height_m": 45.0},
+        {"center_x_m": 670.0, "center_y_m": 550.0, "radius_m": 24.0, "height_m": 30.0},
+        {"center_x_m": 390.0, "center_y_m": 720.0, "radius_m": 27.0, "height_m": 38.0},
+        {"center_x_m": 460.0, "center_y_m": 750.0, "radius_m": 22.0, "height_m": 24.0},
+        {"center_x_m": 530.0, "center_y_m": 720.0, "radius_m": 30.0, "height_m": 43.0},
+        {"center_x_m": 600.0, "center_y_m": 760.0, "radius_m": 25.0, "height_m": 31.0},
+        {"center_x_m": 660.0, "center_y_m": 730.0, "radius_m": 28.0, "height_m": 40.0},
+        {"center_x_m": 420.0, "center_y_m": 900.0, "radius_m": 24.0, "height_m": 29.0},
+        {"center_x_m": 490.0, "center_y_m": 920.0, "radius_m": 26.0, "height_m": 35.0},
+        {"center_x_m": 560.0, "center_y_m": 890.0, "radius_m": 22.0, "height_m": 27.0},
+        {"center_x_m": 630.0, "center_y_m": 930.0, "radius_m": 30.0, "height_m": 41.0}
+      ],
+
+      "valleys": [
+        {"_note": "喀斯特区溶斗(漏斗): 5个负高斯锥下凹, 模拟地表塌陷坑, 深4~6m, 半径14~18m", "center_x_m": 420.0, "center_y_m": 350.0, "radius_m": 15.0, "depth_m": 5.0, "bottom_radius_m": 5.0},
+        {"center_x_m": 580.0, "center_y_m": 500.0, "radius_m": 18.0, "depth_m": 6.0, "bottom_radius_m": 6.0},
+        {"center_x_m": 500.0, "center_y_m": 650.0, "radius_m": 14.0, "depth_m": 4.0, "bottom_radius_m": 4.0},
+        {"center_x_m": 640.0, "center_y_m": 850.0, "radius_m": 16.0, "depth_m": 5.0, "bottom_radius_m": 5.0},
+        {"center_x_m": 450.0, "center_y_m": 850.0, "radius_m": 17.0, "depth_m": 6.0, "bottom_radius_m": 5.0}
+      ],
+
+      "rivers": [
+        {
+          "_note": "沟壑区-主沟(东区 x:700~1008m): 蜿蜒主河道, 宽10m, C++自动河床切削(U型谷深150cm+余弦横截面+河岸余弦衰减), 模拟黄土沟壑主干道",
+          "points": [[720.0, 50.0], [740.0, 150.0], [780.0, 220.0], [760.0, 300.0], [800.0, 370.0], [770.0, 450.0], [820.0, 520.0], [790.0, 600.0], [830.0, 670.0], [810.0, 750.0], [850.0, 820.0], [820.0, 900.0], [860.0, 980.0]],
+          "width_m": 10.0
+        },
+        {
+          "_note": "沟壑区-支沟1: 从主沟(780,220)分叉东北向, 宽6m, 模拟一级支沟",
+          "points": [[780.0, 220.0], [840.0, 240.0], [880.0, 270.0], [920.0, 300.0], [960.0, 330.0]],
+          "width_m": 6.0
+        },
+        {
+          "_note": "沟壑区-支沟2: 从主沟(800,370)分叉东北向, 宽5m, 模拟二级支沟",
+          "points": [[800.0, 370.0], [860.0, 400.0], [900.0, 430.0], [950.0, 460.0], [980.0, 490.0]],
+          "width_m": 5.0
+        },
+        {
+          "_note": "沟壑区-支沟3: 从主沟(820,520)分叉东北向, 宽6m",
+          "points": [[820.0, 520.0], [880.0, 550.0], [920.0, 580.0], [970.0, 610.0]],
+          "width_m": 6.0
+        },
+        {
+          "_note": "沟壑区-支沟4: 从主沟(830,670)分叉东北向, 宽5m",
+          "points": [[830.0, 670.0], [890.0, 700.0], [940.0, 730.0], [980.0, 760.0]],
+          "width_m": 5.0
+        }
+      ],
+
+      "grass_varieties": [
+        {
+          "_note": "高草变体01a: 密度150/10㎡, 缩放0.8~1.2, 随机旋转, 剔除距离30m~300m覆盖航拍高度",
+          "mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Tall_Wild_01a",
+          "density": 150.0,
+          "scale_min": 0.8,
+          "scale_max": 1.2,
+          "jitter": 0.5,
+          "random_rotation": true,
+          "start_cull_dist": 3000.0,
+          "end_cull_dist": 30000.0
+        },
+        {
+          "_note": "高草变体01c: 密度120/10㎡, 缩放0.7~1.1",
+          "mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Tall_Wild_01c",
+          "density": 120.0,
+          "scale_min": 0.7,
+          "scale_max": 1.1,
+          "jitter": 0.5,
+          "random_rotation": true,
+          "start_cull_dist": 3000.0,
+          "end_cull_dist": 30000.0
+        },
+        {
+          "_note": "矮草变体01a: 密度100/10㎡, 缩放0.6~1.0, 覆盖低洼/沟底区域",
+          "mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Beach_01a",
+          "density": 100.0,
+          "scale_min": 0.6,
+          "scale_max": 1.0,
+          "jitter": 0.4,
+          "random_rotation": true,
+          "start_cull_dist": 3000.0,
+          "end_cull_dist": 30000.0
+        },
+        {
+          "_note": "矮草变体01c: 密度80/10㎡",
+          "mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Beach_01c",
+          "density": 80.0,
+          "scale_min": 0.5,
+          "scale_max": 0.9,
+          "jitter": 0.4,
+          "random_rotation": true,
+          "start_cull_dist": 3000.0,
+          "end_cull_dist": 30000.0
+        },
+        {
+          "_note": "主草地网格: 密度200/10㎡, 与2km配方一致",
+          "mesh_path": "/Game/RuralHouse/Environment/Foliage/SM_Grass_01",
+          "density": 200.0,
+          "scale_min": 0.8,
+          "scale_max": 1.3,
+          "jitter": 0.6,
+          "random_rotation": true,
+          "start_cull_dist": 3000.0,
+          "end_cull_dist": 30000.0
+        }
+      ],
+
+      "scatter": [
+        {
+          "_note": "喀斯特区碎石散布: 岩石A-01, 80个, 缩放0.5~1.5, 随机旋转, 模拟喀斯特峰林区碎石",
+          "mesh_path": "/Game/RuralHouse/Environment/Ground/SM_Rock_A_01",
+          "count": 80,
+          "seed": 42,
+          "scale_min": 0.5,
+          "scale_max": 1.5,
+          "random_rotation": true
+        },
+        {
+          "_note": "岩石A-04: 60个, 缩放0.6~1.4",
+          "mesh_path": "/Game/RuralHouse/Environment/Ground/SM_Rock_A_04",
+          "count": 60,
+          "seed": 13,
+          "scale_min": 0.6,
+          "scale_max": 1.4,
+          "random_rotation": true
+        },
+        {
+          "_note": "苔藓岩石: 40个, 缩放0.4~1.0, 分散在各区",
+          "mesh_path": "/Game/RuralHouse/Environment/Ground/SM_MossyRock_01",
+          "count": 40,
+          "seed": 7,
+          "scale_min": 0.4,
+          "scale_max": 1.0,
+          "random_rotation": true
+        }
+      ],
+
+      "perturbation_strength": 0.35,
+      "perturbation_scale": 0.04,
+      "perturbation_seed": 42,
+
+      "noise_overlay": {
+        "_note": "全局自然起伏: amp0.5m freq0.02 octaves3, 在三种地形上叠加低频Perlin微起伏, 消除人工痕迹",
+        "amplitude_m": 0.5,
+        "frequency": 0.02,
+        "octaves": 3,
+        "seed": 7
+      }
+    }
+  },
+
+  "ground": {},
+
+  "placements": [],
+
+  "lighting": {
+    "_note": "基础光照: 太阳斜射(俯角45°方位35°)暖白光 + 天空光冷色补光 + 大气层 + 轻雾营造空气透视; 强度12lux确保1km地形充分照亮",
+    "directional_light": {
+      "location": [0.0, 0.0, 5000.0],
+      "rotation": [-45.0, 35.0, 0.0],
+      "intensity": 12.0,
+      "color": [1.0, 0.9, 0.75],
+      "cast_shadows": true
+    },
+    "sky_light": {
+      "location": [0.0, 0.0, 3000.0],
+      "intensity": 1.0,
+      "color": [0.75, 0.85, 1.0]
+    },
+    "sky_atmosphere": {
+      "location": [0.0, 0.0, 0.0]
+    },
+    "height_fog": {
+      "location": [0.0, 0.0, 0.0],
+      "density": 0.0001,
+      "color": [0.75, 0.8, 0.85]
+    }
+  },
+
+  "weather": {
+    "_note": "体积云: UE5原生VolumetricCloud组件配合SkyAtmosphere渲染真实3D云层",
+    "volumetric_clouds": {
+      "location": [0.0, 0.0, 2000.0]
+    }
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "scene": {
+    "name": "HISM_BP_测试场景",
+    "target_level": "/Game/MapForgeTest/GB_TestHismBp",
+    "description": "小规模测试 HISM 实例化 + 蓝图 spawn 是否在 cmd 模式可用"
+  },
+  "ground": {
+    "asset": "/Game/RuralHouse/House/Meshes/ModularParts/SM_House_FloorPlane_03",
+    "location": [0, 0, 0],
+    "rotation": [0, 0, 0],
+    "scale": [50, 50, 1]
+  },
+  "placements": [
+    {
+      "type": "instanced_grid",
+      "asset": "/Game/Modular_Rural_Cabin/Meshes/Foliage/SM_Pine_Tree_01",
+      "location": [0, 0, 0],
+      "grid": {
+        "rows": 3,
+        "cols": 4,
+        "origin": [0, 0, 0],
+        "spacing": [800, 800, 0],
+        "jitter": 50,
+        "random_yaw": true,
+        "scale_min": [0.8, 0.8, 0.8],
+        "scale_max": [1.25, 1.25, 1.25]
+      }
+    },
+    {
+      "type": "blueprint",
+      "asset": "/Game/hourse/Blueprints/BP_House_RuralBrickFarm",
+      "location": [2000, 0, 0],
+      "rotation": [0, 0, 0],
+      "scale": [1, 1, 1]
+    },
+    {
+      "type": "blueprint",
+      "asset": "/Game/hourse/Blueprints/BP_House_Traditional",
+      "location": [2000, 2000, 0],
+      "rotation": [0, 90, 0],
+      "scale": [1, 1, 1]
+    },
+    {
+      "asset": "/Game/heliport/heliport_helipad_air_base_helicopter/StaticMeshes/Object_0",
+      "location": [0, 2000, 0],
+      "rotation": [0, 0, 0],
+      "scale": [1, 1, 1]
+    }
+  ],
+  "lighting": {
+    "directional_light": {
+      "location": [0, 0, 3000],
+      "rotation": [-15, 60, 0],
+      "intensity": 10.0,
+      "color": [1.0, 0.93, 0.76],
+      "cast_shadows": true
+    },
+    "sky_light": {
+      "location": [0, 0, 3000],
+      "intensity": 1.0,
+      "color": [0.75, 0.85, 1.0]
+    },
+    "sky_atmosphere": {
+      "location": [0, 0, 0]
+    },
+    "height_fog": {
+      "location": [0, 0, 0],
+      "density": 0.02,
+      "color": [0.7, 0.8, 0.9]
+    }
+  },
+  "weather": {
+    "volumetric_clouds": {
+      "location": [0, 0, 2000]
+    }
+  }
+}

@@ -1,0 +1,46 @@
+### 8.3 模板 P2 — 方形铁丝网围栏
+
+- 文件：`templates/template_p2_square_fence.json`
+- 生成脚本：`MapForgeTest/gen_square_fence.py`（改参数后重新生成 JSON）
+- 资产：`/Game/WireFence/chainlink_fence_tileable/StaticMeshes/Plane_004_chainlink_fence_textures_0`
+- 面板尺寸：203.7(X) × 22.6(Y) × 236.4(Z) cm，原点在中心，Z=111 贴地
+
+**布局参数（gen_square_fence.py 顶部常量）：**
+
+| 参数 | 默认值 | 说明 |
+|------|--------|------|
+| CENTER | [0,0,0] | 围栏中心点 |
+| LENGTH | 10000 | X 方向长度（cm） |
+| WIDTH | 5000 | Y 方向宽度（cm） |
+| SPACING | 200.0 | 面板间距（cm，面板长 203.7cm，重叠 1.8% 保证无缝） |
+| PANEL_Z_OFFSET | 111 | Z 偏移（面板原点中心，111cm 贴地） |
+
+**弯折方向规则（实测验证，最关键用法）：**
+
+铁丝网面板顶部有弯折，弯折必须朝围栏外侧。yaw 与弯折方向对应关系：
+
+| yaw | 弯折方向 |
+|-----|----------|
+| 0 | +Y |
+| 90 | -X |
+| 180 | -Y |
+| 270 | +X |
+
+四边 yaw 取值（弯折朝外）：
+
+| 边 | 位置 | yaw |
+|----|------|-----|
+| 南 | Y = -WIDTH/2 | 180 |
+| 北 | Y = +WIDTH/2 | 0 |
+| 西 | X = -LENGTH/2 | 90 |
+| 东 | X = +LENGTH/2 | 270 |
+
+**实例数量公式：**
+- 长边每条：n_long = ceil(LENGTH / SPACING) = 50
+- 短边每条：n_short = ceil(WIDTH / SPACING) = 25
+- 总数：n_long × 2 + n_short × 2 = 150
+
+**关键实现：使用 `instances` 显式数组而非 `grid` 模式**
+build_scene.py 的 grid 模式无法为每条边设置固定 yaw（只能 0 或随机），必须用 `instances` 显式数组逐个列出每个面板的 location/rotation/scale。
+
+### 8.4 派生要点

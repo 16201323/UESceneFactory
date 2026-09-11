@@ -1,0 +1,48 @@
+{
+  "scene": {
+    "name": "gully_loess_test",
+    "description": "模块3黄土沟壑模式测试: 主沟45°蜿蜒 + 6支沟分叉",
+    "target_level": "/Game/MapForgeTest/GB_GullyTest"
+  },
+  "landscape": {
+    "location": [0, 0, 0],
+    "rotation": [0, 0, 0],
+    "scale": [100, 100, 100],
+    "section_size_quads": 63,
+    "num_subsections": 1,
+    "component_count_x": 1,
+    "component_count_y": 1,
+    "material": "/Game/RuralHouse/Landscape/MI_Landscape",
+    "layers": [
+      { "info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer1_LayerInfo", "weight": 0.5 },
+      { "info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer2_LayerInfo", "weight": 0.5 }
+    ],
+    "height_pattern": {
+      "type": "gully",
+      "main_direction_deg": 45,
+      "main_length_m": 800,
+      "meander_amplitude_m": 40,
+      "meander_frequency": 0.008,
+      "branch_count": 6,
+      "branch_angle_deg": 50,
+      "branch_length_ratio": 0.5,
+      "branch_depth": 1,
+      "gully_depth_m": 8,
+      "gully_width_m": 15,
+      "profile": "V",
+      "seed": 42,
+      "blend_mode": "additive",
+      "perturbation_strength": 0.3,
+      "perturbation_scale": 0.05,
+      "perturbation_seed": 19,
+      "noise_overlay": { "amplitude_m": 0.4, "frequency": 0.025, "octaves": 3, "seed": 17 }
+    }
+  },
+  "ground": {},
+  "placements": [],
+  "lighting": {
+    "directional_light": { "location": [0, 0, 5000], "rotation": [-45, 0, 0], "intensity": 3.0, "color": [1, 1, 1] },
+    "sky_light": { "intensity": 1.0, "color": [0.8, 0.9, 1.0] }
+  },
+  "weather": { "volumetric_clouds": { "location": [0, 0, 2000] } }
+}

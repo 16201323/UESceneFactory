@@ -1,0 +1,69 @@
+{
+    "scene": {
+        "name": "test_module4_crop",
+        "target_level": "/Game/Maps/TestModule4Crop",
+        "description": "模块4作物测试: 行垄作物+草地多变体"
+    },
+    "landscape": {
+        "material": "/Game/RuralHouse/Landscape/MI_Landscape",
+        "section_size_quads": 63,
+        "num_subsections": 2,
+        "component_count_x": 4,
+        "component_count_y": 4,
+        "location": [0, 0, 0],
+        "rotation": [0, 0, 0],
+        "scale": [100, 100, 100],
+        "height_pattern": {
+            "type": "flat"
+        },
+        "layers": [
+            {"info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer1_LayerInfo", "weight": 1.0}
+        ],
+        "grass": {
+            "grass_type": "/Game/RuralHouse/Landscape/LandscapeFoliage/LGT_Grass",
+            "layer_name": "Grass",
+            "grass_varieties": [
+                {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Dead_Plants_01a", "density": 8, "scale_min": 0.9, "scale_max": 1.3, "jitter": 0.8, "random_rotation": true},
+                {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Dead_Plants_01b", "density": 4, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.8, "random_rotation": true}
+            ]
+        }
+    },
+    "ground": {},
+    "placements": [
+        {
+            "type": "crop_field",
+            "asset": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Dead_Plants_01a",
+            "field": {
+                "origin": [100, 100, 0],
+                "size_m": [100, 80],
+                "row_spacing_m": 1.2,
+                "plant_spacing_m": 0.4,
+                "row_direction_deg": 0,
+                "jitter": 0.1,
+                "snap_to_ground": true,
+                "scale_min": [0.9, 0.9, 0.9],
+                "scale_max": [1.3, 1.3, 1.3]
+            }
+        },
+        {
+            "type": "crop_field",
+            "asset": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Dead_Plants_01a",
+            "field": {
+                "origin": [250, 100, 0],
+                "size_m": [100, 80],
+                "row_spacing_m": 1.2,
+                "plant_spacing_m": 0.4,
+                "row_direction_deg": 90,
+                "jitter": 0.1,
+                "snap_to_ground": true,
+                "scale_min": [0.9, 0.9, 0.9],
+                "scale_max": [1.3, 1.3, 1.3]
+            }
+        }
+    ],
+    "lighting": {
+        "directional_light": {"location": [0, 0, 5000], "rotation": [-45, 0, 0], "intensity": 3.0, "color": [1, 1, 1]},
+        "sky_light": {"location": [0, 0, 1000], "intensity": 1.0, "color": [0.5, 0.6, 0.8]}
+    },
+    "weather": {"volumetric_clouds": {"location": [0, 0, 5000]}}
+}

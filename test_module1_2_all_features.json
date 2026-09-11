@@ -1,0 +1,206 @@
+{
+  "scene": {
+    "name": "Module1_2_AllFeatures_Test",
+    "target_level": "/Game/MapForgeTest/GB_Test_Module1_2",
+    "description": "模块1+模块2综合功能测试 — 河床冲刷(V/U剖面) + 道路推平(路基+路肩) + 建筑路肩 + scatter智能分层(图层/坡度/海拔过滤+重试)"
+  },
+
+  "landscape": {
+    "_note": "500m测试地形: 8×8 Component, 每Component 63 quad, scale=100 → 504×504m; 505顶点/轴; 基础高地18m + 1座山丘40m + 噪声叠加",
+    "material": "/Game/RuralHouse/Landscape/MI_Landscape",
+    "section_size_quads": 63,
+    "num_subsections": 1,
+    "component_count_x": 8,
+    "component_count_y": 8,
+    "location": [-25200, -25200, 0],
+    "rotation": [0, 0, 0],
+    "scale": [100, 100, 100],
+    "layers": [
+      {"info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer1_LayerInfo", "weight": 0.0},
+      {"info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer2_LayerInfo", "weight": 1.0,
+       "weight_pattern": {
+         "pattern": "height_based",
+         "height_min_m": -20,
+         "height_max_m": 5,
+         "invert": true
+       }},
+      {"info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer3_LayerInfo", "weight": 1.0,
+       "weight_pattern": {
+         "pattern": "snow_line",
+         "snow_line_m": 35,
+         "transition_m": 10,
+         "max_slope": 0.5
+       }},
+      {"info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer4_LayerInfo", "weight": 1.0},
+      {"info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer5_LayerInfo", "weight": 1.0,
+       "weight_pattern": {
+         "pattern": "slope_based",
+         "slope_min": 0.3,
+         "slope_max": 0.7
+       }}
+    ],
+    "grass": {
+      "grass_type": "/Game/RuralHouse/Landscape/LandscapeFoliage/LGT_Grass",
+      "grass_mesh": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Tall_Wild_01a",
+      "layer_name": "Grass",
+      "density": 100.0
+    },
+    "height_pattern": {
+      "type": "features",
+      "blend_mode": "additive",
+      "hills": [
+        {"center_x_m": 252, "center_y_m": 252, "radius_m": 400, "height_m": 18},
+        {"center_x_m": 380, "center_y_m": 250, "radius_m": 80, "height_m": 40}
+      ],
+      "rivers": [
+        {
+          "_note": "模块1测试: V型河床(东→西, 深2m, V剖面 = 尖底余弦半波)",
+          "points": [[380,250],[340,255],[300,260],[260,258],[220,255],[180,250],[140,248],[100,252]],
+          "width_m": 8,
+          "bed_depth_m": 2.0,
+          "profile": "V",
+          "material_path": "/Game/Modular_Rural_Cabin/Materials/Instances/Water_Lake"
+        },
+        {
+          "_note": "模块1测试: U型河床(西→南, 深3m, U剖面 = 平底余弦半波, FlatT=0.6)",
+          "points": [[100,252],[120,300],[140,350],[160,400],[180,430]],
+          "width_m": 10,
+          "bed_depth_m": 3.0,
+          "profile": "U",
+          "material_path": "/Game/Modular_Rural_Cabin/Materials/Instances/Water_Lake"
+        }
+      ],
+      "roads": [
+        {
+          "_note": "模块1测试: 道路推平(北→南, 路基深1.5m, 路肩宽5m, 路基高0.5m)",
+          "points": [[252,100],[252,150],[252,200],[252,250],[252,300],[252,350],[252,400]],
+          "width_m": 12,
+          "level_depth_m": 1.5,
+          "shoulder_width_m": 5.0,
+          "level_height_m": 0.5,
+          "material_path": "/Game/MapForgeTest/M_Road_Dirt"
+        }
+      ],
+      "buildings": [
+        {
+          "_note": "模块1测试: 建筑路肩(中心330,300, 尺寸20×15m, 高10m, 路肩宽3m)",
+          "center": [330, 300],
+          "size_m": [20, 15],
+          "height_m": 10,
+          "rotation_deg": 0,
+          "shoulder_width_m": 3.0
+        }
+      ],
+      "noise_overlay": {
+        "amplitude_m": 2,
+        "frequency": 0.02,
+        "octaves": 3,
+        "seed": 42
+      },
+      "scatter": [
+        {
+          "_note": "模块2测试: 图层过滤(仅Layer4草地层, 权重≥0.5)",
+          "mesh_path": "/Game/RuralHouse/Environment/Ground/SM_Rock_A_01",
+          "count": 30,
+          "seed": 101,
+          "scale_min": 0.8,
+          "scale_max": 2.0,
+          "random_rotation": true,
+          "layer_filter": {
+            "layer": "Layer4",
+            "min_weight": 0.5
+          },
+          "max_retries": 10
+        },
+        {
+          "_note": "模块2测试: 坡度过滤(仅坡度5°~30°区域, 模拟山体岩石)",
+          "mesh_path": "/Game/RuralHouse/Environment/Ground/SM_Rock_A_04",
+          "count": 20,
+          "seed": 102,
+          "scale_min": 1.0,
+          "scale_max": 2.5,
+          "random_rotation": true,
+          "slope_filter": {
+            "min_deg": 5.0,
+            "max_deg": 30.0
+          },
+          "max_retries": 10
+        },
+        {
+          "_note": "模块2测试: 海拔过滤(仅海拔20m~50m区域, 模拟山腰碎石)",
+          "mesh_path": "/Game/RuralHouse/Environment/Ground/SM_MossyRock_01",
+          "count": 15,
+          "seed": 103,
+          "scale_min": 0.9,
+          "scale_max": 1.8,
+          "random_rotation": true,
+          "altitude_filter": {
+            "min_m": 20.0,
+            "max_m": 50.0
+          },
+          "max_retries": 10
+        },
+        {
+          "_note": "模块2测试: 组合过滤(图层Layer4+坡度15°~40°+海拔30m~60m, 重试15次)",
+          "mesh_path": "/Game/RuralHouse/Environment/Ground/SM_Rock_A_01",
+          "count": 10,
+          "seed": 104,
+          "scale_min": 1.0,
+          "scale_max": 3.0,
+          "random_rotation": true,
+          "layer_filter": {
+            "layer": "Layer4",
+            "min_weight": 0.5
+          },
+          "slope_filter": {
+            "min_deg": 15.0,
+            "max_deg": 40.0
+          },
+          "altitude_filter": {
+            "min_m": 30.0,
+            "max_m": 60.0
+          },
+          "max_retries": 15
+        }
+      ],
+      "grass_varieties": [
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Tall_Wild_01a", "density": 15, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 3000, "end_cull_dist": 30000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Tall_Wild_01b", "density": 15, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 3000, "end_cull_dist": 30000},
+        {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Tall_Wild_01c", "density": 15, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 3000, "end_cull_dist": 30000}
+      ]
+    }
+  },
+
+  "ground": {},
+
+  "placements": [],
+
+  "lighting": {
+    "directional_light": {
+      "location": [0, 0, 3000],
+      "rotation": [-15, 60, 0],
+      "intensity": 10.0,
+      "color": [1.0, 0.85, 0.7],
+      "cast_shadows": true
+    },
+    "sky_light": {
+      "location": [0, 0, 3000],
+      "intensity": 1.0,
+      "color": [0.75, 0.85, 1.0]
+    },
+    "sky_atmosphere": {
+      "location": [0, 0, 0]
+    },
+    "height_fog": {
+      "location": [0, 0, 0],
+      "density": 0.0001,
+      "color": [0.7, 0.8, 0.9]
+    }
+  },
+
+  "weather": {
+    "volumetric_clouds": {
+      "location": [0, 0, 2000]
+    }
+  }
+}

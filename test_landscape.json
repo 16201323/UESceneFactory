@@ -1,0 +1,35 @@
+{
+  "scene": {
+    "name": "TestLandscape",
+    "target_level": "/Game/MapForgeTest/GB_TestLandscape",
+    "description": "Landscape 最小化测试 - 仅创建 UE5 正式地形, 验证 LandscapeHelper 插件功能"
+  },
+
+  "landscape": {
+    "_note": "UE5 正式 Landscape: 8x8 Component, section_size=63, scale=100, 共505x505顶点, 504m x 504m; location偏移-25200cm使地形中心对齐原点",
+    "material": "/Game/RuralHouse/Landscape/MI_Landscape",
+    "section_size_quads": 63,
+    "num_subsections": 1,
+    "component_count_x": 8,
+    "component_count_y": 8,
+    "location": [-25200, -25200, 0],
+    "rotation": [0, 0, 0],
+    "scale": [100, 100, 100]
+  },
+
+  "ground": {},
+
+  "placements": [],
+
+  "lighting": {
+    "directional_light": {
+      "location": [0, 0, 500],
+      "rotation": [-40, -30, 0],
+      "intensity": 10.0,
+      "color": [1.0, 0.95, 0.8]
+    },
+    "sky_light": {
+      "intensity": 1.0
+    }
+  }
+}

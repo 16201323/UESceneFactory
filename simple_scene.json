@@ -1,0 +1,56 @@
+{
+  "spec_version": 2,
+  "levels": [
+    {
+      "id": "SimpleScene",
+      "name": "MapForgeTest Simple Scene (JSON)",
+      "target_level": "/Game/MapForgeTest/GB_SimpleScene",
+      "description": "最简场景-地形+天空+光照+原点4方块 (JSON 等价格式)",
+      "floor_blocks": [
+        {
+          "name": "GB_Floor_Ground",
+          "center": [0, 0, -10],
+          "size": [2000, 2000, 20],
+          "notes": "地形地面"
+        }
+      ],
+      "props": [
+        {
+          "name": "GB_Cube_Red",
+          "center": [0, 0, 60],
+          "size": [100, 100, 100],
+          "notes": "红色方块-待上色"
+        },
+        {
+          "name": "GB_Cube_Green",
+          "center": [250, 0, 60],
+          "size": [100, 100, 100],
+          "notes": "绿色方块-待上色"
+        },
+        {
+          "name": "GB_Cube_Blue",
+          "center": [-250, 0, 60],
+          "size": [100, 100, 100],
+          "notes": "蓝色方块-待上色"
+        },
+        {
+          "name": "GB_Cube_Yellow",
+          "center": [0, 250, 60],
+          "size": [100, 100, 100],
+          "notes": "黄色方块-待上色"
+        }
+      ],
+      "markers": [
+        {
+          "id": "PlayerStart",
+          "type": "player_start",
+          "location": [0, -500, 100]
+        }
+      ],
+      "navmesh_bounds": {
+        "center": [0, 0, 100],
+        "size": [2400, 2400, 400]
+      }
+    }
+  ]
+}
