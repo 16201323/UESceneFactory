@@ -10,6 +10,8 @@ import urllib.request
 from abc import ABC, abstractmethod
 from typing import Any
 
+# 推理模型(如 glm-5.2)需要先完成 reasoning 再输出 content;
+# Stage 2 注入20KB模板后 system prompt 暴增, 300s 实测不够(大场景推理+32K输出超时), 调到600s
 _LLM_TIMEOUT = 600.0
 
 
@@ -18,6 +20,7 @@ class LLMClient(ABC):
 
     @abstractmethod
     def complete(self, system_prompt: str, user_prompt: str, **kwargs: Any) -> str:
+        """发送 system+user prompt，返回文本响应。"""
         ...
 
 
@@ -76,6 +79,7 @@ class OpenAILLMClient(LLMClient):
             self._client = OpenAI(**client_kwargs)
 
         try:
+            # kwargs 中的 model 优先(允许调用方覆盖默认模型), 避免重复传参冲突
             call_kwargs = {
                 "messages": [
                     {"role": "system", "content": system_prompt},
@@ -87,6 +91,9 @@ class OpenAILLMClient(LLMClient):
             response = self._client.chat.completions.create(**call_kwargs)
             choice = response.choices[0]
             content = choice.message.content
+            # 推理模型(如 glm-5.2): reasoning_content 和 content 共享 max_tokens 预算
+            # 推理耗尽预算时 content 为空, finish_reason="length"
+            # 此时返回空字符串会导致下游 extract_json 报晦涩错误, 需给出明确原因
             if not content:
                 finish_reason = getattr(choice, "finish_reason", "unknown")
                 rc = getattr(choice.message, "reasoning_content", None)
@@ -98,6 +105,7 @@ class OpenAILLMClient(LLMClient):
                 )
             return str(content)
         except RuntimeError:
+            # 空内容诊断错误直接向上抛, 不被下面的通用异常包装
             raise
         except Exception as e:
             raise RuntimeError(
@@ -119,6 +127,7 @@ class OllamaLLMClient(LLMClient):
         self._timeout = timeout
 
     def complete(self, system_prompt: str, user_prompt: str, **kwargs: Any) -> str:
+        # 构建 Ollama API 请求体，传递 max_tokens 限制（Ollama 用 options.num_predict）
         data_dict = {
             "model": self._model,
             "messages": [
@@ -127,6 +136,7 @@ class OllamaLLMClient(LLMClient):
             ],
             "stream": False,
         }
+        # 将 kwargs 中的 max_tokens 映射到 Ollama 的 options.num_predict
         max_tokens = kwargs.get("max_tokens")
         if max_tokens:
             data_dict["options"] = {"num_predict": max_tokens}
