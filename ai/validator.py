@@ -31,7 +31,7 @@ REPAIR_PROMPT_TEMPLATE = """你是 UE5 场景 JSON 修复器。以下 JSON 有�
 class ValidationRepairLoop:
     def __init__(self, client, knowledge=None, model=None, max_rounds=3):
         self._client = client
-        self._knowledge = knowledge
+        self._knowledge = knowledge  # KnowledgePack，用于注入修复时的知识上下文
         self._model = model
         self._max_rounds = max_rounds
 
@@ -39,11 +39,13 @@ class ValidationRepairLoop:
         history = []
         current = scene
 
+        # 构建修复用的 system_prompt（注入知识包，帮助 LLM 理解正确格式）
         system_prompt = ""
         if self._knowledge and intent:
             system_prompt = self._knowledge.build_system_prompt(intent, [], [])
 
         for round_num in range(self._max_rounds):
+            # 1. 字段校验
             errors, warnings = validate_scene(current)
 
             history.append({
@@ -52,9 +54,11 @@ class ValidationRepairLoop:
                 "warnings": warnings,
             })
 
+            # 2. 无错误 → 通过
             if not errors:
                 return current, history
 
+            # 3. 有错误 → LLM 修复（注入知识包 system_prompt + 错误信息）
             errors_text = "\n".join("- " + e for e in errors)
             prompt = REPAIR_PROMPT_TEMPLATE.format(
                 user_desc=user_description,
@@ -62,6 +66,8 @@ class ValidationRepairLoop:
                 errors_list=errors_text,
             )
 
+            # 启用 JSON Mode + max_tokens 防止截断
+            # 推理模型 reasoning_content 和 content 共享预算, 实测需 65536 才稳
             kwargs = {
                 "response_format": {"type": "json_object"},
                 "max_tokens": 65536,
@@ -71,9 +77,12 @@ class ValidationRepairLoop:
 
             try:
                 resp = self._client.complete(system_prompt, prompt, **kwargs)
+                # 三层 JSON 提取
                 current = extract_json(resp)
             except Exception:
+                # 修复失败，返回当前版本
                 history[-1]["repair_failed"] = True
                 return current, history
 
+        # 超过最大轮数
         return current, history
