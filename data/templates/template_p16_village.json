@@ -1,0 +1,303 @@
+{
+    "scene": {
+        "name": "module4_village",
+        "target_level": "/Game/Maps/Module4Village",
+        "description": "模块4村落测试: 原有2类房屋(village cluster/scatter + blueprint x6) + 10个Fab房屋按真实尺寸分布于4个风格区域"
+    },
+    "landscape": {
+        "material": "/Game/RuralHouse/Landscape/MI_Landscape",
+        "section_size_quads": 63,
+        "num_subsections": 2,
+        "component_count_x": 4,
+        "component_count_y": 4,
+        "location": [0, 0, 0],
+        "rotation": [0, 0, 0],
+        "scale": [100, 100, 100],
+        "height_pattern": {
+            "type": "features",
+            "hills": [
+                {"center_x_m": 250, "center_y_m": 250, "radius_m": 200, "height_m": 20}
+            ]
+        },
+        "layers": [
+            {"info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer1_LayerInfo", "weight": 1.0}
+        ]
+    },
+    "ground": {},
+    "placements": [
+        {"_note": "==== 第1区: Outhouse_House 聚集村落 (village cluster) ===="},
+        {
+            "type": "village",
+            "village": {
+                "center": [100, 100, 0],
+                "house_count": 8,
+                "layout": "cluster",
+                "house_assets": ["/Game/Modular_Rural_Cabin/Meshes/Props/Outhouse_House"],
+                "radius_m": 50,
+                "min_distance_m": 10,
+                "snap_to_ground": true,
+                "random_yaw": true,
+                "yaw_range": [0, 360],
+                "scale_min": [1.8, 1.8, 1.8],
+                "scale_max": [2.2, 2.2, 2.2],
+                "seed": 42
+            }
+        },
+        {"_note": "==== 第2区: Outhouse_House 散布村落 (village scatter) ===="},
+        {
+            "type": "village",
+            "village": {
+                "center": [400, 150, 0],
+                "house_count": 10,
+                "layout": "scatter",
+                "house_assets": ["/Game/Modular_Rural_Cabin/Meshes/Props/Outhouse_House"],
+                "radius_m": 60,
+                "min_distance_m": 12,
+                "snap_to_ground": true,
+                "random_yaw": true,
+                "yaw_range": [0, 360],
+                "scale_min": [1.5, 1.5, 1.5],
+                "scale_max": [2.0, 2.0, 2.0],
+                "seed": 100
+            }
+        },
+        {"_note": "==== 第3区: BP_House_RuralBrickFarm 蓝图住宅 (blueprint x3) ===="},
+        {
+            "type": "blueprint",
+            "asset": "/Game/hourse/Blueprints/BP_House_RuralBrickFarm.BP_House_RuralBrickFarm",
+            "location": [15000, 30000, 0],
+            "rotation": [0, 0, 45],
+            "scale": [1, 1, 1],
+            "snap_to_ground": true
+        },
+        {
+            "type": "blueprint",
+            "asset": "/Game/hourse/Blueprints/BP_House_RuralBrickFarm.BP_House_RuralBrickFarm",
+            "location": [35000, 30000, 0],
+            "rotation": [0, 0, -30],
+            "scale": [1, 1, 1],
+            "snap_to_ground": true
+        },
+        {
+            "type": "blueprint",
+            "asset": "/Game/hourse/Blueprints/BP_House_RuralBrickFarm.BP_House_RuralBrickFarm",
+            "location": [25000, 42000, 0],
+            "rotation": [0, 0, 90],
+            "scale": [1, 1, 1],
+            "snap_to_ground": true
+        },
+        {"_note": "==== 第4区: BP_House_Traditional 传统住宅 (blueprint x3) ===="},
+        {
+            "type": "blueprint",
+            "asset": "/Game/hourse/Blueprints/BP_House_Traditional.BP_House_Traditional",
+            "location": [20000, 25000, 0],
+            "rotation": [0, 0, 0],
+            "scale": [1, 1, 1],
+            "snap_to_ground": true
+        },
+        {
+            "type": "blueprint",
+            "asset": "/Game/hourse/Blueprints/BP_House_Traditional.BP_House_Traditional",
+            "location": [30000, 25000, 0],
+            "rotation": [0, 0, 180],
+            "scale": [1, 1, 1],
+            "snap_to_ground": true
+        },
+        {
+            "type": "blueprint",
+            "asset": "/Game/hourse/Blueprints/BP_House_Traditional.BP_House_Traditional",
+            "location": [25000, 10000, 0],
+            "rotation": [0, 0, 90],
+            "scale": [1, 1, 1],
+            "snap_to_ground": true
+        },
+
+        {"_note": "==== 第5区: 现代郊区 — cottage_free(10m小屋) + locomotive(22m库房) ===="},
+        {
+            "type": "village",
+            "village": {
+                "center": [50, 50, 0],
+                "house_count": 3,
+                "layout": "scatter",
+                "house_assets": ["/Game/Fab/House_Lowpoly_Suburban_Building_Free/cottage_free/StaticMeshes/cottage_free.cottage_free"],
+                "radius_m": 30,
+                "min_distance_m": 15,
+                "snap_to_ground": true,
+                "random_yaw": true,
+                "yaw_range": [0, 360],
+                "scale_min": [0.80, 0.80, 0.80],
+                "scale_max": [0.80, 0.80, 0.80],
+                "seed": 501
+            }
+        },
+        {
+            "type": "village",
+            "village": {
+                "center": [95, 50, 0],
+                "house_count": 2,
+                "layout": "scatter",
+                "house_assets": ["/Game/Fab/Locomotive_Storage_Building/locomotive_storage_building/StaticMeshes/locomotive_storage_building.locomotive_storage_building"],
+                "radius_m": 35,
+                "min_distance_m": 25,
+                "snap_to_ground": true,
+                "random_yaw": true,
+                "yaw_range": [0, 360],
+                "scale_min": [1.35, 1.35, 1.35],
+                "scale_max": [1.35, 1.35, 1.35],
+                "seed": 502
+            }
+        },
+
+        {"_note": "==== 第6区: 中世纪聚落 — building_2(18m) + tavern(16m酒馆) ===="},
+        {
+            "type": "village",
+            "village": {
+                "center": [170, 50, 0],
+                "house_count": 2,
+                "layout": "cluster",
+                "house_assets": ["/Game/Fab/Medieval_Building_-_Procedural_Medieval_Building_Generator_Sample/building_2/StaticMeshes/building_2.building_2"],
+                "radius_m": 25,
+                "min_distance_m": 18,
+                "snap_to_ground": true,
+                "random_yaw": true,
+                "yaw_range": [0, 360],
+                "scale_min": [1.0, 1.0, 1.0],
+                "scale_max": [1.0, 1.0, 1.0],
+                "seed": 601
+            }
+        },
+        {
+            "type": "village",
+            "village": {
+                "center": [205, 50, 0],
+                "house_count": 2,
+                "layout": "cluster",
+                "house_assets": ["/Game/Fab/Large_Medieval_Building/a_medieval_tavern__0327012241_texture/StaticMeshes/a_medieval_tavern__0327012241_texture.a_medieval_tavern__0327012241_texture"],
+                "radius_m": 25,
+                "min_distance_m": 18,
+                "snap_to_ground": true,
+                "random_yaw": true,
+                "yaw_range": [0, 360],
+                "scale_min": [8.0, 8.0, 8.0],
+                "scale_max": [8.0, 8.0, 8.0],
+                "seed": 602
+            }
+        },
+
+        {"_note": "==== 第7区: PSX低多边形 — 日式(10m) + 宅邸(16m) + 旧屋(12m) ===="},
+        {
+            "type": "village",
+            "village": {
+                "center": [50, 170, 0],
+                "house_count": 2,
+                "layout": "scatter",
+                "house_assets": ["/Game/Fab/PSX_Japanese_House/PSX_Japanese_House.PSX_Japanese_House"],
+                "radius_m": 25,
+                "min_distance_m": 15,
+                "snap_to_ground": true,
+                "random_yaw": true,
+                "yaw_range": [0, 360],
+                "scale_min": [1.88, 1.88, 1.88],
+                "scale_max": [1.88, 1.88, 1.88],
+                "seed": 701
+            }
+        },
+        {
+            "type": "village",
+            "village": {
+                "center": [85, 170, 0],
+                "house_count": 2,
+                "layout": "scatter",
+                "house_assets": ["/Game/Fab/PSX_Old_Abandoned_Mansion/psx_old_abandoned_mansion/StaticMeshes/psx_old_abandoned_mansion.psx_old_abandoned_mansion"],
+                "radius_m": 28,
+                "min_distance_m": 18,
+                "snap_to_ground": true,
+                "random_yaw": true,
+                "yaw_range": [0, 360],
+                "scale_min": [2.76, 2.76, 2.76],
+                "scale_max": [2.76, 2.76, 2.76],
+                "seed": 702
+            }
+        },
+        {
+            "type": "village",
+            "village": {
+                "center": [50, 215, 0],
+                "house_count": 2,
+                "layout": "scatter",
+                "house_assets": ["/Game/Fab/PSX_Old_House/psx_old_house/StaticMeshes/psx_old_house.psx_old_house"],
+                "radius_m": 25,
+                "min_distance_m": 15,
+                "snap_to_ground": true,
+                "random_yaw": true,
+                "yaw_range": [0, 360],
+                "scale_min": [1.08, 1.08, 1.08],
+                "scale_max": [1.08, 1.08, 1.08],
+                "seed": 703
+            }
+        },
+
+        {"_note": "==== 第8区: 特殊建筑 — Murder_house(24m大宅) + 老屋(10m) + mohar(16m) ===="},
+        {
+            "type": "village",
+            "village": {
+                "center": [170, 170, 0],
+                "house_count": 2,
+                "layout": "cluster",
+                "house_assets": ["/Game/Fab/Murder_House_from_American_Horror_Story/Murder_house/StaticMeshes/Murder_house.Murder_house"],
+                "radius_m": 30,
+                "min_distance_m": 25,
+                "snap_to_ground": true,
+                "random_yaw": true,
+                "yaw_range": [0, 360],
+                "scale_min": [0.70, 0.70, 0.70],
+                "scale_max": [0.70, 0.70, 0.70],
+                "seed": 801
+            }
+        },
+        {
+            "type": "village",
+            "village": {
+                "center": [215, 170, 0],
+                "house_count": 1,
+                "layout": "cluster",
+                "house_assets": ["/Game/Fab/Free_Small_Old_House/scene/StaticMeshes/scene.scene"],
+                "radius_m": 15,
+                "min_distance_m": 10,
+                "snap_to_ground": true,
+                "random_yaw": true,
+                "yaw_range": [0, 360],
+                "scale_min": [0.0129, 0.0129, 0.0129],
+                "scale_max": [0.0129, 0.0129, 0.0129],
+                "seed": 802
+            }
+        },
+        {
+            "type": "village",
+            "village": {
+                "center": [170, 215, 0],
+                "house_count": 1,
+                "layout": "cluster",
+                "house_assets": ["/Game/Fab/Mohar/mohar/StaticMeshes/mohar.mohar"],
+                "radius_m": 20,
+                "min_distance_m": 15,
+                "snap_to_ground": true,
+                "random_yaw": true,
+                "yaw_range": [0, 360],
+                "scale_min": [0.0255, 0.0255, 0.0255],
+                "scale_max": [0.0255, 0.0255, 0.0255],
+                "seed": 803
+            }
+        }
+    ],
+    "lighting": {
+        "directional_light": {"location": [0, 0, 5000], "rotation": [-45, 0, 0], "intensity": 10.0, "color": [1, 1, 1]},
+        "sky_light": {"location": [0, 0, 1000], "intensity": 1.0, "color": [0.5, 0.6, 0.8]},
+        "sky_atmosphere": {"render_in_main_pass": true, "sky_luminance_factor": [1.0, 1.0, 1.0], "multi_scattering_factor": 2.0},
+        "height_fog": {"density": 0.02, "color": [0.5, 0.6, 0.8]}
+    },
+    "weather": {
+        "volumetric_clouds": {"location": [0, 0, 5000]},
+        "post_process": {"auto_exposure_min": 1.0, "auto_exposure_max": 10.0}
+    }
+}
