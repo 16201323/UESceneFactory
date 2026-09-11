@@ -33,7 +33,7 @@ class AssetIndex:
         for kw in keywords:
             kw_lower = kw.lower()
             if kw_lower in name:
-                score += 3
+                score += 3  # name 匹配权重最高
             if kw_lower in cat:
                 score += 2
             if kw_lower in sub:
