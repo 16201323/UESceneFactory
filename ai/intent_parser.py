@@ -47,11 +47,14 @@ class IntentParser:
         kwargs = {}
         if self._model:
             kwargs["model"] = self._model
+        # 启用 JSON Mode + 限制 token 数
         kwargs["response_format"] = {"type": "json_object"}
         kwargs["max_tokens"] = 2048
         try:
             resp = self._client.complete(INTENT_PROMPT, user_description, **kwargs)
+            # 三层 JSON 提取（兼容 JSON Mode 和非 JSON Mode 响应）
             intent = extract_json(resp)
+            # 合并 fallback 确保所有字段存在
             result = FALLBACK_INTENT.copy()
             result.update(intent)
             return result
