@@ -49,10 +49,30 @@ except ImportError:
 # ============================================================================
 # 版本管理: 每次修改/新增功能后, 版本号递增 + VERSION_HISTORY 追加条目
 # ----------------------------------------------------------------------------
-APP_VERSION = "1.0.10"
+APP_VERSION = "2.1.0"
 
 # 版本更新记录: [(版本号, 日期, [更新条目]), ...] 最新在最前
 VERSION_HISTORY = [
+    ("2.1.0", "2026-09-11", [
+        "[重构] 根目录结构整理: 原根目录约141个文件精简为14个核心文件(减幅90%+), 131个文件归入6个一级子目录",
+        "[重构] scenes/ — 场景文件归档: examples/(8个示例场景)、production/(17个生产场景)、tests/(19个测试场景)",
+        "[重构] tools/ — Python工具脚本归档: camera/(8)、asset/(8)、material/(11)、check/(11)、generate/(5)、fix/(6), 共49个脚本; 3个依赖ai/模块的测试脚本(test_ai_gen_rural/test_intent_debug/test_intent_full)保留在根目录",
+        "[重构] scripts/ — Bat/PS1脚本归档: build/(6)、patches/(3)、utility/(15), 共24个脚本",
+        "[重构] config/ — 配置文档归档: asset_catalog.md、scene_asset_ref.txt、skill_marker.txt、skill_patch*.txt、mesh_gallery.html, 共7个文件; asset_catalog.json保留在根目录(被ai/__init__.py的get_resource_path引用)",
+        "[重构] legacy/ — 废弃文件归档: mapforge_gui.py(旧版GUI)",
+        "[删除] mcp_tools.json — 已确认无任何代码引用的孤立文件",
+        "[修改] build_scene.py:875 — DEFAULT_SCENE 默认场景路径适配目录重组: farming_village.yaml 移至 scenes/examples/ 子目录",
+        "[验证] 全部98个单元测试通过(耗时10.73s), 目录重组未引入任何功能性变更",
+    ]),
+    ("2.0.0", "2026-09-11", [
+        "[新增] v0.1 Agent 基础设施: Pattern 模型、PatternLibrary(SQLite 存储带缓存/上下文管理器)、AgentBase 基类(封装 PydanticAI Agent 创建流程: 模型创建→系统提示词→输出类型→工具注册)、模式查询工具(pattern_tools)",
+        "[新增] v0.2 ScenePlanner Agent: SceneBlueprint 蓝图模型(8 个意图字段+6 个规划字段)、5 个知识工具(search_assets/search_experience/get_design_principles/get_template/get_pattern_docs)、ScenePlannerAgent 智能体(固定流水线第一个 Agent)",
+        "[修复] AgentBase 新增 run() 包装方法自动传递 deps，避免调用者忘记传 deps 导致 ctx.deps 为 None",
+        "[修复] experience_tools.py 移除 isinstance(str) 死代码分支(后端 experience_bank._row_to_dict() 已将 intent_json 反序列化为 dict)",
+        "[修复] knowledge_tools.py 简化冗余异常捕获: except (FileNotFoundError, Exception) → except Exception",
+        "[修复] 后端 KnowledgePack 新增公共方法 get_pattern()/select_template()、AssetIndex 新增 get_asset_by_path()，消除工具函数对私有 API(_get_pattern/_select_template/_assets)的直接访问",
+        "[测试] 新增 59 个单元测试(v0.1: 29 个 + v0.2: 30 个)，覆盖模型/工具/Agent 全链路，含 None 输入/空关键词/截断/scene_type 映射等边界情况",
+    ]),
     ("1.0.10", "2026-09-10", [
         "[新增] AI 对话面板每条信息自动加时间戳前缀 [HH:MM:SS], 统一通过 _append_chat() 方法输出, 便于追踪生成流程各阶段耗时",
         "[修复] AI 生成 Stage 2 请求超时(Request timed out): glm-5.2 推理模型处理 20KB 模板注入后的大 system prompt + 32K 输出超过原 300s 超时, _LLM_TIMEOUT 调至 600s(10分钟)",

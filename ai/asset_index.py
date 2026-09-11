@@ -48,3 +48,14 @@ class AssetIndex:
             if len(result) >= max_results:
                 break
         return result
+
+    def get_asset_by_path(self, path: str) -> dict:
+        """公共接口：按路径获取资产详情字典。
+
+        供外部工具调用，避免直接访问 _assets 私有属性。
+        找不到时返回空字典。
+        """
+        for asset in self._assets:
+            if asset.get("path") == path:
+                return asset
+        return {}

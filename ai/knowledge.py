@@ -54,6 +54,20 @@ class KnowledgePack:
             self._cache[name] = self._read(name)
         return self._cache[name]
 
+    def get_pattern(self, name):
+        """公共接口：获取模式文档内容（带缓存）。
+
+        供外部工具调用，避免直接访问 _get_pattern 私有方法。
+        """
+        return self._get_pattern(name)
+
+    def select_template(self, intent):
+        """公共接口：按意图匹配模板，返回 (文件名, json_str) 或 None。
+
+        供外部工具调用，避免直接访问 _select_template 私有方法。
+        """
+        return self._select_template(intent)
+
     def _try_load_template(self, filename):
         """懒加载模板 JSON 文件, 超大小上限或不存在时返回 None
 
