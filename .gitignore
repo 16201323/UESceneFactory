@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+build/
+*.spec
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# SQLite database
+*.db
+
+# Texture / 3D assets (large binary files, not source code)
+DirtTextures/
+Snow001/
+SnowTextures/
+downloads/
+mesh_thumbnails/
+
+# Logs
+*.log
+
+# Packaged output
+*.exe
+
+# Temporary files
+*.tmp

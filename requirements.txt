@@ -1,0 +1,7 @@
+# MapForge 运行时依赖 (版本锁定, pip install -r requirements.txt)
+PyQt6==6.11.0
+PyQt6-QScintilla==2.14.1
+openai==3.8.0
+PyYAML==6.0.3
+# 打包工具 (仅开发环境需要)
+pyinstaller==6.22.2
