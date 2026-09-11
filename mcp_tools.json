@@ -1,0 +1,495 @@
+[
+  {
+    "description": "设置关卡视口摄像机的位置和旋转。",
+    "name": "EditorToolset.EditorAppToolset.SetCameraTransform",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "transform": {
+          "type": "object",
+          "title": "ToolsetTransform",
+          "description": "表示带有可选位置、旋转和缩放的3D变换。\n未设置的字段在创建Object时表示“使用默认/恒等值”，在修改现有Object时表示“保持不变”。",
+          "properties": {
+            "location": {
+              "description": "世界空间位置。",
+              "title": "Vector",
+              "type": "object",
+              "properties": {
+                "x": {
+                  "type": "number"
+                },
+                "y": {
+                  "type": "number"
+                },
+                "z": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "x",
+                "y",
+                "z"
+              ]
+            },
+            "rotation": {
+              "description": "世界空间旋转。",
+              "title": "Rotator",
+              "type": "object",
+              "properties": {
+                "pitch": {
+                  "type": "number",
+                  "description": "绕Y轴的Pitch（角度）"
+                },
+                "yaw": {
+                  "type": "number",
+                  "description": "绕Z轴的Yaw（角度）"
+                },
+                "roll": {
+                  "type": "number",
+                  "description": "绕X轴的Roll（角度）"
+                }
+              },
+              "required": [
+                "pitch",
+                "yaw",
+                "roll"
+              ]
+            },
+            "scale": {
+              "description": "缩放。",
+              "title": "Vector",
+              "type": "object",
+              "properties": {
+                "x": {
+                  "type": "number"
+                },
+                "y": {
+                  "type": "number"
+                },
+                "z": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "x",
+                "y",
+                "z"
+              ]
+            }
+          }
+        }
+      },
+      "required": [
+        "transform"
+      ]
+    }
+  },
+  {
+    "description": "返回关卡视口摄像机的位置和旋转。",
+    "name": "EditorToolset.EditorAppToolset.GetCameraTransform",
+    "inputSchema": {
+      "type": "object"
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "returnValue": {
+          "type": "object",
+          "title": "ToolsetTransform",
+          "description": "返回关卡视口摄像机的变换。",
+          "properties": {
+            "location": {
+              "description": "世界空间位置。",
+              "title": "Vector",
+              "type": "object",
+              "properties": {
+                "x": {
+                  "type": "number"
+                },
+                "y": {
+                  "type": "number"
+                },
+                "z": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "x",
+                "y",
+                "z"
+              ]
+            },
+            "rotation": {
+              "description": "世界空间旋转。",
+              "title": "Rotator",
+              "type": "object",
+              "properties": {
+                "pitch": {
+                  "type": "number",
+                  "description": "绕Y轴的Pitch（角度）"
+                },
+                "yaw": {
+                  "type": "number",
+                  "description": "绕Z轴的Yaw（角度）"
+                },
+                "roll": {
+                  "type": "number",
+                  "description": "绕X轴的Roll（角度）"
+                }
+              },
+              "required": [
+                "pitch",
+                "yaw",
+                "roll"
+              ]
+            },
+            "scale": {
+              "description": "缩放。",
+              "title": "Vector",
+              "type": "object",
+              "properties": {
+                "x": {
+                  "type": "number"
+                },
+                "y": {
+                  "type": "number"
+                },
+                "z": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "x",
+                "y",
+                "z"
+              ]
+            }
+          }
+        }
+      },
+      "required": [
+        "returnValue"
+      ]
+    }
+  },
+  {
+    "description": "捕获带可选注释的关卡视口。\n\n注释渲染在可见Actor上叠加一个投影的3D世界空间网格，\n以及名称和位置标签。网格绘制在可配置的\n地面平面Z处，并通过摄像机投影，交点处\n有坐标数字（以米为单位显示）。每个带标签的Actor在其\n投影的屏幕位置处得到一个准星，并放置一个引导线标注以避免重叠。这赋予了\n具备视觉能力的代理空间感知能力：它可以引用网格\n坐标来指导放置，并通过标签识别场景内容。",
+    "name": "EditorToolset.EditorAppToolset.CaptureViewport",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "captureTransform": {
+          "description": "可选的捕获姿势。如果未设置，则使用视口 当前摄像机。",
+          "type": "object",
+          "title": "ToolsetTransform",
+          "properties": {
+            "location": {
+              "description": "世界空间位置。",
+              "title": "Vector",
+              "type": "object",
+              "properties": {
+                "x": {
+                  "type": "number"
+                },
+                "y": {
+                  "type": "number"
+                },
+                "z": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "x",
+                "y",
+                "z"
+              ]
+            },
+            "rotation": {
+              "description": "世界空间旋转。",
+              "title": "Rotator",
+              "type": "object",
+              "properties": {
+                "pitch": {
+                  "type": "number",
+                  "description": "绕Y轴的Pitch（角度）"
+                },
+                "yaw": {
+                  "type": "number",
+                  "description": "绕Z轴的Yaw（角度）"
+                },
+                "roll": {
+                  "type": "number",
+                  "description": "绕X轴的Roll（角度）"
+                }
+              },
+              "required": [
+                "pitch",
+                "yaw",
+                "roll"
+              ]
+            },
+            "scale": {
+              "description": "缩放。",
+              "title": "Vector",
+              "type": "object",
+              "properties": {
+                "x": {
+                  "type": "number"
+                },
+                "y": {
+                  "type": "number"
+                },
+                "z": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "x",
+                "y",
+                "z"
+              ]
+            }
+          }
+        },
+        "annotations": {
+          "description": "可选的注释覆层配置。仅在你需要 此信息以执行空间操作时使用。",
+          "title": "ViewportAnnotationConfig",
+          "type": "object",
+          "properties": {
+            "gridSpacing": {
+              "type": "number",
+              "description": "世界空间中网格线之间的距离（厘米）。传递0以禁用网格覆层，同时仍然绘制Actor标签。"
+            },
+            "gridExtent": {
+              "type": "number",
+              "description": "网格在每个轴上从原点延伸的距离（厘米）。"
+            },
+            "gridHeight": {
+              "type": "number",
+              "description": "世界空间中地平面网格的高度。"
+            },
+            "maxLabelDistance": {
+              "type": "number",
+              "description": "用于标记Actor和网格坐标的最大距离（厘米）。传递0以禁用Actor标签，同时仍然绘制网格。"
+            },
+            "classFilter": {
+              "type": "object",
+              "title": "Class@/Script/Engine.Actor",
+              "description": "如果非空，则只标记此类别（或子类别）的Actor。",
+              "properties": {
+                "refPath": {
+                  "type": "string",
+                  "description": "存储为软路径字符串的引用。"
+                }
+              },
+              "required": [
+                "refPath"
+              ]
+            },
+            "maxLabels": {
+              "type": "integer",
+              "description": "要绘制的Actor标签的最大数量。离摄像机最近的优先。不要绘制太多，否则图像会变得不连贯。"
+            }
+          },
+          "required": [
+            "gridSpacing",
+            "gridExtent",
+            "gridHeight",
+            "maxLabelDistance",
+            "classFilter",
+            "maxLabels"
+          ]
+        },
+        "bShowUI": {
+          "type": "boolean",
+          "description": "如果为false（默认），则在捕获的图像中隐藏编辑器UI覆层， 例如变换小工具和选择轮廓。设为true以精确 捕获屏幕上的内容，包括小工具。",
+          "default": false
+        }
+      }
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "returnValue": {
+          "title": "ViewportCapture",
+          "description": "被捕获的图像和关联的元数据。",
+          "type": "object",
+          "properties": {
+            "image": {
+              "title": "ToolsetImage",
+              "description": "捕获的屏幕截图（PNG编码为base64）。失败时为空。像素尺寸可通过FToolsetImage获取。",
+              "type": "object",
+              "properties": {
+                "mimeType": {
+                  "type": "string",
+                  "description": "图像的编码格式。"
+                },
+                "data": {
+                  "type": "string",
+                  "description": "编码为base64字符串的图像数据。"
+                }
+              },
+              "required": [
+                "mimeType",
+                "data"
+              ]
+            },
+            "cameraLocation": {
+              "title": "Vector",
+              "description": "关卡视口摄像机位置（世界空间，以厘米为单位）。",
+              "type": "object",
+              "properties": {
+                "x": {
+                  "type": "number"
+                },
+                "y": {
+                  "type": "number"
+                },
+                "z": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "x",
+                "y",
+                "z"
+              ]
+            },
+            "cameraRotation": {
+              "title": "Rotator",
+              "description": "关卡视口摄像机旋转（世界空间）。",
+              "type": "object",
+              "properties": {
+                "pitch": {
+                  "type": "number",
+                  "description": "绕Y轴的Pitch（角度）"
+                },
+                "yaw": {
+                  "type": "number",
+                  "description": "绕Z轴的Yaw（角度）"
+                },
+                "roll": {
+                  "type": "number",
+                  "description": "绕X轴的Roll（角度）"
+                }
+              },
+              "required": [
+                "pitch",
+                "yaw",
+                "roll"
+              ]
+            },
+            "cameraFOV": {
+              "type": "number",
+              "description": "关卡视口摄像机视野（以度为单位）。"
+            },
+            "grid": {
+              "title": "ViewportGrid",
+              "description": "用于注释的网格参数。当网格被禁用时，SpacingCm为零。",
+              "type": "object",
+              "properties": {
+                "spacingCm": {
+                  "type": "number",
+                  "description": "世界空间中网格线之间的距离（厘米）。如果网格被禁用，则为零。"
+                },
+                "extentCm": {
+                  "type": "number",
+                  "description": "网格在每个轴上从原点延伸的距离（厘米）。"
+                },
+                "height": {
+                  "type": "number",
+                  "description": "世界空间中地平面网格的高度。"
+                }
+              },
+              "required": [
+                "spacingCm",
+                "extentCm",
+                "height"
+              ]
+            },
+            "labeledActors": {
+              "type": "array",
+              "items": {
+                "title": "ViewportLabel",
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Actor的规范化、关卡独有的名称（AActor::GetName）之后可以使用此项来引用该Actor。"
+                  },
+                  "label": {
+                    "type": "string",
+                    "description": "在图像上绘制的显示标签（Actor标签+位置，以米为单位）。不保证唯一。"
+                  },
+                  "class": {
+                    "type": "object",
+                    "title": "Class@/Script/Engine.Actor",
+                    "description": "Actor的类。",
+                    "properties": {
+                      "refPath": "@{type=string; description=存储为软路径字符串的引用。}"
+                    },
+                    "required": [
+                      "refPath"
+                    ]
+                  },
+                  "screenPosition": {
+                    "title": "IntPoint",
+                    "description": "返回图像中Actor原点的屏幕空间像素位置。",
+                    "type": "object",
+                    "properties": {
+                      "x": "@{type=integer}",
+                      "y": "@{type=integer}"
+                    },
+                    "required": [
+                      "x",
+                      "y"
+                    ]
+                  },
+                  "worldLocation": {
+                    "title": "Vector",
+                    "description": "Actor原点的世界空间位置（厘米）。",
+                    "type": "object",
+                    "properties": {
+                      "x": "@{type=number}",
+                      "y": "@{type=number}",
+                      "z": "@{type=number}"
+                    },
+                    "required": [
+                      "x",
+                      "y",
+                      "z"
+                    ]
+                  },
+                  "distanceCm": {
+                    "type": "number",
+                    "description": "从摄像机到Actor原点的距离（厘米）。"
+                  }
+                },
+                "required": [
+                  "name",
+                  "label",
+                  "class",
+                  "screenPosition",
+                  "worldLocation",
+                  "distanceCm"
+                ]
+              },
+              "description": "图像中每个被标记的角色对应一个条目。"
+            }
+          },
+          "required": [
+            "image",
+            "cameraLocation",
+            "cameraRotation",
+            "cameraFOV",
+            "grid",
+            "labeledActors"
+          ]
+        }
+      },
+      "required": [
+        "returnValue"
+      ]
+    }
+  }
+]
