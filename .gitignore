@@ -26,11 +26,9 @@ Thumbs.db
 *.db
 
 # Texture / 3D assets (large binary files, not source code)
-DirtTextures/
-Snow001/
-SnowTextures/
-downloads/
-mesh_thumbnails/
+assets/snow/
+assets/ground/
+assets/thumbnails/
 
 # Logs
 *.log

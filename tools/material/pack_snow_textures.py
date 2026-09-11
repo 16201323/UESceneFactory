@@ -8,8 +8,10 @@ from PIL import Image
 import shutil
 import os
 
-src_dir = r"c:\Users\25868\Desktop\UE5\MapForgeTest\Snow001"
-dst_dir = r"c:\Users\25868\Desktop\UE5\MapForgeTest\SnowTextures"
+# 本脚本位于 tools/material/, 向上两级到项目根, 再访问 assets/snow/
+_project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+src_dir = os.path.join(_project_root, "assets", "snow", "Snow001")
+dst_dir = os.path.join(_project_root, "assets", "snow", "SnowTextures")
 os.makedirs(dst_dir, exist_ok=True)
 
 # 1. 反照率: 直接复制 Color

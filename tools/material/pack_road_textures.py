@@ -13,8 +13,10 @@ from PIL import Image
 import shutil
 import os
 
-src_dir = r"c:\Users\25868\Desktop\UE5\MapForgeTest\downloads\Ground103_1K-JPG"
-dst_dir = r"c:\Users\25868\Desktop\UE5\MapForgeTest\DirtTextures"
+# 本脚本位于 tools/material/, 向上两级到项目根, 再访问 assets/ground/
+_project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+src_dir = os.path.join(_project_root, "assets", "ground", "Ground103_1K-JPG")
+dst_dir = os.path.join(_project_root, "assets", "ground", "DirtTextures")
 os.makedirs(dst_dir, exist_ok=True)
 
 

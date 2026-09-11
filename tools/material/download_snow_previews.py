@@ -17,7 +17,11 @@ SNOW_TEXTURES = [
         "name": "Snow 001",
         "desc": "干净浅白雪 · 程序化生成 · 下载量24,894",
         "url": "https://ambientcg.com/get?file=Snow001_1K-JPG.zip",
-        "local_color": r"c:\Users\25868\Desktop\UE5\MapForgeTest\Snow001\Snow001_1K-JPG_Color.jpg",
+        # 本脚本位于 tools/material/, 向上两级到项目根, 再访问 assets/snow/Snow001/
+        "local_color": os.path.join(
+            os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+            "assets", "snow", "Snow001", "Snow001_1K-JPG_Color.jpg"
+        ),
     },
     {
         "id": "Snow002",
@@ -44,8 +48,9 @@ SNOW_TEXTURES = [
 
 # 缩略图大小
 THUMB_SIZE = (256, 256)
-# 输出目录
-OUT_DIR = r"c:\Users\25868\Desktop\UE5\MapForgeTest\SnowPreviews"
+# 输出目录 (相对于项目根目录 assets/snow/ 下)
+_project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+OUT_DIR = os.path.join(_project_root, "assets", "snow", "SnowPreviews")
 os.makedirs(OUT_DIR, exist_ok=True)
 
 

@@ -49,10 +49,16 @@ except ImportError:
 # ============================================================================
 # 版本管理: 每次修改/新增功能后, 版本号递增 + VERSION_HISTORY 追加条目
 # ----------------------------------------------------------------------------
-APP_VERSION = "2.2.0"
+APP_VERSION = "2.2.1"
 
 # 版本更新记录: [(版本号, 日期, [更新条目]), ...] 最新在最前
 VERSION_HISTORY = [
+    ("2.2.1", "2026-09-11", [
+        "[重构] 资产文件统一归入 assets/ 目录: Snow001/SnowTextures → assets/snow/, Ground103/DirtTextures → assets/ground/, mesh_thumbnails → assets/thumbnails/",
+        "[修改] 3个工具脚本(pack_snow_textures/pack_road_textures/download_snow_previews)硬编码的 MapForgeTest 路径改为相对项目根路径",
+        "[修改] .gitignore 旧的根目录忽略规则更新为资产目录 assets/ 下忽略",
+        "[验证] 全部98个单元测试通过, 资产目录重组未引入功能性变更",
+    ]),
     ("2.2.0", "2026-09-11", [
         "[重构] 二级目录重组: 所有脚本移入 scripts/ (含 __init__.py 使其成为 Python 包, from scripts.xxx import)",
         "[重构] 资产文件移入 config/ (asset_catalog.json、mapforge.ico)",
