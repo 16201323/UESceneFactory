@@ -1,0 +1,53 @@
+{
+    "scene": {
+        "name": "water_river_template",
+        "target_level": "/Game/Maps/TestWaterRiver",
+        "description": "水系模板: 主河+支流汇入 (P15)"
+    },
+    "landscape": {
+        "material": "/Game/RuralHouse/Landscape/MI_Landscape",
+        "section_size_quads": 63,
+        "num_subsections": 2,
+        "component_count_x": 4,
+        "component_count_y": 4,
+        "location": [0, 0, 0],
+        "rotation": [0, 0, 0],
+        "scale": [100, 100, 100],
+        "height_pattern": {
+            "type": "features",
+            "rivers": [
+                {
+                    "points": [[50, 450], [250, 350], [450, 200]],
+                    "width_m": 3,
+                    "width_end_m": 8,
+                    "bed_depth_m": 2.0,
+                    "profile": "V",
+                    "material_path": "/Game/Modular_Rural_Cabin/Materials/Instances/Water_Lake",
+                    "flow_speed": 10.0
+                },
+                {
+                    "points": [[450, 450], [350, 300], [250, 350]],
+                    "width_m": 1.5,
+                    "width_end_m": 3,
+                    "bed_depth_m": 1.5,
+                    "profile": "V",
+                    "material_path": "/Game/Modular_Rural_Cabin/Materials/Instances/Water_Lake",
+                    "flow_speed": 10.0
+                }
+            ]
+        },
+        "layers": [
+            {"info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer1_LayerInfo", "weight": 1.0}
+        ]
+    },
+    "ground": {},
+    "lighting": {
+        "directional_light": {"location": [0, 0, 5000], "rotation": [-45, 0, 0], "intensity": 3.0, "color": [1, 1, 1]},
+        "sky_light": {"location": [0, 0, 1000], "intensity": 1.0, "color": [0.5, 0.6, 0.8]},
+        "sky_atmosphere": {"location": [0, 0, 10000]},
+        "height_fog": {"location": [0, 0, 500], "density": 0.01, "color": [0.6, 0.7, 0.9]}
+    },
+    "weather": {
+        "volumetric_clouds": {"location": [0, 0, 5000]}
+    }
+}
