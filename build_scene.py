@@ -58,43 +58,6 @@ _sds = None
 # 用途: snap_to_ground 时大量实例查询地形高度, 缓存命中率极高(网格间距通常>1m)
 _terrain_cache = {}
 _terrain_helper_available = None
-
-# 植被类资产关键词(小写匹配): 路径含这些词的资产视为花草树木, 自动强制贴地
-# 防止 AI 生成的树木埋入山体内部而非贴着地表生长
-_VEGETATION_KEYWORDS = (
-    "foliage", "tree", "pine", "oak", "birch", "spruce", "willow",
-    "palm", "bamboo", "cedar", "cypress", "maple", "elm", "poplar",
-    "grass", "plant", "flower", "bush", "shrub", "weed", "fern",
-    "reed", "cactus", "sapling", "seedling", "crop", "wheat",
-    "rice", "corn", "sorghum", "soybean", "cotton",
-)
-
-
-def _is_vegetation_asset(asset_path):
-    """检测资产路径是否为植被类(树木/花草/灌木/作物), 用于自动强制贴地
-
-    植被类资产必须贴着地形表面生长, 不能埋入山体或悬浮空中。
-    将资产路径按 / 和 _ 分割为独立 token, 逐词与关键词做精确匹配;
-    同时兼容关键词+数字后缀(如 "tree04" → "tree")。
-    分词匹配避免了子串匹配的误判: 如 "corn" 不会误匹配 "Corner"。
-    """
-    # 非字符串(如 None/int)直接返回, 防止 .lower() 抛 AttributeError
-    if not asset_path or not isinstance(asset_path, str):
-        return False
-    low = asset_path.lower()
-    # 按 / 和 _ 统一分割为独立 token, 做精确词级匹配
-    tokens = low.replace('/', '_').split('_')
-    kw_set = set(_VEGETATION_KEYWORDS)
-    for token in tokens:
-        # 精确命中(如 "tree"、"pine"、"grass")
-        if token in kw_set:
-            return True
-        # 兼容关键词+数字后缀(如 "tree04" → 去掉数字后 "tree" 命中)
-        stripped = token.rstrip('0123456789')
-        if stripped and stripped in kw_set:
-            return True
-    return False
-
 # 是否优先使用内存高度图查询(GetHeightFromHeightmap): None=未检测, True/False=已检测
 # 绕过纹理重建导致的悬浮问题: Import()+PostEditChange()后部分纹理区域被空编辑层覆盖,
 # GetHeightAtLocation对部分位置返回0 -> 同一山谷区域有的树贴地有的悬浮。
@@ -952,4 +915,61 @@ def main():
 
     if _umap_exists_on_disk:
         log("磁盘上发现旧 .umap (" + str(_os.path.getsize(_umap_disk) // 1024) + "KB)，尝试加载到目标路径")
-        # 加载已有关卡 → 世界直接在目标路径上 → save_map 走 SaveCurrentLevel →
+        # 加载已有关卡 → 世界直接在目标路径上 → save_map 走 SaveCurrentLevel → 无对话框
+        for _load_attempt in range(3):
+            try:
+                unreal.EditorLevelLibrary.load_level(target_level)
+                _world = unreal.EditorLevelLibrary.get_editor_world()
+                if _world:
+                    _pkg_path = _world.get_outer().get_path_name()
+                    _expected_path = target_level.split("/")[-1]
+                    if "/Temp/" not in _pkg_path:
+                        log("关卡加载成功（尝试" + str(_load_attempt + 1) + "），包路径: " + _pkg_path)
+                        level_created = True
+                        _world_at_target_path = True
+                        break
+                    else:
+                        log("加载后世界仍在 /Temp/（尝试" + str(_load_attempt + 1) + "）: " + _pkg_path)
+                _time.sleep(1.0)
+            except Exception as _e:
+                log("load_level 失败（尝试" + str(_load_attempt + 1) + "）: " + str(_e))
+                _time.sleep(1.0)
+
+    if not level_created:
+        # 首次构建：磁盘上无 .umap，使用 new_level 创建
+        log("首次构建或加载失败，使用 new_level 创建关卡")
+        try:
+            _level_subsystem = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
+            if _level_subsystem:
+                for _nl_attempt in range(3):
+                    _level_subsystem.new_level(target_level)
+                    _world = unreal.EditorLevelLibrary.get_editor_world()
+                    if _world:
+                        _pkg_path = _world.get_outer().get_path_name()
+                        if "/Temp/" in _pkg_path:
+                            log("new_level 回退到临时路径（尝试" + str(_nl_attempt + 1) + "）: " + _pkg_path + "，稍后重试")
+                            _time.sleep(1.0)
+                            continue
+                        log("new_level 创建成功，包路径: " + _pkg_path)
+                        level_created = True
+                        _world_at_target_path = True
+                        break
+                    else:
+                        log("new_level 创建成功")
+                        level_created = True
+                        break
+                if not level_created:
+                    log("new_level 3次均回退到 /Temp/，将尝试直接加载目标路径的空壳", "WARN")
+                    # 【修复】new_level回退到/Temp/时会在目标路径创建8KB空壳.umap,
+                    # 加载该空壳后世界在目标路径上, save_map走SaveCurrentLevel路径即可成功保存。
+                    # 注意: PackageTools.find_or_create_package在UE5 Python API中不存在,
+                    # 不能用它手动创建包。改用直接load_level加载new_level已创建的空壳。
+                    _stub_exists = _os.path.exists(_umap_disk)
+                    if _stub_exists:
+                        _stub_size_kb = _os.path.getsize(_umap_disk) // 1024
+                        log("空壳 .umap 已存在 (" + str(_stub_size_kb) + "KB)，尝试加载以将世界移至目标路径")
+                        try:
+                            unreal.EditorLevelLibrary.load_level(target_level)
+                            _world = unreal.EditorLevelLibrary.get_editor_world()
+                            if _world:
+                                _pkg_path = _world.g
