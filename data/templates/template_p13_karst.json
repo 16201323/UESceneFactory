@@ -1,0 +1,128 @@
+{
+  "scene": {
+    "_note": "喀斯特峰林场景模板 — 泊松盘采样40座山峰+8个溶斗(漏斗), 模拟云南/桂林喀斯特峰林地貌。每座峰为高斯锥凸起(delta=h×exp(-d²/(2r²))), 溶斗为负高斯锥下凹; 63m×63m小地形, 改component_count可放大",
+    "name": "KarstPeakForest",
+    "target_level": "/Game/MapForgeTest/GB_KarstTemplate",
+    "description": "喀斯特峰林模板: 泊松盘40峰(15~45m, 半径25m) + 8溶斗(深6m, 半径18m), 63m×63m"
+  },
+  "landscape": {
+    "_note": "【喀斯特算法】C++用泊松盘采样(Poisson disk)在min_distance_m约束下生成peak_count个峰点, 每峰随机高度[h_min,h_max]; 每峰以高斯锥凸起: delta=h×exp(-d²/(2σ²)), σ=peak_radius_m/2; 溶斗同理但高度为负(下凹); 所有峰/溶斗高度累加(blend_mode=additive); perturbation扭曲等高线, noise_overlay叠加自然起伏",
+    "material": "/Game/RuralHouse/Landscape/MI_Landscape",
+    "section_size_quads": 63,
+    "num_subsections": 1,
+    "component_count_x": 1,
+    "component_count_y": 1,
+    "location": [
+      0,
+      0,
+      0
+    ],
+    "rotation": [
+      0,
+      0,
+      0
+    ],
+    "scale": [
+      100,
+      100,
+      100
+    ],
+    "layers": [
+      {
+        "_note": "Layer1基底土: uniform权重0.6, 峰体主体岩石材质",
+        "info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer1_LayerInfo",
+        "weight": 0.6
+      },
+      {
+        "_note": "Layer2泥地: uniform权重0.4, 溶斗底部/低洼积水泥地",
+        "info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer2_LayerInfo",
+        "weight": 0.4
+      }
+    ],
+    "height_pattern": {
+      "_note": "karst核心参数: peak_count=40(峰数量, 越多峰林越密); min_distance_m=60(峰间最小距离, 泊松盘参数, 值越大峰越稀疏); peak_height_min_m=15/peak_height_max_m=45(每峰随机取此区间高度); peak_radius_m=25(峰底半径, σ=radius/2, 控制山体坡度陡缓); doline_count=8(溶斗/漏斗数量, 地表塌陷坑); doline_depth_m=6(溶斗下凹深度); doline_radius_m=18(溶斗半径); seed=42(随机种子, 控制峰/溶斗位置分布); blend_mode=additive(所有峰凸起+溶斗下凹累加); 增强字段: perturbation_strength=0.4扭曲等高线, noise_overlay(amp0.5m)叠加起伏",
+      "type": "karst",
+      "peak_count": 40,
+      "min_distance_m": 60,
+      "peak_height_min_m": 15,
+      "peak_height_max_m": 45,
+      "peak_radius_m": 25,
+      "doline_count": 8,
+      "doline_depth_m": 6,
+      "doline_radius_m": 18,
+      "seed": 42,
+      "blend_mode": "additive",
+      "perturbation_strength": 0.4,
+      "perturbation_scale": 0.04,
+      "perturbation_seed": 13,
+      "noise_overlay": {
+        "_note": "自然起伏: amp0.5m freq0.03 oct3 seed11, 在峰林几何上叠加中频起伏增强岩石不规则感",
+        "amplitude_m": 0.5,
+        "frequency": 0.03,
+        "octaves": 3,
+        "seed": 11
+      }
+    }
+  },
+  "ground": {},
+  "placements": [],
+  "lighting": {
+    "_note": "基础光照: 太阳斜射(俯角45°)正白光 + 天空光冷色补光 + 大气层 + 轻雾营造空气透视",
+    "directional_light": {
+      "location": [
+        0,
+        0,
+        5000
+      ],
+      "rotation": [
+        -45,
+        0,
+        0
+      ],
+      "intensity": 3.0,
+      "color": [
+        1,
+        1,
+        1
+      ]
+    },
+    "sky_light": {
+      "intensity": 1.0,
+      "color": [
+        0.8,
+        0.9,
+        1.0
+      ]
+    },
+    "sky_atmosphere": {
+      "location": [
+        0,
+        0,
+        0
+      ]
+    },
+    "height_fog": {
+      "location": [
+        0,
+        0,
+        0
+      ],
+      "density": 0.0001,
+      "color": [
+        0.8,
+        0.85,
+        0.9
+      ]
+    }
+  },
+  "weather": {
+    "_note": "体积云: UE5原生VolumetricCloud组件",
+    "volumetric_clouds": {
+      "location": [
+        0,
+        0,
+        2000
+      ]
+    }
+  }
+}
