@@ -1,0 +1,32 @@
+{
+  "scene": {
+    "name": "Comm_Tower_Two",
+    "target_level": "/Game/MapForgeTest/GB_Test_07_CommTower",
+    "description": "P7 通信塔场景 — 2种通信塔按真实世界标准缩放: 电信塔1.2x→24.7m(城市宏基站15-30m), 科幻塔3.0x→8.4m(小型基站4-15m). 碰撞: 两塔均已✓完整碰撞(电信塔手动添加复杂碰撞体)"
+  },
+
+  "ground": {
+    "_note": "草地地面: SM_House_FloorPlane_03 scale[10,20,1]→97m×100m, 放置2座通信塔(间距4000cm=40m). 缩放后: 电信塔24.7m+科幻塔8.4m, 均在地面内",
+    "asset": "/Game/RuralHouse/House/Meshes/ModularParts/SM_House_FloorPlane_03",
+    "location": [0, 0, 0],
+    "scale": [10, 20, 1],
+    "material_override": "/Game/Foliage_Sets/ground_materials/materials/M_grass_simple_a"
+  },
+
+  "placements": [
+    {"_note": "=== 左侧: 电信通信塔(6个Object组合, 基础最高2058cm=20.6m, x1.2缩放→24.7m, 城市宏基站标准15-30m) ==="},
+    {"_note": "telecommunication_tower: 6个Object全可见; scale1.2x达城市宏基站高度; skip_z_fix跳过单部件Z修正(组合内原点混合), ground_assembly按整体包围盒min_Z落地; 碰撞✓完整碰撞(手动添加复杂碰撞体, 玩家无法穿透)"},
+    {"type": "group", "asset_prefix": "/Game/CommunicationTower/telecommunication_tower_low-poly_free/StaticMeshes/Object_", "count": 6, "location": [-2000, 0, 0], "rotation": [0, 0, 0], "scale": [1.2, 1.2, 1.2], "skip_z_fix": true, "ground_assembly": true},
+
+    {"_note": "=== 右侧: 科幻通信塔(10个Object组合, 基础最高280cm=2.8m, x3.0缩放→8.4m, 小型基站标准4-15m) ==="},
+    {"_note": "sci-fi_communication_tower: 10个Object全可见; scale3.0x达小型基站高度; skip_z_fix跳过单部件Z修正, ground_assembly按整体包围盒min_Z落地; 碰撞✓完整碰撞(简化10 convex, 玩家无法穿透). 注意Object_1存在单位异常(米制导入未转换, bounds仅39.78×40×13.5cm, x3.0后约0.4m仍偏小, 可单独再x100)"},
+    {"type": "group", "asset_prefix": "/Game/CommunicationTower/sci-fi_communication_tower/StaticMeshes/Object_", "count": 10, "location": [2000, 0, 0], "rotation": [0, 0, 0], "scale": [3.0, 3.0, 3.0], "skip_z_fix": true, "ground_assembly": true}
+  ],
+
+  "lighting": {
+    "_note": "基础日光: 太阳45°俯角暖白光投射阴影 + 天空光冷色 + 大气层",
+    "directional_light": {"location": [0, 0, 3000], "rotation": [-45, 35, 0], "intensity": 10.0, "color": [1.0, 0.94, 0.78], "cast_shadows": true},
+    "sky_light": {"location": [0, 0, 3000], "intensity": 1.0, "color": [0.78, 0.86, 1.0]},
+    "sky_atmosphere": {"location": [0, 0, 0]}
+  }
+}
