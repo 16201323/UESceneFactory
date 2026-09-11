@@ -1,0 +1,30 @@
+{
+  "scene": {
+    "name": "PV_Solar_Panels",
+    "target_level": "/Game/MapForgeTest/GB_PV_Solar_Panels",
+    "description": "P5 光伏板场景 — group加载 Photovoltaic/-photovoltaic_panels 全部 Material* 资产, scale 0.01 缩到1%, roll -90 度"
+  },
+
+  "ground": {
+    "_note": "草地地面: SM_House_FloorPlane_03 基础尺寸9.7m×5m, scale[10,10,1]放大到97m×50m, 足够容纳缩到1%的光伏阵列(最大约4m)",
+    "asset": "/Game/RuralHouse/House/Meshes/ModularParts/SM_House_FloorPlane_03",
+    "location": [0, 0, 0],
+    "scale": [10, 10, 1],
+    "material_override": "/Game/Foliage_Sets/ground_materials/materials/M_grass_simple_a"
+  },
+
+  "placements": [
+    {"_note": "=== 光伏板组: group加载全部 Material* 资产 ==="},
+    {"_note": "asset_prefix: /Game/Photovoltaic/-photovoltaic_panels/StaticMeshes/Material — group生成 Material0~Material226, 共227个候选. 实际存在约30个(Material2,3,21-29,31-32,210-226), 其余197个GROUP_SKIP跳过. 注意Material210/211/212/217/28/29为空几何体(不可见但加载成功)"},
+    {"_note": "scale[0.01]: 缩到1% — 原始尺寸如Material3(411m×46m×127m)→4.1m×0.46m×1.27m, Material22(400m×32m×77m)→4m×0.32m×0.77m. 各部件放在同一世界坐标[0,0,0], 内部相对偏移由资产自带"},
+    {"_note": "rotation[0,0,-90]: roll=-90度(滚动-90度). skip_z_fix=true跳过单部件Z自动修正(各资产原点类型不一: center/bottom/top混用). ground_assembly=true整组生成后统计最低Z平移贴地"},
+    {"type": "group", "asset_prefix": "/Game/Photovoltaic/-photovoltaic_panels/StaticMeshes/Material", "count": 227, "location": [0, 0, 0], "rotation": [0, 0, -90], "scale": [0.01, 0.01, 0.01], "skip_z_fix": true, "ground_assembly": true}
+  ],
+
+  "lighting": {
+    "_note": "基础日光: 太阳45°俯角暖白光投射阴影 + 天空光冷色 + 大气层",
+    "directional_light": {"location": [0, 0, 3000], "rotation": [-45, 35, 0], "intensity": 10.0, "color": [1.0, 0.94, 0.78], "cast_shadows": true},
+    "sky_light": {"location": [0, 0, 3000], "intensity": 1.0, "color": [0.78, 0.86, 1.0]},
+    "sky_atmosphere": {"location": [0, 0, 0]}
+  }
+}
