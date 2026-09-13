@@ -349,6 +349,81 @@ def type_name(expected):
 
 
 # ===========================================================================
+# P1-2: 语义一致性校验 — 检测地形/水系/图层引用的逻辑矛盾
+# 语义规则只产生 warning（不阻塞流水线），提示用户审查潜在的不一致
+# ===========================================================================
+
+# 语义规则1: flat 地形但描述含山丘关键词 → 可能 terrain_type 判断有误
+_HILL_KEYWORDS = ["山", "hill", "坡", "mountain", "峰", "peak", "ridge", "脊", "高原"]
+
+
+def validate_semantic(scene):
+    """语义一致性校验 — 检测地形/水系/图层引用的逻辑矛盾。
+
+    语义规则只产生 warning（不阻塞流水线），提示用户审查潜在的不一致。
+    用户确认意图与 JSON 相符时可忽略这些 warning。
+
+    规则:
+    1. 地形-描述不匹配: height_pattern.type=flat 但 scene.description 含山丘关键词
+    2. 水系不完整: height_pattern 含 water 但无 rivers（静水池可忽略）
+    3. 植被图层引用未定义: grass/wheat 的 layer_name 不在 layers[].info 中定义
+
+    Args:
+        scene: 场景 JSON 字典
+
+    Returns:
+        语义 warning 列表（空=无语义矛盾）
+    """
+    warnings = []
+    ls = scene.get("landscape", {})
+    hp = ls.get("height_pattern", {})
+    hp_type = hp.get("type", "")
+    desc = scene.get("scene", {}).get("description", "").lower()
+
+    # 规则1: 地形-描述不匹配 — flat 地形但场景描述含山丘关键词
+    if hp_type == "flat":
+        for kw in _HILL_KEYWORDS:
+            if kw in desc:
+                warnings.append(
+                    "语义: height_pattern.type=flat 但描述含 '%s'，考虑改为 hills/mountains" % kw
+                )
+                break
+
+    # 规则2: 水系不完整 — 有 water 配置但无 rivers（静水池可忽略此警告）
+    if hp.get("water") and not hp.get("rivers"):
+        warnings.append("语义: height_pattern 含 water 但无 rivers，若为静水池可忽略")
+
+    # 规则3: 植被图层引用未定义 — grass/wheat 的 layer_name 不在 layers[] 中定义
+    # 从 layers[].info 路径末尾提取图层名(如 /Game/.../L_Grass_LayerInfo → L_Grass)
+    defined_layer_names = set()
+    for layer in ls.get("layers", []):
+        info = layer.get("info", "")
+        if info:
+            name = info.rstrip("/").split("/")[-1]
+            if name.endswith("_LayerInfo"):
+                name = name[:-len("_LayerInfo")]
+            defined_layer_names.add(name)
+
+    grass = ls.get("grass", {})
+    if isinstance(grass, dict):
+        grass_layer = grass.get("layer_name", "")
+        if grass_layer and grass_layer not in defined_layer_names:
+            warnings.append(
+                "语义: grass.layer_name='%s' 未在 layers[].info 中定义" % grass_layer
+            )
+
+    wheat = ls.get("wheat", {})
+    if isinstance(wheat, dict):
+        wheat_layer = wheat.get("layer_name", "")
+        if wheat_layer and wheat_layer not in defined_layer_names:
+            warnings.append(
+                "语义: wheat.layer_name='%s' 未在 layers[].info 中定义" % wheat_layer
+            )
+
+    return warnings
+
+
+# ===========================================================================
 # 校验核心: 遍历 JSON 结构, 检查字段名/类型/必填/枚举
 # ===========================================================================
 
@@ -524,6 +599,9 @@ def validate_scene(scene):
         validate_section(rv, TOP_RIVER_FIELDS, rv_path, errors, warnings)
         for j, wf in enumerate(rv.get("waterfalls", [])):
             validate_section(wf, WATERFALL_FIELDS, "%s.waterfalls[%d]" % (rv_path, j), errors, warnings)
+
+    # P1-2: 语义一致性校验 — 检测地形/水系/图层引用的逻辑矛盾(只产生 warning)
+    warnings.extend(validate_semantic(scene))
 
     return errors, warnings
 

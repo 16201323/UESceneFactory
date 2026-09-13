@@ -5,6 +5,7 @@
       response_format 和 max_tokens 可直接传入。
 """
 import json
+import threading
 import urllib.error
 import urllib.request
 from abc import ABC, abstractmethod
@@ -13,6 +14,47 @@ from typing import Any
 # 推理模型(如 glm-5.2)需要先完成 reasoning 再输出 content;
 # Stage 2 注入20KB模板后 system prompt 暴增, 300s 实测不够(大场景推理+32K输出超时), 调到600s
 _LLM_TIMEOUT = 600.0
+
+
+class TokenTracker:
+    """全局 LLM Token 累计器(线程安全单例)
+
+    统一统计程序启动后所有用到 LLM 的 token 消耗量, 覆盖两条调用路径:
+      1. AIWorker(旧管线): IntentParser/SceneGenerator/ValidationRepairLoop → LLMClient.complete()
+         → 在 complete() 成功返回后调用 add() 上报(OpenAI: usage.prompt_tokens/completion_tokens;
+         Ollama: prompt_eval_count/eval_count)
+      2. AgentWorker(新管线): pydantic_ai Agent.run() → AgentRunResult.usage
+         → 在 run() 每阶段完成后调用 add() 上报(input_tokens/output_tokens)
+    UI 层通过 QTimer 定时轮询 totals 属性刷新顶栏显示, 实现"所有用到 LLM 的 tokens
+    量都计算进去"的跨模块统一统计。
+    """
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._input_tokens = 0   # 累计输入(prompt) tokens
+        self._output_tokens = 0  # 累计输出(completion) tokens
+
+    def add(self, input_tokens: int, output_tokens: int) -> None:
+        """上报一次 LLM 调用的 token 消耗(线程安全, 允许 None/负值自动归零)"""
+        with self._lock:
+            self._input_tokens += int(input_tokens or 0)
+            self._output_tokens += int(output_tokens or 0)
+
+    @property
+    def totals(self) -> tuple[int, int, int]:
+        """返回 (累计输入, 累计输出, 累计合计) 的快照"""
+        with self._lock:
+            return self._input_tokens, self._output_tokens, self._input_tokens + self._output_tokens
+
+    def reset(self) -> None:
+        """重置累计(用于新会话/测试隔离)"""
+        with self._lock:
+            self._input_tokens = 0
+            self._output_tokens = 0
+
+
+# 全局单例: 程序生命周期内所有 LLM 调用统一上报到此实例
+token_tracker = TokenTracker()
 
 
 class LLMClient(ABC):
@@ -89,6 +131,15 @@ class OpenAILLMClient(LLMClient):
             call_kwargs.update(kwargs)
             call_kwargs.setdefault("model", self._model)
             response = self._client.chat.completions.create(**call_kwargs)
+            # 上报本次调用的 token 消耗到全局累计器
+            # (OpenAI 响应 usage 含 prompt_tokens=输入, completion_tokens=输出;
+            #  放在内容提取之前, 即使推理模型耗尽预算导致 content 为空, 已消耗的 tokens 仍被统计)
+            _usage = getattr(response, "usage", None)
+            if _usage is not None:
+                token_tracker.add(
+                    getattr(_usage, "prompt_tokens", 0),
+                    getattr(_usage, "completion_tokens", 0),
+                )
             choice = response.choices[0]
             content = choice.message.content
             # 推理模型(如 glm-5.2): reasoning_content 和 content 共享 max_tokens 预算
@@ -149,6 +200,13 @@ class OllamaLLMClient(LLMClient):
         try:
             with urllib.request.urlopen(req, timeout=self._timeout) as resp:
                 result = json.loads(resp.read().decode("utf-8"))
+                # 上报本次调用的 token 消耗到全局累计器
+                # (Ollama 响应含 prompt_eval_count=输入tokens, eval_count=输出tokens;
+                #  某些模型/版本可能不返回这两个字段, 用 .get 兜底为 0)
+                token_tracker.add(
+                    result.get("prompt_eval_count", 0),
+                    result.get("eval_count", 0),
+                )
                 return str(result["message"]["content"])
         except (TimeoutError, urllib.error.URLError, OSError, json.JSONDecodeError, KeyError) as e:
             raise RuntimeError(

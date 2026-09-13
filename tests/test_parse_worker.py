@@ -63,7 +63,60 @@ def test_parse_worker_error():
     assert isinstance(results.get("info"), str), "应返回错误信息字符串"
     print("SceneParseWorker 错误处理验证通过")
 
+def test_parse_scene_file_null_grid():
+    """验证含 null grid 的 JSON 不崩溃 (pydantic model_dump_json 默认含 None 字段)。
+
+    触发场景: Agent 管线通过 SceneJSON.model_dump_json() 序列化时,
+    static 类型的 PlacementConfig.grid 字段为 None, 默认输出 "grid": null。
+    parse_scene_file 遇到 "grid" in p 为 True 但 p["grid"] 为 None,
+    对 None 调用 .get() 会抛 'NoneType' object has no attribute 'get'。
+    """
+    import json as _json, tempfile, os
+    from scripts.mapforge_app import parse_scene_file
+
+    # 模拟 pydantic model_dump_json 输出: static 类型含 "grid": null
+    scene_data = {
+        "scene": {"name": "NullGridTest", "target_level": "/Game/Maps/Test"},
+        "placements": [
+            {"type": "static", "asset": "/Game/A", "grid": None, "instances": None},
+            {"type": "instanced_grid", "asset": "/Game/B",
+             "grid": {"rows": 3, "cols": 4}},
+        ],
+    }
+    tmp = tempfile.NamedTemporaryFile(
+        mode="w", suffix=".json", delete=False, encoding="utf-8")
+    _json.dump(scene_data, tmp)
+    tmp.close()
+
+    scene, info = parse_scene_file(tmp.name)
+    os.unlink(tmp.name)
+
+    assert scene is not None, "scene 不应为 None"
+    assert info["name"] == "NullGridTest"
+    # null grid 按 1 个 actor 计, 正常 grid 按 rows*cols=12 计 → 合计 13
+    assert info["total_actors"] == 13, f"期望 13, 实际 {info['total_actors']}"
+    print("parse_scene_file null grid 验证通过")
+
+def test_parse_scene_file_null_root():
+    """验证 JSON 根为 null 时不崩溃, 返回友好错误信息。"""
+    import tempfile, os
+    from scripts.mapforge_app import parse_scene_file
+
+    tmp = tempfile.NamedTemporaryFile(
+        mode="w", suffix=".json", delete=False, encoding="utf-8")
+    tmp.write("null")
+    tmp.close()
+
+    scene, info = parse_scene_file(tmp.name)
+    os.unlink(tmp.name)
+
+    assert scene is None, "null 根应返回 None scene"
+    assert isinstance(info, str), "应返回错误信息字符串"
+    print("parse_scene_file null root 验证通过")
+
 if __name__ == "__main__":
     test_parse_worker_success()
     test_parse_worker_error()
+    test_parse_scene_file_null_grid()
+    test_parse_scene_file_null_root()
     print("=== SceneParseWorker 测试通过 ===")

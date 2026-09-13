@@ -14,6 +14,7 @@ import subprocess
 import tempfile
 import time
 import logging
+import asyncio
 from collections import deque
 
 from PyQt6.QtWidgets import (
@@ -49,10 +50,79 @@ except ImportError:
 # ============================================================================
 # 版本管理: 每次修改/新增功能后, 版本号递增 + VERSION_HISTORY 追加条目
 # ----------------------------------------------------------------------------
-APP_VERSION = "2.2.1"
+APP_VERSION = "2.8.0"
 
 # 版本更新记录: [(版本号, 日期, [更新条目]), ...] 最新在最前
 VERSION_HISTORY = [
+    ("2.8.0", "2026-09-13", [
+        "[优化] 流水线 P0-1: QualityGuardAgent 注册 search_assets 工具 — 此前第三阶段只有 validate_scene/validate_assets 两个校验工具, 发现资产路径错误后只能等 LLM 瞎猜正确路径(修复率约40%); 新增 search_assets 工具后 LLM 可调用资产库搜索关键词获取候选路径列表, 从中选取正确 path 替换(预期修复率提升至约85%); 系统提示词同步增加'资产路径修复策略'章节",
+        "[优化] 流水线 P0-2: 知识模板智能裁剪 — 此前超 25KB 的模板(如 45KB 围栏模板含150个实例)被完全排除不注入上下文, LLM 缺少结构参考; 新增 _trim_template() 方法解析 JSON 后截断 placements[].instances/height_pattern.hills等长数组保留前5项并添加 _note 标注原始数量, 裁剪后骨架(约3KB)注入上下文供 LLM 参考结构; 围栏模板从'完全排除'变为'骨架注入'",
+        "[优化] 流水线 P1-1: 分级模型策略 — run_agent_pipeline.py 支持可选 stage_models 配置字典(stage1/stage2/stage3), 每阶段可用不同模型; 建议配置 Stage1(场景规划)/Stage3(质量校验)用小模型省时省 token, Stage2(JSON构建)保持大模型保质量; 不配置时所有阶段使用全局 llm_model(完全向后兼容)",
+        "[新增] 流水线 P1-2: 语义一致性校验规则 — validate_scene_json.py 新增 validate_semantic() 函数检测三类逻辑矛盾并产生 warning(不阻塞): (1)地形-描述不匹配(height_pattern.type=flat 但描述含山丘关键词); (2)水系不完整(含 water 但无 rivers); (3)植被图层引用未定义(grass/wheat 的 layer_name 不在 layers[].info 中)",
+        "[新增] 流水线 P1-3: 知识文档一致性检测脚本 — scripts/check_knowledge_sync.py 对比 data/knowledge/*.md 文档字段名与 validate_scene_json.py 字段注册表, 报告漏文档字段(注册表有但文档无)和额外字段(文档标注但注册表无), 用于发现新增字段忘了写文档或字段改名后文档未同步",
+    ]),
+    ("2.7.3", "2026-09-12", [
+        "[修复] C++ LandscapeHelper.cpp 代码审查修复3处隐患: #1快照陈旧——GbHasStoredTerrain仅条件置true从不重置, 连续创建地形(先有高度后平坦)时残留true返回旧坡度; 修复为先无条件GbHasStoredTerrain=false再条件存储; #2快照仅散布时存储——快照存储原嵌套在if(ScatterEntries.Num()>0)内, 无散布条目的场景永远无法查询坡度; 修复为移至散布块之前(PostEditChange之后)独立块, 确保所有场景均存储快照; #3 SizeX==0除零——GetSlopeDeg(VIdx%SizeX/VIdx/SizeX)和GetSlopeDegByWorld(Clamp区间反转)缺少SizeX<=0防护, 添加SizeX<=0||SizeY<=0前置检查避免UB/崩溃",
+    ]),
+    ("2.7.2", "2026-09-12", [
+        "[新增] C++ LandscapeHelper 暴露 GetSlopeAtWorldLocation(WorldX, WorldY) BlueprintCallable 静态方法: Python/Blueprint可运行时查询任意世界坐标处地形坡度角(度, 0=平地~90=垂直悬崖); 数据源为CreateLandscapeWithLayers中存储的静态高度快照(GStoredBaseHeights+GStoredLandscapeLocation/Scale/SizeX/SizeY), 不依赖GPU高度图纹理(避免Import后编辑层覆盖纹理导致GetHeightAtLocation返回0的已知问题); 内部重构FTerrainQuery复用Phase4的GetSlopeDeg中心差分法, 精度与步骤14散布代码完全一致; FTerrainQuery新增GetSlopeDegByWorld(WorldX,WorldY)方法封装世界坐标→顶点索引→坡度角转换; Python端不修改(符合最小改动原则, C++散布步骤14已内置slope_filter坡度过滤)",
+    ]),
+    ("2.7.1", "2026-09-12", [
+        "[重构] C++ LandscapeHelper.cpp 提取FTerrainQuery地形查询工具结构体(文件级, L60-135): 封装BaseHeightData+Location+Scale+SizeX/Y上下文, 提供GetZ(世界坐标→地形Z, 四舍五入最近顶点)/GetZByVertex(顶点索引→地形Z)/GetSlopeDeg(顶点索引→坡度角, 中心差分法)三个const方法; 消除步骤15/16/17三份完全相同的GetTerrainZ lambda + 步骤14内联Z计算 + 步骤14 CalcSlopeDeg lambda共5份重复逻辑; 4处FTerrainQuery Terrain(BaseHeightData,Location,Scale,SizeX,SizeY)构造替代原lambda定义, 9处GetTerrainZ()调用→Terrain.GetZ(), 1处CalcSlopeDeg()→Terrain.GetSlopeDeg(), 1处内联Z→Terrain.GetZByVertex(); 步骤14海拔过滤器(BaseHeightData直接读取uint16转米)保持不变",
+    ]),
+    ("2.7.0", "2026-09-12", [
+        "[重构] C++ LandscapeHelper.cpp 道路渲染: 分段平面Actor(每段独立AActor+UStaticMeshComponent)→SplineMesh连续渲染(整条道路单AActor内多个USplineMeshComponent); 新增#include Components/SplineMeshComponent.h; 预计算所有路径点世界坐标+地形Z→TArray<FVector>; Catmull-Rom式切线插值(起点=Pt[1]-Pt[0], 终点=Pt[N]-Pt[N-1], 中间=(Pt[i+1]-Pt[i-1])*0.5)实现弯道平滑过渡消除段间接缝/楔形缺口; SetStartAndEnd设置起终点位置+切线使网格沿样条线变形, SetStartScale/SetEndScale(FVector2D(1,WidthM))控制宽度(Plane网格Y基础1米缩放WidthM倍); 第一个分段SetRootComponent其余SetupAttachment挂载到根, Actor定位原点使局部坐标=世界坐标; 兼容已有LevelDepthM/ShoulderWidthM/LevelHeightM地形推平(步骤8已完成不受影响)",
+    ]),
+    ("2.6.1", "2026-09-12", [
+        "[修复] C++ LandscapeHelper.cpp 道路分段俯仰角(Pitch)缺失: 此前道路段 FRotator(0,Yaw,0) Pitch硬编码为0, 坡地上道路段水平铺放导致上坡半埋入土/下坡半悬空呈阶梯脱节; 新增dZ=Z2-Z1/PitchRad=atan2(dZ,SegLen)/PitchDeg计算(与河流分段步骤15完全相同模型), SegScale.X补偿为斜边长(段长/cosPitch+重叠20cm)/100封闭弯道楔形接缝, 最终FRotator(PitchDeg,Yaw,0)使道路段精确贴合地形坡度",
+    ]),
+    ("2.6.0", "2026-09-12", [
+        "[修改] 全放置类型 snap_to_ground 默认值 False→True(设计反转: 地面为默认, 悬空为特例): build_scene.py 8处默认值翻转——instanced_grid(circle/rows)/instances/crop_field/village/group/static grid/static single; 新增蓝图(blueprint)类型贴地支持(此前完全缺失), spawn前查询地形Z覆盖location的Z",
+        "[优化] JSONBuilderAgent 系统提示词新增贴地规则: 明确'所有放置条目默认贴地, 仅桥梁/高架/飞行物等才设false+显式Z', 约束LLM生成符合贴地优先策略的场景JSON",
+    ]),
+    ("2.5.5", "2026-09-12", [
+        "[优化] Token 统计重构为全局累计: 新增 TokenTracker 线程安全单例(ai/client.py), 统一统计两条 LLM 调用路径——(1)AIWorker旧管线 IntentParser/SceneGenerator/ValidationRepairLoop 经 LLMClient.complete() 调用时由 OpenAILLMClient(response.usage.prompt_tokens/completion_tokens) 和 OllamaLLMClient(prompt_eval_count/eval_count) 内部上报; (2)AgentWorker新管线 pydantic_ai AgentRunResult.usage 三阶段上报; 实现'程序启动后所有用到 LLM 的 tokens 量都计算进去'",
+        "[优化] 移除原 tokens_updated(int,int,int) 信号及 _update_tokens 方法, 改为 MainWindow QTimer 每 500ms 轮询 token_tracker.totals 刷新顶栏标签, AIWorker 与 AgentWorker 共用同一累计器无需各自接线",
+        "[修复] 顶栏 Token 标签比旁边 StatusPill 高: 根因为 QLabel 无高度约束被 QHBoxLayout 纵向拉伸至顶栏全高(52px), 而 StatusPill 固定24px; 新增 setFixedHeight(24) 同高 + setMinimumWidth(140) 加宽以容纳长数字 + QSS 垂直 padding 归零(0px 12px)避免内部裁切 + 文本水平垂直居中",
+    ]),
+    ("2.5.4", "2026-09-12", [
+        "[新增] 顶栏增加 LLM Token 消耗量实时显示: AgentWorker 三阶段(ScenePlanner/JSONBuilder/QualityGuard)每阶段完成后提取 pydantic_ai AgentRunResult.usage 的 input_tokens/output_tokens/total_tokens 并累积, 通过新增 tokens_updated(int,int,int) 信号回传主线程, MainWindow 顶栏新增 ⚡Tokens 标签实时更新, 悬停显示输入/输出/合计明细",
+    ]),
+    ("2.5.3", "2026-09-12", [
+        "[修复] Agent流水线根因: JSONBuilderAgent生成空asset占位条目导致转UMAP卡死. 双层修复: (1)PlacementConfig添加Pydantic model_validator, static/instanced_grid/blueprint/crop_field类型asset为空时抛ValueError触发pydantic_ai自动重试(retries=3)反馈LLM修正; group类型校验asset_prefix非空; village类型跳过 (2)JSONBuilderAgent系统提示词增加asset字段规则约束, 明确禁止空asset占位条目并指导LLM'未找到匹配资产则省略该条目'",
+    ]),
+    ("2.5.2", "2026-09-12", [
+        "[修复] 转UMAP卡在5%: Agent流水线生成的JSON含4条asset为空字符串的static放置条目, build_scene.py 的L1189跳过条件仅检查key是否存在(\"asset\" not in p), 空值\"\"通过后到达load_asset(\"\")导致UE编辑器主线程卡死; 新增防御守卫在asset赋值后立即拦截空值(static/instanced_grid/crop_field类型), group用asset_prefix/village用house_assets不受影响",
+    ]),
+    ("2.5.1", "2026-09-11", [
+        "[修复] GUI 启动失败(ModuleNotFoundError: No module named 'ai'): 直接运行 python scripts/mapforge_app.py 时 sys.path[0]=scripts/ 不含项目根, 导致 from ai.xxx import 全部失败; 在 ai 模块导入前插入 sys.path.insert 把项目根(scripts/父目录)加入路径, 算法与 get_resource_path() 一致",
+    ]),
+    ("2.5.0", "2026-09-11", [
+        "[新增] 多智能体流水线 GUI 页面(AgentPipelinePanel): 与\"AI生成\"和\"构建UMAP\"平级的第三个页面, 走新管线 ScenePlannerAgent→JSONBuilderAgent→QualityGuardAgent, 三阶段中间产物分折叠面板展示(蓝图/场景JSON/校验报告), 用户可直观看到 Agent 链式协作过程",
+        "[新增] AgentWorker(QThread): 多智能体流水线后台线程, 在独立线程的 asyncio 事件循环中驱动异步 Agent, 每阶段完成发信号(stage1_done/stage2_done/stage3_done)到 UI 实时更新, 与旧管线 AIWorker 平级独立",
+        "[新增] 采纳并构建UMAP流程接通: AgentPipelinePanel 底部\"采纳并构建UMAP\"按钮, 复用 ChatPanel 的跳转模式(保存临时JSON→切换构建页→_on_file_selected→_on_generate)",
+        "[修改] MainWindow 分段控件从2段扩展为3段(构建UMAP/AI生成/Agent流水线), _on_segment_changed 通用逻辑无需修改自动适配",
+    ]),
+    ("2.4.1", "2026-09-11", [
+        "[新增] 三阶段 Agent 流水线命令行启动脚本(scripts/run_agent_pipeline.py): ScenePlannerAgent → JSONBuilderAgent → QualityGuardAgent 端到端编排, 支持 --desc/--output 参数和交互式输入, 复用 GUI 应用的 ~/.uescenefactory_config.json 配置",
+        "[新增] GUI 启动器(start_gui.bat): 双击运行 mapforge_app.py PyQt6 图形界面(GBK 编码, 优先 .venv 解释器)",
+        "[新增] 测试运行器(run_tests.bat): 双击运行 pytest, 自动排除需要 UE 编辑器环境的 tools/check 测试",
+    ]),
+    ("2.4.0", "2026-09-11", [
+        "[新增] v0.4 QualityGuardAgent: 场景 JSON 质量守护智能体(流水线第三阶段), 接收 JSONBuilderAgent 输出的场景 JSON, 调用校验工具检查字段和资产路径, 有错误时 LLM 修复最多 3 轮, 输出 ValidationReport",
+        "[新增] ValidationReport 模型(ai/models/validation_report.py): 记录校验/修复后的场景 JSON 及校验历史, 含 scene/is_valid/errors/warnings/repair_rounds/repair_history 6 个字段",
+        "[新增] 校验工具(ai/tools/validation_tools.py): validate_scene_core 复用 scripts/validate_scene_json.validate_scene 字段校验, validate_assets_core 复用 tools/check/validate_scene_assets 资产路径校验(用 importlib 按文件路径加载非包模块)",
+        "[新增] QualityGuardAgent 注册 2 个工具: validate_scene(校验字段完整性) + validate_assets(校验资产路径存在性, content_dir 从 AgentDeps.validator 注入)",
+        "[改进] 工具函数防御性处理: json.loads 解析失败时返回错误描述而非抛异常, 让 LLM 修复后重新调用(TestModel 测试中自动生成无效 JSON 也能优雅处理)",
+        "[测试] 新增 19 个单元测试(ValidationReport 模型 5 个 + validation_tools 8 个 + QualityGuardAgent 6 个), 全部 142 个测试通过",
+    ]),
+    ("2.3.0", "2026-09-11", [
+        "[新增] v0.3 JSONBuilderAgent: 场景 JSON 生成智能体(流水线第二阶段), 接收 SceneBlueprint 蓝图, 调用工具注入知识和搜索资产, 输出 SceneJSON",
+        "[新增] SceneJSON 模型(ai/models/scene_json.py): 映射 build_scene.py 顶层 JSON 结构(scene/landscape/ground/placements/lighting/weather), 6 个 Pydantic 子模型",
+        "[新增] 知识注入工具(ai/tools/json_tools.py): inject_knowledge_core 复用 KnowledgePack.build_system_prompt() 注入 L1核心+L2模式+L2.5模板标杆",
+        "[新增] JSONBuilderAgent 注册 2 个工具: inject_knowledge(按意图注入分层知识文档) + search_assets(复用 v0.2 资产搜索)",
+        "[测试] 新增 25 个单元测试(SceneJSON 模型 15 个 + json_tools 4 个 + JSONBuilderAgent 6 个), 全部 123 个测试通过",
+    ]),
     ("2.2.1", "2026-09-11", [
         "[重构] 资产文件统一归入 assets/ 目录: Snow001/SnowTextures → assets/snow/, Ground103/DirtTextures → assets/ground/, mesh_thumbnails → assets/thumbnails/",
         "[修改] 3个工具脚本(pack_snow_textures/pack_road_textures/download_snow_previews)硬编码的 MapForgeTest 路径改为相对项目根路径",
@@ -218,8 +288,13 @@ try:
 except ImportError:
     HAS_YAML = False
 
+# 项目根目录(scripts/的父目录)加入 sys.path
+# 直接运行 python scripts/mapforge_app.py 时 sys.path[0]=scripts/, 不含项目根,
+# 会导致 from ai.xxx import 失败; 路径算法与 get_resource_path() 保持一致
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 # AI 场景生成模块
-from ai.client import MockLLMClient, OpenAILLMClient, OllamaLLMClient
+from ai.client import MockLLMClient, OpenAILLMClient, OllamaLLMClient, token_tracker
 from ai.knowledge import KnowledgePack
 from ai.asset_index import AssetIndex
 from ai.intent_parser import IntentParser
@@ -227,6 +302,11 @@ from ai.generator import SceneGenerator
 from ai.validator import ValidationRepairLoop
 from ai.experience_bank import ExperienceBank
 from ai.retriever import ExperienceRetriever
+# 多智能体流水线 (v0.2~v0.4): 三阶段 Agent 编排, AgentPipelinePanel 使用
+from ai.agents.base import AgentDeps
+from ai.agents.scene_planner import ScenePlannerAgent
+from ai.agents.json_builder import JSONBuilderAgent
+from ai.agents.quality_guard import QualityGuardAgent
 
 # Mock 模式预设响应：意图 JSON + 场景 JSON（供 MockLLMClient 循环返回）
 # 与 tests/test_phase11_pipeline.py 中的 mock 数据格式一致，保证管线端到端可用
@@ -454,6 +534,11 @@ def parse_scene_file(file_path):
     except Exception as e:
         return None, "解析文件失败: " + str(e)
 
+    # 校验解析结果: 空文件或 null 值会导致 scene 为 None (或非 dict), 无法调用 .get()
+    # pydantic model_dump_json 默认含 None 字段, 生成的 JSON 可能含 "grid": null
+    if not isinstance(scene, dict):
+        return None, "场景文件内容无效: 期望 JSON/YAML 对象, 实际得到 %s" % type(scene).__name__
+
     # 提取场景信息
     s = scene.get("scene", {})
     name = s.get("name", "未命名场景")
@@ -469,7 +554,12 @@ def parse_scene_file(file_path):
         if "grid" in p:
             grids += 1
             gr = p["grid"]
-            total_actors += gr.get("rows", 1) * gr.get("cols", 1)
+            # grid 值可能为 null (pydantic model_dump_json 默认含 None 字段),
+            # 非字典值按单实例计数, 避免 None.get() 崩溃
+            if isinstance(gr, dict):
+                total_actors += gr.get("rows", 1) * gr.get("cols", 1)
+            else:
+                total_actors += 1
         else:
             singles += 1
             total_actors += 1
@@ -1090,6 +1180,148 @@ class AIWorker(QThread):
             self.error_occurred.emit(str(e))
         finally:
             # 确保在任何路径下 SQLite 连接都被关闭
+            if bank is not None:
+                try:
+                    bank.close()
+                except Exception as e:
+                    logger.debug("关闭 ExperienceBank 连接失败: %s", e)
+
+
+# ============================================================================
+# 多智能体流水线后台线程 (AgentWorker)
+# 与 AIWorker 平级: AIWorker 走旧管线(IntentParser/SceneGenerator/ValidationRepairLoop),
+# AgentWorker 走新管线(ScenePlannerAgent → JSONBuilderAgent → QualityGuardAgent)。
+# 两套管线完全独立, 由各自的页面(ChatPanel / AgentPipelinePanel)分别驱动。
+# ============================================================================
+
+class AgentWorker(QThread):
+    """多智能体流水线后台线程: 在独立线程的事件循环中运行三阶段 Agent
+
+    三阶段:
+        1. ScenePlannerAgent  — 意图解析 + 资产搜索 + 经验检索 → SceneBlueprint
+        2. JSONBuilderAgent   — 知识注入 + 资产搜索 → SceneJSON
+        3. QualityGuardAgent  — 字段校验 + 资产校验 + LLM 修复 → ValidationReport
+
+    PydanticAI 的 Agent.run() 是协程, QThread.run() 是同步方法,
+    用 asyncio.new_event_loop() 在线程内创建事件循环驱动协程执行。
+    每阶段完成发信号到 UI, 用户可实时看到中间产物。
+    """
+
+    # 阶段信号: 传递该阶段输出产物的 JSON 字符串 (供面板折叠展示)
+    stage1_done = pyqtSignal(str)       # 蓝图 JSON
+    stage2_done = pyqtSignal(str)       # 场景 JSON
+    stage3_done = pyqtSignal(str)       # 校验报告 JSON
+    # 全部完成: 最终场景 dict + 是否成功 + 消息
+    finished_signal = pyqtSignal(dict, bool, str)
+    error_occurred = pyqtSignal(str)    # 异常
+    log_line = pyqtSignal(str)          # 日志行
+
+    def __init__(self, config, user_desc):
+        super().__init__()
+        self._config = config
+        self._user_desc = user_desc
+
+    def run(self):
+        """运行三阶段 Agent 流水线, 每阶段发信号到 UI
+
+        资源管理: bank(SQLite) 在 finally 中关闭, 防止异常时连接泄漏。
+        事件循环: 线程内新建独立 asyncio 循环, 避免与 Qt 主循环冲突。
+        """
+        bank = None
+        loop = None
+        try:
+            config = self._config
+            user_desc = self._user_desc
+
+            # 解析 API Key (支持 ${VAR_NAME} 环境变量引用)
+            api_key = resolve_env_value(config.get("llm_api_key", ""))
+            model_name = config.get("llm_model", "glm-5.2")
+            base_url = config.get("llm_base_url", "")
+            if not api_key:
+                self.error_occurred.emit("API Key 未配置, 请在设置对话框中填写")
+                return
+
+            # 初始化依赖: 知识库 / 资产索引 / 经验库 (复用 get_resource_path 适配打包路径)
+            self.log_line.emit("初始化知识库 / 资产索引 / 经验库...")
+            knowledge = KnowledgePack(
+                get_resource_path("data/knowledge"),
+                templates_dir=get_resource_path("data/templates"),
+            )
+            asset_index = AssetIndex(get_resource_path("config/asset_catalog.json"))
+            bank = ExperienceBank()
+            retriever = ExperienceRetriever(bank)
+
+            # content_dir: UE 项目 Content 目录, 用于 QualityGuardAgent 资产路径校验
+            # validator 字段复用为 content_dir; project_path 未配置时为 None (跳过磁盘校验)
+            project_path = config.get("project_path", "")
+            content_dir = os.path.join(project_path, "Content") if project_path else None
+
+            deps = AgentDeps(
+                knowledge=knowledge,
+                asset_index=asset_index,
+                experience_bank=bank,
+                retriever=retriever,
+                validator=content_dir,
+            )
+
+            # 线程内创建独立事件循环驱动异步 Agent
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+
+            # ---- Stage 1: 场景规划 ----
+            self.log_line.emit("Stage 1: 场景规划 (ScenePlannerAgent)...")
+            planner = ScenePlannerAgent(model_name, api_key, base_url=base_url, deps=deps)
+            result1 = loop.run_until_complete(planner.run(user_desc))
+            blueprint = result1.output
+            blueprint_json = blueprint.model_dump_json()
+            self.stage1_done.emit(blueprint_json)
+            self.log_line.emit("蓝图生成完成: terrain=%s, placements=%d" % (
+                blueprint.terrain_type, len(blueprint.placements)))
+            # 提取 Stage 1 token 消耗并上报全局累计器
+            # (pydantic_ai AgentRunResult.usage 是属性, 返回 RunUsage 对象;
+            #  与 LLMClient.complete() 上报的 tokens 汇总, 实现"所有用到 LLM 的 tokens 都计算")
+            u1 = result1.usage
+            token_tracker.add(u1.input_tokens, u1.output_tokens)
+
+            # ---- Stage 2: 场景 JSON 生成 ----
+            self.log_line.emit("Stage 2: 场景 JSON 生成 (JSONBuilderAgent)...")
+            builder = JSONBuilderAgent(model_name, api_key, base_url=base_url, deps=deps)
+            result2 = loop.run_until_complete(builder.run(blueprint_json))
+            scene_json = result2.output
+            scene_json_str = scene_json.model_dump_json()
+            self.stage2_done.emit(scene_json_str)
+            scene_name = scene_json.scene.name if scene_json.scene else "unnamed"
+            self.log_line.emit("场景 JSON 生成完成: scene.name=%s" % scene_name)
+            # 提取 Stage 2 token 消耗并上报全局累计器
+            u2 = result2.usage
+            token_tracker.add(u2.input_tokens, u2.output_tokens)
+
+            # ---- Stage 3: 质量校验 ----
+            self.log_line.emit("Stage 3: 质量校验 (QualityGuardAgent)...")
+            guard = QualityGuardAgent(model_name, api_key, base_url=base_url, deps=deps)
+            result3 = loop.run_until_complete(guard.run(scene_json_str))
+            report = result3.output
+            self.stage3_done.emit(report.model_dump_json())
+            self.log_line.emit("校验完成: is_valid=%s, errors=%d, repair_rounds=%d" % (
+                report.is_valid, len(report.errors), report.repair_rounds))
+            # 提取 Stage 3 token 消耗并上报全局累计器 (最终值)
+            u3 = result3.usage
+            token_tracker.add(u3.input_tokens, u3.output_tokens)
+
+            # 最终场景 = ValidationReport.scene (已修复)
+            success = report.is_valid
+            self.finished_signal.emit(report.scene, success, "多智能体流水线完成")
+        except Exception as e:
+            logger.error("Agent 流水线异常: %s", e, exc_info=True)
+            self.error_occurred.emit(str(e))
+        finally:
+            # 关闭事件循环
+            if loop is not None:
+                try:
+                    loop.close()
+                except Exception as e:
+                    logger.debug("关闭事件循环失败: %s", e)
+            # 关闭 SQLite 连接
             if bank is not None:
                 try:
                     bank.close()
@@ -1991,6 +2223,434 @@ class ChatPanel(QWidget):
 
 
 # ============================================================================
+# 多智能体流水线面板 (AgentPipelinePanel)
+# 与 ChatPanel 平级: ChatPanel 走旧管线(AIWorker), 本面板走新管线(AgentWorker)。
+# 三阶段中间产物分折叠面板展示, 让用户直观看到 Agent 链式协作过程。
+# ============================================================================
+
+class AgentPipelinePanel(QWidget):
+    """多智能体流水线面板: 聊天输入 + 三阶段折叠展示 + JSON 预览 + 采纳构建UMAP
+
+    布局 (参考 ChatPanel 三区分离, 简化去掉评分/反馈/经验保存):
+      左栏 = 聊天历史 + 输入框 + 进度条 + 三个折叠阶段面板(蓝图/场景JSON/校验报告)
+      右栏 = 最终场景 JSON 预览 (QScintilla) + 可折叠运行日志
+      底部 = 采纳并构建UMAP + 复制 JSON
+    交互: 输入自然语言 → AgentWorker 后台三阶段 → 折叠面板逐阶段填充 → 采纳
+    """
+
+    def __init__(self, config, parent=None):
+        super().__init__(parent)
+        self._config = config
+        self._worker = None          # AgentWorker 引用, 防止被 GC 回收
+        self._last_scene = None      # 最终场景 dict (ValidationReport.scene)
+        self._umap_signal_connected = False
+        self._init_ui()
+
+    def _init_ui(self):
+        """构建面板 UI: 左栏(对话+阶段折叠) / 右栏(JSON预览+日志) / 底部动作栏"""
+        layout = QVBoxLayout(self)
+        layout.setSpacing(10)
+        layout.setContentsMargins(16, 16, 16, 16)
+
+        # ==================== 左栏: 对话区 + 阶段折叠面板 ====================
+        left = QVBoxLayout()
+        left.setSpacing(8)
+
+        # 聊天历史: 显示进度和阶段状态 (区别于 ChatPanel 的对话流, 这里偏日志风格)
+        self._chat_history = QTextEdit()
+        self._chat_history.setObjectName("chatHistory")
+        self._chat_history.setReadOnly(True)
+        self._chat_history.setPlaceholderText(
+            "多智能体流水线实验页。输入自然语言描述, 三阶段 Agent 链式协作生成场景 JSON。\n"
+            "示例: 生成一个1km的山谷草地场景, 有河流和松树")
+        left.addWidget(self._chat_history, 1)
+
+        # 输入框 + 发送按钮 (Ctrl+Enter 发送)
+        input_row = QHBoxLayout()
+        input_row.setSpacing(8)
+        self._input = QTextEdit()
+        self._input.setObjectName("chatInput")
+        self._input.setPlaceholderText("描述你想要的场景...（Ctrl+Enter 发送）")
+        self._input.setMinimumHeight(60)
+        self._input.setMaximumHeight(100)
+        self._input.setAcceptRichText(False)
+        input_row.addWidget(self._input, 1)
+        self._send_btn = QPushButton("发送")
+        self._send_btn.clicked.connect(self._on_send)
+        input_row.addWidget(self._send_btn, 0, Qt.AlignmentFlag.AlignBottom)
+        left.addLayout(input_row)
+        self._input.installEventFilter(self)
+
+        # 进度条: 指示三阶段流水线整体进度 (0→33→66→100)
+        self._progress = QProgressBar()
+        self._progress.setVisible(False)
+        left.addWidget(self._progress)
+
+        # ---- 三个折叠阶段面板: 标题按钮(checkable) + 内容区 ----
+        # 每阶段完成后填充内容, 默认折叠避免初始界面过长
+        self._stage1_btn, self._stage1_content = self._make_collapsible("Stage 1: 场景蓝图")
+        self._stage2_btn, self._stage2_content = self._make_collapsible("Stage 2: 场景 JSON")
+        self._stage3_btn, self._stage3_content = self._make_collapsible("Stage 3: 校验报告")
+        left.addWidget(self._stage1_btn)
+        left.addWidget(self._stage1_content)
+        left.addWidget(self._stage2_btn)
+        left.addWidget(self._stage2_content)
+        left.addWidget(self._stage3_btn)
+        left.addWidget(self._stage3_content)
+
+        # ==================== 右栏: JSON 预览 + 运行日志 ====================
+        right_widget = QWidget()
+        right_layout = QVBoxLayout(right_widget)
+        right_layout.setContentsMargins(0, 0, 0, 0)
+        right_layout.setSpacing(4)
+        json_title = QLabel("最终场景 JSON 预览")
+        json_title.setObjectName("sectionLabel")
+        right_layout.addWidget(json_title)
+
+        self._json_editor = self._create_json_editor()
+        right_layout.addWidget(self._json_editor, 1)
+
+        # 运行日志 (可折叠, 默认展开)
+        self._log_toggle_btn = QPushButton("▼ 运行日志")
+        self._log_toggle_btn.setObjectName("logToggleBtn")
+        self._log_toggle_btn.setCheckable(True)
+        self._log_toggle_btn.setChecked(True)
+        self._log_toggle_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self._log_toggle_btn.toggled.connect(self._on_log_toggle)
+        right_layout.addWidget(self._log_toggle_btn)
+        self._log = QTextEdit()
+        self._log.setObjectName("chatLog")
+        self._log.setReadOnly(True)
+        self._log.setMaximumHeight(120)
+        right_layout.addWidget(self._log)
+
+        # 用 Splitter 分割左右两栏
+        splitter = QSplitter(Qt.Orientation.Horizontal)
+        left_widget = QWidget()
+        left_widget.setLayout(left)
+        splitter.addWidget(left_widget)
+        splitter.addWidget(right_widget)
+        splitter.setSizes([420, 460])
+        layout.addWidget(splitter, 1)
+
+        # ==================== 底部动作栏 ====================
+        action_bar = QHBoxLayout()
+        action_bar.setSpacing(8)
+        self._approve_btn = QPushButton("采纳并构建 UMAP")
+        self._approve_btn.setObjectName("reviewBtn")
+        self._approve_btn.clicked.connect(self._on_approve)
+        self._approve_btn.setEnabled(False)
+        self._approve_btn.setToolTip("将多智能体生成的场景 JSON 保存为临时文件并触发 UMAP 构建")
+        action_bar.addWidget(self._approve_btn)
+        self._copy_json_btn = QPushButton("复制 JSON")
+        self._copy_json_btn.setObjectName("copyJsonBtn")
+        self._copy_json_btn.clicked.connect(self._on_copy_json)
+        self._copy_json_btn.setEnabled(False)
+        self._copy_json_btn.setToolTip("将最终场景 JSON 复制到系统剪贴板")
+        action_bar.addWidget(self._copy_json_btn)
+        action_bar.addStretch()
+        # 打开 UE 编辑器按钮 (UMAP 生成后显示)
+        self._open_ue_btn = QPushButton("在 UE 编辑器中打开")
+        self._open_ue_btn.setObjectName("openUEBtn")
+        self._open_ue_btn.clicked.connect(self._on_open_ue_editor)
+        self._open_ue_btn.setVisible(False)
+        self._open_ue_btn.setToolTip("启动 UE5 编辑器并加载刚生成的 UMAP 关卡")
+        action_bar.addWidget(self._open_ue_btn)
+        layout.addLayout(action_bar)
+
+    def _make_collapsible(self, title):
+        """创建折叠面板: 返回 (标题按钮, 内容区)
+
+        标题按钮 checkable, 点击切换内容区可见性;
+        内容区初始隐藏 + 最大高度限制, 防止阶段面板撑爆左栏。
+        """
+        btn = QPushButton("▶ " + title)
+        btn.setObjectName("stageToggleBtn")
+        btn.setCheckable(True)
+        btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        content = QTextEdit()
+        content.setObjectName("stageContent")
+        content.setReadOnly(True)
+        content.setVisible(False)           # 初始折叠
+        content.setMaximumHeight(160)      # 限制高度, 避免三段叠加超出屏幕
+        btn.toggled.connect(lambda checked, b=btn, c=content, t=title: self._on_stage_toggle(b, c, t, checked))
+        return btn, content
+
+    def _on_stage_toggle(self, btn, content, title, checked):
+        """折叠面板切换: 同步箭头方向 + 内容区可见性"""
+        content.setVisible(checked)
+        btn.setText("▼ " + title if checked else "▶ " + title)
+
+    def _create_json_editor(self):
+        """创建 JSON 预览编辑器 (QScintilla 优先, 降级 QPlainTextEdit)
+
+        配置逻辑与 ChatPanel 一致: 语法高亮 + 代码折叠 + 行号 + 暗色主题。
+        独立封装为方法而非复用 ChatPanel 代码, 避免修改 ChatPanel (不动无关代码)。
+        """
+        editor = QsciScintilla()
+        editor.setObjectName("jsonEditor")
+        editor.setReadOnly(True)
+        if HAS_QSCI:
+            editor.setScrollWidth(0)
+            json_lexer = QsciLexerJSON()
+            editor.setLexer(json_lexer)
+            editor.setFolding(QsciScintilla.FoldStyle.BoxedTreeFoldStyle)
+            editor.setMarginType(0, QsciScintilla.MarginType.NumberMargin)
+            editor.setMarginWidth(0, "40")
+            editor.setMarginsForegroundColor(QColor("#585b70"))
+            editor.setMarginsBackgroundColor(QColor("#11111b"))
+            editor.setMarginWidth(1, 0)
+            for _m in (0, 1, 2, 3):
+                editor.setMarginBackgroundColor(_m, QColor("#11111b"))
+            editor.setMarginWidth(2, 14)
+            editor.setFoldMarginColors(QColor("#11111b"), QColor("#11111b"))
+            font = QFont("Consolas", 10)
+            editor.setFont(font)
+            json_lexer.setFont(font)
+            editor.setPaper(QColor("#11111b"))
+            editor.setColor(QColor("#a6adc8"))
+            json_lexer.setPaper(QColor("#11111b"))
+            json_lexer.setColor(QColor("#a6adc8"))
+            for style_name, color_hex in [
+                ("Keyword", "#89b4fa"), ("String", "#a6e3a1"),
+                ("Number", "#fab387"), ("Operator", "#f38ba8"),
+                ("Property", "#89b4fa"), ("Comment", "#585b70"),
+            ]:
+                style_val = getattr(QsciLexerJSON, style_name, None)
+                if style_val is not None:
+                    json_lexer.setColor(QColor(color_hex), style_val)
+        else:
+            font = QFont("Consolas", 10)
+            editor.setFont(font)
+            editor.setStyleSheet("background-color: #11111b; color: #a6adc8; border: none;")
+        return editor
+
+    # ------------------------------------------------------------------
+    # 用户交互
+    # ------------------------------------------------------------------
+
+    def _on_send(self):
+        """发送按钮回调: 获取输入文本, 启动多智能体流水线"""
+        text = self._input.toPlainText().strip()
+        if not text:
+            return
+        self._append_chat("[用户] %s" % text)
+        self._input.clear()
+        self._start_pipeline(text)
+
+    def eventFilter(self, obj, event):
+        """事件过滤器: 捕获 Ctrl+Enter 发送快捷键"""
+        if obj is self._input and event.type() == QEvent.Type.KeyPress:
+            if event.key() == Qt.Key.Key_Return and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+                self._on_send()
+                return True
+        return super().eventFilter(obj, event)
+
+    def _start_pipeline(self, user_desc):
+        """启动多智能体流水线: 创建 AgentWorker 并连接信号"""
+        self._progress.setVisible(True)
+        self._progress.setValue(0)
+        self._send_btn.setEnabled(False)
+        self._approve_btn.setEnabled(False)
+        self._copy_json_btn.setEnabled(False)
+        self._open_ue_btn.setVisible(False)
+
+        # 重置阶段面板内容 (新一轮流水线开始)
+        self._stage1_content.clear()
+        self._stage2_content.clear()
+        self._stage3_content.clear()
+        self._json_editor.setText("")
+
+        # 创建并启动后台线程
+        self._worker = AgentWorker(self._config, user_desc)
+        self._worker.log_line.connect(self._on_log)
+        self._worker.stage1_done.connect(self._on_stage1)
+        self._worker.stage2_done.connect(self._on_stage2)
+        self._worker.stage3_done.connect(self._on_stage3)
+        self._worker.finished_signal.connect(self._on_finished)
+        self._worker.error_occurred.connect(self._on_error)
+        # Token 消耗量改由全局 token_tracker 累计, MainWindow QTimer 轮询刷新,
+        # 不再需要 per-worker 信号连接(AIWorker 旧管线的 tokens 也一并统计)
+        self._worker.start()
+
+    # ------------------------------------------------------------------
+    # AgentWorker 信号回调
+    # ------------------------------------------------------------------
+
+    def _on_log(self, line):
+        """日志行追加"""
+        self._log.append(line)
+
+    def _append_chat(self, msg):
+        """统一追加聊天历史, 自动加时间戳前缀 [HH:MM:SS]"""
+        ts = time.strftime("%H:%M:%S")
+        self._chat_history.append("[%s] %s" % (ts, msg))
+
+    def _on_stage1(self, blueprint_json):
+        """Stage 1 完成: 填充蓝图折叠面板 + 进度 33%"""
+        import json as _json
+        try:
+            bp = _json.loads(blueprint_json)
+            lines = []
+            lines.append("terrain_type: %s" % bp.get("terrain_type", ""))
+            lines.append("has_water: %s  has_river: %s  has_grass: %s" % (
+                bp.get("has_water"), bp.get("has_river"), bp.get("has_grass")))
+            lines.append("scene_type: %s" % bp.get("scene_type", ""))
+            lines.append("placements: %s" % bp.get("placements", []))
+            lines.append("keywords: %s" % bp.get("keywords", []))
+            lines.append("assets: %d 项" % len(bp.get("assets", [])))
+            lines.append("experience_refs: %s" % bp.get("experience_refs", []))
+            lines.append("template_ref: %s" % bp.get("template_ref", ""))
+            self._stage1_content.setPlainText("\n".join(lines))
+        except Exception:
+            self._stage1_content.setPlainText(blueprint_json)
+        # 自动展开本阶段面板, 让用户即时看到产物
+        self._stage1_btn.setChecked(True)
+        self._progress.setValue(33)
+        self._append_chat("[Stage 1] 蓝图生成完成")
+
+    def _on_stage2(self, scene_json_str):
+        """Stage 2 完成: 填充场景JSON折叠面板 + 右栏JSON预览 + 进度 66%"""
+        import json as _json
+        try:
+            scene = _json.loads(scene_json_str)
+            sn = scene.get("scene", {})
+            lines = []
+            lines.append("scene.name: %s" % sn.get("name", ""))
+            lines.append("target_level: %s" % sn.get("target_level", ""))
+            lines.append("placements: %d 项" % len(scene.get("placements", [])))
+            has_land = "landscape" in scene
+            has_light = "lighting" in scene
+            has_weather = "weather" in scene
+            lines.append("landscape: %s  lighting: %s  weather: %s" % (
+                has_land, has_light, has_weather))
+            self._stage2_content.setPlainText("\n".join(lines))
+        except Exception:
+            self._stage2_content.setPlainText(scene_json_str)
+        # 右栏 JSON 预览显示格式化的完整场景 JSON
+        try:
+            pretty = _json.dumps(_json.loads(scene_json_str), ensure_ascii=False, indent=2)
+        except Exception:
+            pretty = scene_json_str
+        self._json_editor.setText(pretty)
+        self._stage2_btn.setChecked(True)
+        self._progress.setValue(66)
+        self._append_chat("[Stage 2] 场景 JSON 生成完成")
+
+    def _on_stage3(self, report_json):
+        """Stage 3 完成: 填充校验报告折叠面板 + 进度 100%"""
+        import json as _json
+        try:
+            rep = _json.loads(report_json)
+            lines = []
+            lines.append("is_valid: %s" % rep.get("is_valid", False))
+            lines.append("errors: %d 项" % len(rep.get("errors", [])))
+            lines.append("warnings: %d 项" % len(rep.get("warnings", [])))
+            lines.append("repair_rounds: %d" % rep.get("repair_rounds", 0))
+            for e in rep.get("errors", []):
+                lines.append("  [错误] %s" % e)
+            for w in rep.get("warnings", []):
+                lines.append("  [警告] %s" % w)
+            self._stage3_content.setPlainText("\n".join(lines))
+        except Exception:
+            self._stage3_content.setPlainText(report_json)
+        self._stage3_btn.setChecked(True)
+        self._progress.setValue(100)
+        self._append_chat("[Stage 3] 质量校验完成")
+
+    def _on_finished(self, scene, success, message):
+        """流水线全部完成: 保存最终场景 + 启用采纳按钮"""
+        self._last_scene = scene
+        self._progress.setVisible(False)
+        self._send_btn.setEnabled(True)
+        self._approve_btn.setEnabled(True)
+        self._copy_json_btn.setEnabled(True)
+        status = "✅ 成功" if success else "⚠️ 有错误, 请审核"
+        self._append_chat("[系统] %s (%s)" % (message, status))
+
+    def _on_error(self, msg):
+        """异常回调"""
+        self._progress.setVisible(False)
+        self._send_btn.setEnabled(True)
+        self._append_chat("[错误] %s" % msg)
+
+    # ------------------------------------------------------------------
+    # 采纳 / 复制 / 打开UE
+    # ------------------------------------------------------------------
+
+    def _on_approve(self):
+        """采纳并构建 UMAP: 保存 JSON 到临时文件, 切换到构建页并触发生成
+
+        复用 ChatPanel._on_approve 的跳转模式:
+        mw._segmented.setCurrentIndex(0) → _on_file_selected(tmp.name) → _on_generate()
+        """
+        if not self._last_scene:
+            return
+        try:
+            tmp = tempfile.NamedTemporaryFile(
+                mode="w", suffix=".json", delete=False, encoding="utf-8")
+            json.dump(self._last_scene, tmp, ensure_ascii=False, indent=2)
+            tmp.close()
+            mw = self.window()
+            # 切换到"构建 UMAP"页 (index=0), 滑块与内容同步
+            if hasattr(mw, "_segmented"):
+                mw._segmented.setCurrentIndex(0)
+            elif hasattr(mw, "_tabs"):
+                mw._tabs.setCurrentIndex(0)
+            # 刷新文件上传区域显示
+            if hasattr(mw, "_on_file_selected"):
+                mw._on_file_selected(tmp.name)
+            self._append_chat("[用户] 已采纳, 开始生成 UMAP...")
+            self._open_ue_btn.setVisible(False)
+            if hasattr(mw, "_on_generate"):
+                mw._on_generate()
+        except Exception as e:
+            self._append_chat("[错误] 保存场景 JSON 失败: %s" % e)
+
+    def _on_copy_json(self):
+        """复制 JSON: 将最终场景 JSON 复制到系统剪贴板"""
+        if not self._last_scene:
+            return
+        from PyQt6.QtWidgets import QApplication
+        text = json.dumps(self._last_scene, ensure_ascii=False, indent=2)
+        QApplication.clipboard().setText(text)
+        self._append_chat("[系统] 场景 JSON 已复制到剪贴板")
+
+    def _on_open_ue_editor(self):
+        """打开 UE 编辑器: 委托给 MainWindow 的统一打开逻辑"""
+        mw = self.window()
+        umap = getattr(mw, "umap_path", "")
+        if not umap or not os.path.isfile(umap):
+            QMessageBox.critical(self, "错误", "UMAP 文件不存在:\n" + umap)
+            return
+        if hasattr(mw, "_on_open_ue_editor"):
+            mw._on_open_ue_editor()
+
+    def showEvent(self, event):
+        """窗口显示时延迟连接 MainWindow 的 umap_ready 信号
+
+        构造时 MainWindow 可能尚未完成初始化, 在 showEvent 中建立连接更安全
+        """
+        if not self._umap_signal_connected:
+            mw = self.window()
+            if mw is not None and hasattr(mw, "umap_ready"):
+                mw.umap_ready.connect(self._on_umap_ready)
+                self._umap_signal_connected = True
+        super().showEvent(event)
+
+    def _on_umap_ready(self, umap_path):
+        """UMAP 生成完成: 显示打开 UE 按钮"""
+        if umap_path and os.path.isfile(umap_path):
+            self._open_ue_btn.setVisible(True)
+            self._append_chat("[系统] UMAP 已生成, 可在 UE 编辑器中预览")
+
+    def _on_log_toggle(self, checked):
+        """运行日志折叠/展开, 同步按钮箭头方向"""
+        self._log.setVisible(checked)
+        self._log_toggle_btn.setText("▼ 运行日志" if checked else "▶ 运行日志")
+
+
+# ============================================================================
 # LLM 设置对话框
 # ============================================================================
 
@@ -2549,6 +3209,14 @@ QPushButton#cmdBtn {
 }
 QPushButton#cmdBtn:hover { border-color: #6d4aff; color: #e2e8f0; }
 
+/* LLM Token 消耗量标签: 与 StatusPill 同高(24px)的圆角药丸, 垂直 padding 归零避免内部裁切 */
+QLabel#tokenLabel {
+    background-color: rgba(255, 255, 255, 0.05); color: #94a3b8;
+    border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px;
+    font-size: 11px; font-weight: bold; padding: 0px 12px;
+}
+QLabel#tokenLabel:hover { border-color: #6d4aff; color: #e2e8f0; }
+
 /* ===== 命令面板弹窗: 毛玻璃纯色浮层 ===== */
 QDialog#commandPalette, QWidget#commandPalette {
     background-color: #15161c; border: 1px solid rgba(255, 255, 255, 0.08);
@@ -2621,6 +3289,13 @@ class MainWindow(QMainWindow):
         # 用配置中的历史记录填充侧栏底部列表
         self._refresh_history()
 
+        # 全局 LLM Token 消耗量轮询: 每 500ms 读取 token_tracker 累计值刷新顶栏标签
+        # 覆盖 AIWorker(旧管线) + AgentWorker(新管线) 两条路径的所有 LLM 调用
+        self._token_timer = QTimer(self)
+        self._token_timer.setInterval(500)
+        self._token_timer.timeout.connect(self._poll_tokens)
+        self._token_timer.start()
+
     def _build_ui(self):
         """构建完整 UI 布局
 
@@ -2653,7 +3328,8 @@ class MainWindow(QMainWindow):
         tbl.addWidget(brand)
 
         # 分段控件替代原生 TabBar, 带动画滑块
-        self._segmented = SegmentedControl(["构建 UMAP", "AI 生成"])
+        # 三段: 构建 UMAP(0) / AI 生成(1) / Agent 流水线(2)
+        self._segmented = SegmentedControl(["构建 UMAP", "AI 生成", "Agent 流水线"])
         self._segmented.currentChanged.connect(self._on_segment_changed)
         tbl.addWidget(self._segmented)
         tbl.addStretch(1)
@@ -2663,6 +3339,17 @@ class MainWindow(QMainWindow):
         tbl.addWidget(self._pill_file)
         self._pill_build = StatusPill("就绪", "idle")
         tbl.addWidget(self._pill_build)
+
+        # LLM Token 消耗量显示标签 (全局累计, 由 MainWindow QTimer 每 500ms 轮询 token_tracker 刷新)
+        # setFixedHeight(24) 与 StatusPill 同高, 避免 QHBoxLayout 纵向拉伸导致比旁边药丸高;
+        # setMinimumWidth(140) 比药丸(70)更宽, 容纳 "⚡ Tokens: 1,234,567" 等长数字
+        self._pill_tokens = QLabel("⚡ Tokens: —")
+        self._pill_tokens.setObjectName("tokenLabel")
+        self._pill_tokens.setFixedHeight(24)
+        self._pill_tokens.setMinimumWidth(140)
+        self._pill_tokens.setAlignment(Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignHCenter)
+        self._pill_tokens.setToolTip("尚未调用 LLM (启动后所有 LLM tokens 将累计于此)")
+        tbl.addWidget(self._pill_tokens)
 
         # ⌘K 命令面板入口按钮
         cmd_btn = QPushButton("⌘K")
@@ -2916,6 +3603,9 @@ class MainWindow(QMainWindow):
         # Tab 2: AI 生成
         self._chat_panel = ChatPanel(self._config)
         self._tabs.addTab(self._chat_panel, "AI 生成")
+        # Tab 3: Agent 流水线 (多智能体实验页, 走新管线 ScenePlanner→JSONBuilder→QualityGuard)
+        self._agent_panel = AgentPipelinePanel(self._config)
+        self._tabs.addTab(self._agent_panel, "Agent 流水线")
 
         # 最近文件悬浮弹窗: 独立顶层 Popup 窗口, 承载 recent_list, 点击别处自动关闭
         self._recent_popup = QWidget(self, Qt.WindowType.Popup)
@@ -2973,6 +3663,25 @@ class MainWindow(QMainWindow):
         g4.setColorAt(1, QColor(30, 40, 80, 0))
         painter.fillRect(rect, g4)
         painter.end()
+
+    def _poll_tokens(self):
+        """轮询全局 token_tracker 刷新顶栏 Token 显示 (由 QTimer 每 500ms 驱动)
+
+        token_tracker 统一累计两条 LLM 调用路径的 tokens:
+          - AIWorker(旧管线): LLMClient.complete() 内部上报
+          - AgentWorker(新管线): pydantic_ai AgentRunResult.usage 上报
+        实现"程序启动后所有用到 LLM 的 tokens 量都计算进去"。
+        """
+        input_tokens, output_tokens, total_tokens = token_tracker.totals
+        # 千分位格式化, 如 12345 → "12,345"
+        self._pill_tokens.setText("⚡ Tokens: %s" % format(total_tokens, ","))
+        self._pill_tokens.setToolTip(
+            "LLM Token 消耗量 (全局累计)\n输入: %s\n输出: %s\n合计: %s" % (
+                format(input_tokens, ","),
+                format(output_tokens, ","),
+                format(total_tokens, ","),
+            )
+        )
 
     def _on_segment_changed(self, index):
         """分段控件切换 → 驱动隐藏的 TabWidget"""

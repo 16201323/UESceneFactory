@@ -1191,6 +1191,14 @@ def main():
         ptype = p.get("type", "static")
         asset = p.get("asset", "")
 
+        # 防御守卫: 跳过 asset 字段为空字符串的放置条目
+        # (Agent 流水线生成的 JSON 可能含未填充 asset 的占位条目,
+        #  load_asset("") 会导致 UE 编辑器主线程卡死, 表现为转 UMAP 卡在 5%)
+        # group 类型用 asset_prefix, village 类型用 house_assets, 不受此守卫影响
+        if not asset and ptype not in ("group", "village"):
+            log("SKIP[" + str(i) + "] empty asset (type=" + ptype + ")")
+            continue
+
         # ---- HISM 实例化放置 ----
         if ptype == "instanced_grid":
             if asset not in _asset_cache:
@@ -1219,8 +1227,8 @@ def main():
                     cpitch = gr.get("pitch", 0.0)
                     smin = gr.get("scale_min", [1, 1, 1])
                     smax = gr.get("scale_max", [1, 1, 1])
-                    # snap_to_ground: 逐实例查询地形表面Z, 使实例贴地(山谷/山丘自动跟随)
-                    snap_ground = gr.get("snap_to_ground", False)
+                    # snap_to_ground: 默认贴地(2.6.0改True), 逐实例查地形表面Z使实例贴地; 设false+显式Z可悬空
+                    snap_ground = gr.get("snap_to_ground", True)
                     random.seed(i * 7 + 13)
                     instances = []
                     for k in range(cnt):
@@ -1253,8 +1261,8 @@ def main():
                     # scale_min/scale_max 控制每实例缩放随机范围 (文档: Scale=0.80~1.25)
                     smin = gr.get("scale_min", [1, 1, 1])
                     smax = gr.get("scale_max", [1, 1, 1])
-                    # snap_to_ground: 逐实例查询地形表面Z, 使实例贴地(山谷/山丘自动跟随)
-                    snap_ground = gr.get("snap_to_ground", False)
+                    # snap_to_ground: 默认贴地(2.6.0改True), 逐实例查地形表面Z使实例贴地; 设false+显式Z可悬空
+                    snap_ground = gr.get("snap_to_ground", True)
                     random.seed(i * 7 + 13)
                     instances = []
                     for r in range(rows):
@@ -1287,8 +1295,8 @@ def main():
                     n = len(instances)
             else:
                 instances = p.get("instances", [])
-                # snap_to_ground: 显式instances也支持贴地, 覆盖每个实例的Z为地形表面Z
-                snap_ground = p.get("snap_to_ground", False)
+                # snap_to_ground: 默认贴地(2.6.0改True), 覆盖每个实例的Z为地形表面Z; 设false+显式Z可悬空
+                snap_ground = p.get("snap_to_ground", True)
                 if snap_ground:
                     for inst in instances:
                         iloc = inst.get("location", [0, 0, 0])
@@ -1323,7 +1331,8 @@ def main():
             plant_sp = fd.get("plant_spacing_m", 0.5)
             row_dir = fd.get("row_direction_deg", 0)
             jitter = fd.get("jitter", 0)
-            snap_g = fd.get("snap_to_ground", False)
+            # snap_to_ground: 默认贴地(2.6.0改True), 作物行垄贴地; 设false+显式Z可悬空
+            snap_g = fd.get("snap_to_ground", True)
             smin = fd.get("scale_min", [1, 1, 1])
             smax = fd.get("scale_max", [1, 1, 1])
             # 单位转换: JSON origin/size/spacing 均为米, UE5世界坐标为厘米(cm)
@@ -1390,7 +1399,8 @@ def main():
             street_dir = vd.get("street_direction_deg", 0)
             street_sp = vd.get("street_spacing_m", 20)
             house_sp = vd.get("house_spacing_m", 8)
-            snap_g = vd.get("snap_to_ground", False)
+            # snap_to_ground: 默认贴地(2.6.0改True), 村落房屋贴地; 设false+显式Z可悬空
+            snap_g = vd.get("snap_to_ground", True)
             random_yaw = vd.get("random_yaw", False)
             yaw_range = vd.get("yaw_range", [0, 360])
             smin = vd.get("scale_min", [1, 1, 1])
@@ -1519,6 +1529,11 @@ def main():
             loc = p.get("location", [0, 0, 0])
             rot = p.get("rotation", [0, 0, 0])
             scl = p.get("scale", [1, 1, 1])
+            # snap_to_ground: 默认贴地(2.6.0新增), 蓝图Actor查地形Z覆盖location的Z; 设false可悬空
+            if p.get("snap_to_ground", True):
+                tz = get_terrain_z(loc[0], loc[1])
+                if tz is not None:
+                    loc = [loc[0], loc[1], tz]
             spawn_blueprint(asset, loc, rot, scl)
             count += 1
             log("blueprint[" + str(i) + "]: " + asset.split("/")[-1])
@@ -1539,8 +1554,8 @@ def main():
             # ground_assembly: 全部部件放置完成后, 统计世界空间最低Z, 整组平移使最低点对齐 gloc.z(贴地)
             # 用途: 高压电塔等竖立资产 roll-90 后躺倒, 各部件内部相对高度被保留, 但整组可能悬空或埋地, 需统一贴地
             gground = p.get("ground_assembly", False)
-            # 贴地支持: 查询地形Z覆盖 gloc.z, 使组合体底部贴合地形表面(与 village snap_to_ground 同源)
-            if p.get("snap_to_ground", False):
+            # 贴地支持: 默认贴地(2.6.0改True), 查询地形Z覆盖 gloc.z 使组合体底部贴合地形表面; 设false可悬空
+            if p.get("snap_to_ground", True):
                 tz = get_terrain_z(gloc[0], gloc[1])
                 if tz is not None:
                     gloc = [gloc[0], gloc[1], tz]
@@ -1594,16 +1609,16 @@ def main():
         if not _asset_cache[asset]:
             log("SKIP[" + str(i) + "] missing: " + asset)
             continue
-        if "grid" in p:
-            gr = p["grid"]
+        gr = p.get("grid")
+        if gr:
             rows = gr["rows"]; cols = gr["cols"]
             origin = gr.get("origin", [0, 0, 0])
             spacing = gr.get("spacing", [100, 100, 0])
             jitter = gr.get("jitter", 0)
             rot = p.get("rotation", [0, 0, 0])
             scl = p.get("scale", [1, 1, 1])
-            # snap_to_ground: 逐实例查询地形表面Z, 使实例贴地(山谷/山丘自动跟随)
-            snap_ground = gr.get("snap_to_ground", False)
+            # snap_to_ground: 默认贴地(2.6.0改True), 逐实例查地形表面Z使实例贴地; 设false+显式Z可悬空
+            snap_ground = gr.get("snap_to_ground", True)
             random.seed(i * 7 + 13)
             n = 0
             for r in range(rows):
@@ -1626,8 +1641,8 @@ def main():
             loc = p.get("location", [0, 0, 0])
             rot = p.get("rotation", [0, 0, 0])
             scl = p.get("scale", [1, 1, 1])
-            # snap_to_ground: 单个实例也支持贴地, 查询地形Z覆盖location的Z
-            if p.get("snap_to_ground", False):
+            # snap_to_ground: 默认贴地(2.6.0改True), 查询地形Z覆盖location的Z; 设false+显式Z可悬空
+            if p.get("snap_to_ground", True):
                 tz = get_terrain_z(loc[0], loc[1])
                 if tz is not None:
                     loc = [loc[0], loc[1], tz]

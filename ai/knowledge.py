@@ -2,13 +2,18 @@
 L1 核心知识(~3KB, 始终注入) + L2 模式文档(按意图选择) + L2.5 模板标杆(按意图匹配)
 + L3 资产路径 + L4 经验 few-shot
 """
+import json
 import os
 
 
 class KnowledgePack:
-    # 模板注入大小上限(字节): 超过此值的模板不注入 system prompt, 避免撑爆 token 预算
-    # P2围栏(45KB)由脚本生成含150个实例, 过大且不适合 LLM 模仿, 排除
+    # 模板注入大小上限(字节): 超过此值的模板尝试智能裁剪后再注入
+    # P2围栏(45KB)由脚本生成含150个实例, 过大但结构有参考价值, 裁剪后注入而非排除
     _MAX_TEMPLATE_BYTES = 25000
+    # P0-2: 裁剪后最小保留字节数 — 裁完低于此值说明模板骨架太少, 放弃注入
+    _MIN_TEMPLATE_BYTES = 5000
+    # P0-2: 裁剪时每个数组保留的最大条目数 — 保留代表性样本供 LLM 参考结构
+    _TRIM_ARRAY_KEEP = 5
 
     # 模板匹配规则: (模板文件名, 匹配关键词列表, 匹配地形类型列表)
     # 按优先级排序: 特定地形模式 > 特定资产关键词 > 水系 > 默认全地形
@@ -69,9 +74,10 @@ class KnowledgePack:
         return self._select_template(intent)
 
     def _try_load_template(self, filename):
-        """懒加载模板 JSON 文件, 超大小上限或不存在时返回 None
+        """懒加载模板 JSON 文件, 超大模板智能裁剪后注入, 不存在时返回 None
 
         含负缓存: 首次加载失败后缓存 None, 避免重复磁盘 IO
+        P0-2: 超过 _MAX_TEMPLATE_BYTES 的模板不再排除, 而是裁剪重复数组后注入骨架
         """
         if filename in self._template_cache:
             return self._template_cache[filename]
@@ -83,12 +89,71 @@ class KnowledgePack:
             return None
         with open(path, "r", encoding="utf-8") as f:
             content = f.read()
-        # 超过大小上限的模板不注入(如 P2 围栏 45KB), 避免撑爆 system prompt token 预算
+        # P0-2: 超过大小上限的模板尝试智能裁剪(保留结构骨架, 截断过长的重复数组)
+        #       裁剪后仍超限或低于最小骨架则放弃, 否则注入裁剪版供 LLM 参考结构
         if len(content) > self._MAX_TEMPLATE_BYTES:
-            self._template_cache[filename] = None
-            return None
+            content = self._trim_template(content)
+            if not content or len(content) < self._MIN_TEMPLATE_BYTES:
+                self._template_cache[filename] = None
+                return None
         self._template_cache[filename] = content
         return content
+
+    def _trim_template(self, json_str):
+        """智能裁剪模板: 保留结构骨架, 截断过长的重复数组
+
+        裁剪策略:
+        - placements[].instances[] 超过 _TRIM_ARRAY_KEEP 个时截断为前 N 个, 附加 _note 说明
+        - height_pattern 中 hills/valleys/ridges/scatter 等数组同理截断
+        - 保留 scene/landscape 基础参数/lighting/weather 等结构不变
+
+        Args:
+            json_str: 原始模板 JSON 字符串
+
+        Returns:
+            裁剪后的 JSON 字符串; 解析失败返回 None
+        """
+        try:
+            data = json.loads(json_str)
+        except (json.JSONDecodeError, TypeError):
+            return None
+
+        # 裁剪 placements 中的 instances 数组(围栏模板 150 个实例 → 5 个)
+        for p in data.get("placements", []):
+            if not isinstance(p, dict):
+                continue
+            instances = p.get("instances")
+            if isinstance(instances, list) and len(instances) > self._TRIM_ARRAY_KEEP:
+                orig_count = len(instances)
+                p["instances"] = instances[:self._TRIM_ARRAY_KEEP]
+                p["_note"] = "(原始 %d 个实例, 已裁剪为前 %d 个作为结构参考)" % (
+                    orig_count, self._TRIM_ARRAY_KEEP
+                )
+
+        # 裁剪 height_pattern 中的长数组(hills/valleys/ridges/scatter 等)
+        hp = data.get("landscape", {}).get("height_pattern", {})
+        if isinstance(hp, dict):
+            for key in ("hills", "valleys", "ridges", "scatter",
+                        "grass_varieties", "wheat_varieties"):
+                arr = hp.get(key)
+                if isinstance(arr, list) and len(arr) > self._TRIM_ARRAY_KEEP:
+                    hp[key] = arr[:self._TRIM_ARRAY_KEEP]
+
+        # 裁剪 height_pattern.roads 中的 points 数组
+        for rd in hp.get("roads", []):
+            if isinstance(rd, dict):
+                pts = rd.get("points")
+                if isinstance(pts, list) and len(pts) > self._TRIM_ARRAY_KEEP:
+                    rd["points"] = pts[:self._TRIM_ARRAY_KEEP]
+
+        # 裁剪 height_pattern.rivers 中的 points 数组
+        for rv in hp.get("rivers", []):
+            if isinstance(rv, dict):
+                pts = rv.get("points")
+                if isinstance(pts, list) and len(pts) > self._TRIM_ARRAY_KEEP:
+                    rv["points"] = pts[:self._TRIM_ARRAY_KEEP]
+
+        return json.dumps(data, ensure_ascii=False, indent=2)
 
     def _select_template(self, intent):
         """按 intent 关键词和地形类型匹配最佳模板, 返回 (文件名, json_str) 或 None
