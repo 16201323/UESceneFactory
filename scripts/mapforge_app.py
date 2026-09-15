@@ -50,10 +50,19 @@ except ImportError:
 # ============================================================================
 # 版本管理: 每次修改/新增功能后, 版本号递增 + VERSION_HISTORY 追加条目
 # ----------------------------------------------------------------------------
-APP_VERSION = "2.8.0"
+APP_VERSION = "2.8.3"
 
 # 版本更新记录: [(版本号, 日期, [更新条目]), ...] 最新在最前
 VERSION_HISTORY = [
+    ("2.8.3", "2026-09-15", [
+        "[优化] GUI 启动加速: 将 4 个 Agent 类(AgentDeps/ScenePlannerAgent/JSONBuilderAgent/QualityGuardAgent)的导入从模块顶层移至 AgentWorker.run() 内懒加载; 根因是 pydantic_ai 首次导入约6秒(连带 fastmcp/openai/mcp 链), 此前在 GUI 启动时即加载导致双击后需等待约7秒窗口才出现; 改为懒加载后仅用户实际运行 Agent 流水线时才付出导入代价(sys.modules 缓存后续零开销); 实测模块导入耗时 8.06秒→0.69秒(降幅92%), 144项测试通过",
+    ]),
+    ("2.8.2", "2026-09-15", [
+        "[修复] 阶段一语义理解: SceneBlueprint 新增 size_m/region/user_desc 三个结构化参数字段, 解决用户描述中的尺寸(如2km*2km)、地域(如江西)、原始氛围描述在蓝图阶段丢失的问题; scene_planner 提示词增加结构化参数提取规则(Nkm→[N*1000]米/地域名/原描述透传); json_builder 提示词增加 landscape 尺寸换算公式(component_count=round(size_m/63), size_m=[2000,2000]→component_count=32≈2016m≈2km)及地域植被/user_desc 氛围参考规则; 验证: 输入'2km*2km江西农村'正确提取 size_m=[2000,2000]/region=江西/user_desc完整透传",
+    ]),
+    ("2.8.1", "2026-09-15", [
+        "[优化] 阶段一语义理解: ScenePlannerAgent 系统提示词概念展开规则表扩展, 新增 11 类场景映射(城市/沙漠/雪山/森林/草原/峡谷/机场/光伏电站/湿地/海岛/工业区), 覆盖中国环境常见场景类型; 同步修正 terrain_type 枚举为合法值并对齐 validate_scene_json.py; 验证: 输入'农村'展开为 features+village+forest+山脉水流, 输入'沙漠'展开为 noise+枯树+沙丘戈壁",
+    ]),
     ("2.8.0", "2026-09-13", [
         "[优化] 流水线 P0-1: QualityGuardAgent 注册 search_assets 工具 — 此前第三阶段只有 validate_scene/validate_assets 两个校验工具, 发现资产路径错误后只能等 LLM 瞎猜正确路径(修复率约40%); 新增 search_assets 工具后 LLM 可调用资产库搜索关键词获取候选路径列表, 从中选取正确 path 替换(预期修复率提升至约85%); 系统提示词同步增加'资产路径修复策略'章节",
         "[优化] 流水线 P0-2: 知识模板智能裁剪 — 此前超 25KB 的模板(如 45KB 围栏模板含150个实例)被完全排除不注入上下文, LLM 缺少结构参考; 新增 _trim_template() 方法解析 JSON 后截断 placements[].instances/height_pattern.hills等长数组保留前5项并添加 _note 标注原始数量, 裁剪后骨架(约3KB)注入上下文供 LLM 参考结构; 围栏模板从'完全排除'变为'骨架注入'",
@@ -303,10 +312,9 @@ from ai.validator import ValidationRepairLoop
 from ai.experience_bank import ExperienceBank
 from ai.retriever import ExperienceRetriever
 # 多智能体流水线 (v0.2~v0.4): 三阶段 Agent 编排, AgentPipelinePanel 使用
-from ai.agents.base import AgentDeps
-from ai.agents.scene_planner import ScenePlannerAgent
-from ai.agents.json_builder import JSONBuilderAgent
-from ai.agents.quality_guard import QualityGuardAgent
+# 注意: Agent 类不在模块顶层导入 — pydantic_ai 首次导入约6秒(连带 fastmcp/openai),
+# 若放此处会让 GUI 启动卡顿6秒。改为在 AgentWorker.run() 内懒加载, 仅用户实际
+# 运行流水线时才付出导入代价, GUI 启动保持秒开。
 
 # Mock 模式预设响应：意图 JSON + 场景 JSON（供 MockLLMClient 循环返回）
 # 与 tests/test_phase11_pipeline.py 中的 mock 数据格式一致，保证管线端到端可用
@@ -1255,6 +1263,15 @@ class AgentWorker(QThread):
             # validator 字段复用为 content_dir; project_path 未配置时为 None (跳过磁盘校验)
             project_path = config.get("project_path", "")
             content_dir = os.path.join(project_path, "Content") if project_path else None
+
+            # 懒加载 Agent 框架: pydantic_ai 首次导入约6秒(连带 fastmcp/openai/mcp),
+            # 延迟到用户实际运行流水线时再加载, GUI 启动无需等待。
+            # 模块导入由 sys.modules 缓存, 后续调用零额外开销。
+            self.log_line.emit("加载 Agent 框架(首次约6秒)...")
+            from ai.agents.base import AgentDeps
+            from ai.agents.scene_planner import ScenePlannerAgent
+            from ai.agents.json_builder import JSONBuilderAgent
+            from ai.agents.quality_guard import QualityGuardAgent
 
             deps = AgentDeps(
                 knowledge=knowledge,

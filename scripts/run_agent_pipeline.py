@@ -163,6 +163,10 @@ async def run_pipeline(user_desc, config, deps):
     print("  资产数       = %d" % len(blueprint.assets))
     print("  经验引用     = %d" % len(blueprint.experience_refs))
     print("  template_ref = %s" % blueprint.template_ref)
+    # 补打结构化参数, 验证尺寸/地域/原描述是否正确提取
+    print("  size_m       = %s" % blueprint.size_m)
+    print("  region       = %s" % blueprint.region)
+    print("  user_desc    = %s" % blueprint.user_desc)
 
     # ---- Stage 2: JSONBuilderAgent — 知识注入 + 资产搜索 → 场景 JSON ----
     print()

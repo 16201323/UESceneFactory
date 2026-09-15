@@ -38,6 +38,13 @@ class SceneBlueprint(BaseModel):
     placements: list[str] = Field(default_factory=list)
     keywords: list[str] = Field(default_factory=list)
     scene_type: str
+    # --- 结构化参数字段(从描述提取,透传给 Stage2 配置 landscape 尺寸/地域氛围)---
+    # size_m: 场景物理尺寸 [长,宽] 米,如 [2000,2000] 表示 2km×2km;空列表=用默认尺寸
+    size_m: list[int] = Field(default_factory=list)
+    # region: 地域名(江西/西北/南方/沿海等),用于体现地域植被与水系特征
+    region: str = ""
+    # user_desc: 用户原始描述原样透传,保留氛围修饰词供 Stage2 参考
+    user_desc: str = ""
     # --- 规划字段 ---
     assets: list[AssetEntry] = Field(default_factory=list)
     design_rules: list[str] = Field(default_factory=list)
