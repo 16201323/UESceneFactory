@@ -129,9 +129,10 @@ HP_RIDGE_FIELDS = {
     "direction_deg": (int, float),
 }
 
-# height_pattern.water
+# height_pattern.water (模块5新增: flow_speed 控制湖面Panner流速动画)
 HP_WATER_FIELDS = {
     "level_m": (int, float), "material_path": str,
+    "flow_speed": (int, float),
 }
 
 # height_pattern.rivers[] 河流 (模块1新增: bed_depth_m, profile; 模块5新增: flow_speed)
@@ -156,13 +157,14 @@ HP_BUILDING_FIELDS = {
     "shoulder_width_m": (int, float),
 }
 
-# height_pattern.scatter[] 散布 (模块2新增: 智能分层过滤字段)
+# height_pattern.scatter[] 散布 (模块2新增: 智能分层过滤字段; 道路排除新增: road_exclude_distance_m)
 HP_SCATTER_FIELDS = {
     "mesh_path": str, "count": int, "seed": int,
     "scale_min": (int, float, list), "scale_max": (int, float, list),
     "random_rotation": bool,
     "layer_filter": dict, "slope_filter": dict, "altitude_filter": dict,
     "max_retries": int,
+    "road_exclude_distance_m": (int, float),
 }
 
 # height_pattern.grass_varieties[] / wheat_varieties[] 共用
@@ -393,32 +395,12 @@ def validate_semantic(scene):
     if hp.get("water") and not hp.get("rivers"):
         warnings.append("语义: height_pattern 含 water 但无 rivers，若为静水池可忽略")
 
-    # 规则3: 植被图层引用未定义 — grass/wheat 的 layer_name 不在 layers[] 中定义
-    # 从 layers[].info 路径末尾提取图层名(如 /Game/.../L_Grass_LayerInfo → L_Grass)
-    defined_layer_names = set()
-    for layer in ls.get("layers", []):
-        info = layer.get("info", "")
-        if info:
-            name = info.rstrip("/").split("/")[-1]
-            if name.endswith("_LayerInfo"):
-                name = name[:-len("_LayerInfo")]
-            defined_layer_names.add(name)
-
-    grass = ls.get("grass", {})
-    if isinstance(grass, dict):
-        grass_layer = grass.get("layer_name", "")
-        if grass_layer and grass_layer not in defined_layer_names:
-            warnings.append(
-                "语义: grass.layer_name='%s' 未在 layers[].info 中定义" % grass_layer
-            )
-
-    wheat = ls.get("wheat", {})
-    if isinstance(wheat, dict):
-        wheat_layer = wheat.get("layer_name", "")
-        if wheat_layer and wheat_layer not in defined_layer_names:
-            warnings.append(
-                "语义: wheat.layer_name='%s' 未在 layers[].info 中定义" % wheat_layer
-            )
+    # 规则3: 植被图层引用校验 — 已移除(假阳性)
+    # 原逻辑: 将 grass/wheat.layer_name 与 layers[].info 路径末尾名做匹配,
+    # 但 layer_name 是材质 GrassOutput 逻辑名(如 "Grass", 见 LandscapeHelper.cpp:3439),
+    # 而 layers[].info 路径末尾名是 LayerInfo 资产名(如 "L_Grass_LayerInfo" → "L_Grass"),
+    # 两者命名体系不同, 永远不匹配 → 产生假阳性警告。
+    # 真正的图层-植被绑定关系由 C++ 材质 GrassOutput 节点运行时解析, JSON 层无法校验。
 
     return warnings
 

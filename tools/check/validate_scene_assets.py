@@ -41,7 +41,12 @@ import sys
 def ue_path_to_disk(path, content_dir):
     """UE 资产路径 → Content 下的磁盘文件, 返回存在的文件路径或 None
 
-    依次尝试: 原路径.uasset / 原路径.umap / 补对象名 X.Y.uasset
+    依次尝试: 原路径.uasset / 原路径.umap / 补对象名 X.Y.uasset / 长路径剥离后缀
+
+    长路径兼容(v2.9.8新增): UE 长路径格式 /Game/A/B.B 中,
+    最后一段的 '.' 前为包名(磁盘文件名), '.' 后为对象名(不对应文件)。
+    asset_catalog.json 全部使用此格式(如 Name.Name), 若不剥离后缀,
+    ue_path_to_disk 会尝试 B.B.uasset 而非 B.uasset, 导致误报缺失。
     """
     rel = path[len("/Game/"):] if path.startswith("/Game/") else path.lstrip("/")
     base = os.path.join(content_dir, rel.replace("/", os.sep))
@@ -55,7 +60,38 @@ def ue_path_to_disk(path, content_dir):
     obj = os.path.basename(base)
     if os.path.isfile(os.path.join(base + "." + obj + ".uasset")):
         return base + "." + obj + ".uasset"
+    # 3. 长路径剥离: /Game/A/B.C → /Game/A/B
+    #    最后一段含 '.' 时, '.' 前为包名, 剥离后重试 .uasset/.umap 检查
+    #    修复场景: LLM 从 search_assets 获取 catalog 中的 Name.Name 格式路径,
+    #    直接填入 JSON 后校验端无法匹配磁盘文件
+    last_seg = os.path.basename(base)
+    if "." in last_seg:
+        short_base = os.path.join(os.path.dirname(base), last_seg.split(".")[0])
+        for ext in (".uasset", ".umap"):
+            if os.path.isfile(short_base + ext):
+                return short_base + ext
     return None
+
+
+def _scan_group_dir(prefix, content_dir):
+    """扫描 group 前缀所在目录, 检查是否存在任意匹配的 .uasset 文件。
+
+    部分资产包(如 rural_brick_house)编号不从0开始且非连续(仅偶数),
+    prefix+"0" 检查会误报缺失。此函数扫描目录, 只要存在以 prefix
+    的末段(如 "Object_")开头且以 .uasset 结尾的文件, 即判定有效——
+    build_scene.py 的 GROUP_SKIP 会逐个跳过缺失编号, 只加载存在的部件。
+
+    Returns: True=目录中有匹配文件(group有效), False=无匹配(group无效)
+    """
+    rel = prefix[len("/Game/"):] if prefix.startswith("/Game/") else prefix.lstrip("/")
+    prefix_dir = os.path.join(content_dir, os.path.dirname(rel).replace("/", os.sep))
+    prefix_base = os.path.basename(rel)  # 如 "Object_"
+    if not os.path.isdir(prefix_dir):
+        return False
+    for name in os.listdir(prefix_dir):
+        if name.startswith(prefix_base) and name.endswith(".uasset"):
+            return True
+    return False
 
 
 def collect_asset_refs(scene):
@@ -68,37 +104,50 @@ def collect_asset_refs(scene):
             refs.append((desc, p.strip()))
 
     # scene: target_level (关卡本身, 允许不存在=新建)
-    s = scene.get("scene", {})
+    # 注意: dict.get(key, {}) 的默认值仅在 key 不存在时生效;
+    # 若 LLM 输出 "scene": null, .get 返回 None, 后续 .get 会崩。
+    # 用 `or {}` 把 None 也归一为空 dict, 彻底防御 null 值。
+    s = scene.get("scene") or {}
     add("scene.target_level", s.get("target_level"))
 
-    # landscape
-    ls = scene.get("landscape", {})
+    # landscape (可能为 null, 用 or {} 防御)
+    ls = scene.get("landscape") or {}
     add("landscape.material", ls.get("material"))
-    for i, l in enumerate(ls.get("layers", [])):
+    # layers 可能为 null → or [] 归一为空列表, 避免遍历 None 崩溃
+    for i, l in enumerate(ls.get("layers") or []):
+        # 单个 layer 也可能为 null (LLM 生成异常), or {} 防御
+        l = l or {}
         add("landscape.layers[%d].info" % i, l.get("info"))
-    g = ls.get("grass", {})
+    # grass / wheat 可能为 null → or {} 防御, 避免 None.get() 崩溃
+    g = ls.get("grass") or {}
     add("landscape.grass.grass_type", g.get("grass_type"))
     add("landscape.grass.grass_mesh", g.get("grass_mesh"))
-    w = ls.get("wheat", {})
+    w = ls.get("wheat") or {}
     add("landscape.wheat.type_path", w.get("type_path"))
 
-    # height_pattern (C++ 端特征配置里的资产引用)
-    hp = ls.get("height_pattern", {})
-    for i, rv in enumerate(hp.get("rivers", [])):
+    # height_pattern (C++ 端特征配置里的资产引用, 可能为 null)
+    hp = ls.get("height_pattern") or {}
+    for i, rv in enumerate(hp.get("rivers") or []):
+        rv = rv or {}
         add("rivers[%d].material_path" % i, rv.get("material_path"))
-    for i, rd in enumerate(hp.get("roads", [])):
+    for i, rd in enumerate(hp.get("roads") or []):
+        rd = rd or {}
         add("roads[%d].material_path" % i, rd.get("material_path"))
         add("roads[%d].mesh_path" % i, rd.get("mesh_path"))
-    for i, b in enumerate(hp.get("buildings", [])):
+    for i, b in enumerate(hp.get("buildings") or []):
+        b = b or {}
         add("buildings[%d].material_path" % i, b.get("material_path"))
     wat = hp.get("water")
     if wat:
         add("water.material_path", wat.get("material_path"))
-    for i, sc in enumerate(hp.get("scatter", [])):
+    for i, sc in enumerate(hp.get("scatter") or []):
+        sc = sc or {}
         add("scatter[%d].mesh_path" % i, sc.get("mesh_path"))
-    for i, gv in enumerate(hp.get("grass_varieties", [])):
+    for i, gv in enumerate(hp.get("grass_varieties") or []):
+        gv = gv or {}
         add("grass_varieties[%d].mesh_path" % i, gv.get("mesh_path"))
-    for i, wv in enumerate(hp.get("wheat_varieties", [])):
+    for i, wv in enumerate(hp.get("wheat_varieties") or []):
+        wv = wv or {}
         add("wheat_varieties[%d].mesh_path" % i, wv.get("mesh_path"))
 
     # ground
@@ -107,20 +156,26 @@ def collect_asset_refs(scene):
         add("ground.asset", gnd.get("asset"))
         add("ground.material_override", gnd.get("material_override"))
 
-    # placements
-    for i, p in enumerate(scene.get("placements", [])):
+    # placements (可能为 null → or [] 防御)
+    for i, p in enumerate(scene.get("placements") or []):
+        p = p or {}  # 单个 placement 也可能为 null
         if p.get("type") == "group":
-            # group: asset_prefix 需存在至少一个编号资产 (前缀_0 起存在即算有效)
+            # group: asset_prefix 需存在至少一个编号资产
             prefix = p.get("asset_prefix", "")
             if prefix:
                 # 检查 prefix+"0" 是否存在 (group 从编号 0 开始)
                 found = ue_path_to_disk(prefix + "0", CONTENT_DIR[0])
                 if not found:
-                    # 退化: 检查前缀目录是否存在 (非序列命名容错, 构建时 GROUP_SKIP 逐个跳过)
+                    # v2.9.8: prefix+"0" 不存在时, 扫描前缀所在目录是否有任意匹配的 .uasset 文件
+                    # 部分资产包编号不从0开始(如 rural_brick_house 从 Object_4 起, 仅偶数),
+                    # build_scene.py 的 GROUP_SKIP 会逐个跳过缺失编号, 只要目录中有匹配文件即有效
+                    found = _scan_group_dir(prefix, CONTENT_DIR[0])
+                if not found:
+                    # 目录中也没有任何匹配文件, 前缀确实无效
                     refs.append(("placements[%d].asset_prefix" % i, prefix))
                 else:
-                    # 已找到编号0资产, group 校验通过; 裸前缀不是资产路径,
-                    # 不能再加入 refs (否则后续存在性检查必误报缺失)
+                    # 已找到编号资产或目录中有匹配文件, group 校验通过
+                    # 裸前缀不是资产路径, 不能再加入 refs (否则后续存在性检查必误报缺失)
                     pass
         add("placements[%d].asset" % i, p.get("asset"))
         add("placements[%d].material_override" % i, p.get("material_override"))

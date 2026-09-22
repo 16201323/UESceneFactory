@@ -38,8 +38,6 @@
 | bank_ratio | float | 0.25 | 田埂占比[0,1]，0=无田埂全平坦，1=全田埂；0.2=每级20%为smoothstep过渡区+80%为平坦田面 |
 | base_height_m | float | 0.0 | 起始基准高度（米），direction_deg方向投影距离=0处 |
 
-**算法**：将顶点投影到 direction_deg 方向轴，投影距离 ÷ step_width_m 取整 = 层级号 level；层内位置 t∈[0,1)：t < (1-bank_ratio) → 平坦田面（高度 = base + level × step_height_m），t ≥ (1-bank_ratio) → smoothstep 过渡到下一级。bank_ratio 被 C++ 钳制到 [0,1]。
-
 **调参建议**：
 - 密台阶：减小 step_width_m，增大 step_height_m
 - 缓坡梯田：减小 step_height_m，增大 step_width_m
@@ -59,8 +57,6 @@
 | doline_depth_m | float | 5.0 | 溶斗下凹深度（米） |
 | doline_radius_m | float | 15.0 | 溶斗半径（米） |
 | seed | int | 42 | 随机种子，控制峰/溶斗位置分布 |
-
-**算法**：泊松盘采样（Poisson disk）在 min_distance_m 约束下生成 peak_count 个峰点，每峰随机高度 ∈ [peak_height_min_m, peak_height_max_m]；每峰以高斯锥凸起：delta = height × exp(-d² / (2σ²))，σ = peak_radius_m / 2；溶斗同理但高度为负（下凹）；所有峰/溶斗高度累加（blend_mode=additive）。
 
 **调参建议**：
 - 密峰林：增大 peak_count，减小 min_distance_m
@@ -85,8 +81,6 @@
 | gully_width_m | float | 12.0 | 沟壑宽度（米） |
 | profile | string | "V" | 横截面形状，V=V型余弦切 / U=U型平底 |
 | seed | int | 42 | 随机种子，控制分叉点位置 / 蜿蜒相位 |
-
-**算法**：主沟路径 = 沿 main_direction_deg 方向行进 main_length_m，中心线叠加垂直方向正弦蜿蜒（meander_amplitude_m × sin(meander_frequency × 距离)）；从主沟随机 branch_count 个点分叉支沟，支沟方向 = 主沟方向 ± branch_angle_deg，支沟长度 = main_length × branch_length_ratio；branch_depth ≥ 2 时支沟递归再分叉二级支沟；每条沟沿路径用 V/U 型余弦横截面切削地形（delta = -gully_depth_m × cos(πd / width)，d 为到沟中心线距离）；AABB 裁剪提升性能。
 
 **调参建议**：
 - 密沟网：增大 branch_count，branch_depth=2
@@ -130,16 +124,36 @@ features 是最强大模式，以下字段只在 features 下生效：
 | ridges[] | array | region_min_x_m, region_min_y_m, region_max_x_m, region_max_y_m, amplitude_m, frequency, direction_deg | 山脊列表 |
 | blend_mode | string | — | additive/max/min/replace，特征混合模式 |
 | scatter[] | array | mesh_path, count, seed, scale_min(float), scale_max(float), random_rotation | 碎石等散布物（详见下方子表） |
-| water | object | level_m, material_path | 水面 |
+| water | object | level_m, material_path, **flow_speed** | 湖面; flow_speed 控制湖面 Panner 流速动画(缓流), 详见下方警告 |
 | rivers[] | array | 见下方 rivers 子表 | 河流; C++ 两阶段处理: (1) Import 前沿路径在高度图下切 V/U 型谷(深=bed_depth_m, 余弦横截面); (2) Import 后沿中心线每~5m 分段创建 SMC 水面平面, 水面Z=min(河床底+沉入量, 较低边缘地形-15cm), 平面宽=河宽×1.2; 折点须沿自然下坡、不穿越山丘/悬崖, 否则水面可能断节或悬空. 详见下方 rivers 子表 |
 | roads[] | array | points[[x,y],...], width_m, mesh_path(可选，空=引擎Plane), material_path(可选) | 道路; C++ 自动路基平整: 沿中心线横截面推向路径高度形成平整路面(余弦加权) + 路肩余弦缓过渡, 道路 ribbon 逐顶点采样地形贴合高差 |
 | buildings[] | array | center[x,y], size_m[宽,深], height_m, rotation_deg, material_path(可选) | 建筑 |
 | grass_varieties[] | array | 见下 | 草地变体（C++ 可能改写 LGT_Grass） |
 | wheat_varieties[] | array | 见下 | 麦田变体（C++ 可能改写 LGT_Wheat） |
 
+> ⚠️ **远景山脉规则（必读）**：除纯平原/沙漠/城市场景外，height_pattern 必须配置 `hills` 或 `ridges` 作为远景山脉。山脉应放在场景边缘（如北侧或四周），中心坐标远离场景中心。hills 参数：`center_x_m`/`center_y_m`（中心）、`radius_m`（半径）、`height_m`（高度，远景山推荐 50~200m）。
+
+> ⚠️ **水系 flow_speed 必填规则（必读）**：**只要有水系（湖面 `water` 对象或河流 `rivers[]`），就必须为每个水系配置 `flow_speed` 字段**。C++ 通过 `CreateDynamicMaterialInstance` + `SetScalarParameterValue("FlowSpeed", ...)` 将该值传入水面材质控制 Panner 动画速度。不配置时使用默认值（湖面 0.3=缓流、河流 1.0=正常），但**显式配置可避免湖河流速相同的视觉错误**。
+> - **湖面 `water.flow_speed`**：推荐 `0.3`（缓流，湖面几乎静止微荡）
+> - **河流 `rivers[].flow_speed`**：推荐 `1.0~3.0`（正常至急流，小溪 1.0、急流 3.0+）
+> - **铁律：河流 flow_speed > 湖面 flow_speed**（河流流速应快于湖泊，否则视觉不合理）
+> - ❌ **错误示例**：湖面和河流都不写 flow_speed → 两者都用各自默认值，但湖面默认 0.3 < 河流默认 1.0 恰好满足；若湖面材质默认 Panner 较快则两者流速相同，视觉错误
+
+> ⚠️ **水系植物排除规则（必读）**：**水系区域（湖面水位线以下、河床范围内）必须排除其他陆生植物（草、麦穗、树木）的生长**，否则会出现"湖中长麦子/野草"的荒谬景象。C++ 的 `grass_varieties`/`wheat_varieties` 是基于图层权重全域撒播的，**不自动避让水系**。必须通过以下方式排除：
+> - **方案1（推荐）**：在水系 `exclude_regions` 或图层权重 `weight_pattern` 中将水系区域权重设为 0（详见 weight_pattern.md 的 `water_mask` 模式）
+> - **方案2**：将草/麦的 `scatter` 范围限制在水系区域之外（通过坐标避让）
+> - **例外**：若特意需要水生植物（芦苇、荷花等），需在 `scatter[]` 中显式配置水生植物网格并限定在水系坐标范围内
+
 grass_varieties / wheat_varieties 单项格式（8 字段）：
 
 > ⚠️ **必填提醒**：`start_cull_dist` / `end_cull_dist` 为草/麦变体必填字段。不写则 C++ 使用原始默认值 1000/3000（10m/30m），高空俯瞰时植被全部被剔除露出黑色地形。生成草/麦 JSON 时必须包含这两个字段。
+
+> ⚠️ **麦穗 vs 草 缩放推荐值（必读）**：Fab Megascans 麦穗网格（`/Game/Fab/Megascans/Plants/Wheat_Grass_tdcrdbur/High/tdcrdbur_tier_1/StaticMeshes/SM_tdcrdbur_Var*`）原始高度约 **0.6~1m**，缩放接近 1.0；草网格（`/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Tall_Wild_*`）原始高度约 **50~80cm**，缩放接近1.0。**铁律：缩放后麦穗实际高度必须 > 草实际高度**（现实中麦穗60~100cm，野草20~50cm）。
+> - **麦穗推荐（Fab Megascans）**：`scale_min: 0.8`, `scale_max: 1.2`（缩放后约50~120cm，高于草）
+> - **旧版 realistic_wheat 麦穗**：`/Game/wheat/realistic_wheat/StaticMeshes/Plane_*` 原始约10m，需 `scale_min: 0.08`, `scale_max: 0.15`
+> - **草推荐**：`scale_min: 0.8`, `scale_max: 1.2`（缩放后约40~96cm）
+> - ❌ **错误示例（Fab麦穗）**：Fab 麦穗 `scale_min: 0.03` → 缩放后仅1.8~3cm，几乎看不见
+> - ❌ **错误示例（旧版麦穗）**：旧版 `scale_min: 0.03` → 缩放后仅30cm，比草还矮
 
 | 字段 | 类型 | 默认 | 说明 |
 |------|------|------|------|
@@ -150,9 +164,7 @@ grass_varieties / wheat_varieties 单项格式（8 字段）：
 | jitter | float | — | 位置抖动 |
 | random_rotation | bool | — | 随机旋转 |
 | start_cull_dist | float | **必填** | 起始剔除距离（世界cm）。草/麦推荐3000(30m)：相机<30m满画质 |
-| end_cull_dist | float | **必填** | 结束剔除距离（世界cm）。草推荐30000(300m)、麦推荐50000(500m)；麦穗是航拍主体需更远剔除覆盖高空视角 |
-
-> ⚠️ **必填字段**：`start_cull_dist`/`end_cull_dist` 是草/麦变体的必填字段，生成 JSON 时不可省略。控制 UE5 foliage 系统的距离剔除。C++ 结构体 `FGrassVarietyEntry` 原始默认值为 1000/3000（10m/30m），**JSON 不写这两个字段时使用 C++ 原始默认值（10m/30m），高空俯瞰时植被全部被剔除露出下方黑色地形材质**。推荐值：草 start=3000(30m)/end=30000(300m)、麦 start=3000(30m)/end=50000(500m)，覆盖大部分航拍高度。Clamp 范围 [1, 100000]（0.01m~1000m）。
+| end_cull_dist | float | **必填** | 结束剔除距离（世界cm）。草推荐30000(300m)、麦推荐50000(500m)；麦穗是航拍主体需更远剔除覆盖高空视角。Clamp [1,100000] |
 
 scatter 单项格式（6 字段，C++ 结构体 FScatterEntry）：
 
@@ -181,28 +193,9 @@ scatter 单项格式（6 字段，C++ 结构体 FScatterEntry）：
 | waterfalls[] | array | [] | 瀑布列表, 每项 {t(0~1段内位置), drop_m(落差), mesh_path(可选瀑布网格)} |
 | flow_speed | float | 1.0 | 流速倍数, 传入材质 FlowSpeed 参数控制 Panner 动画速度。10.0=快流, 1.0=缓流 |
 
-**水面 Z 计算公式（C++ 自动, 不可配置）:**
-
-```
-WaterSinkOffset = (bed_depth_m > 0.3) ? bed_depth_m * 100 - 30 : 2.0   (cm)
-HalfEdgeCm      = width_m * 1.2 * 0.5 * 100                              (cm, 平面半宽)
-LeftEdgeZ  = GetTerrainZ(center + LeftNormal * HalfEdgeCm)
-RightEdgeZ = GetTerrainZ(center - LeftNormal * HalfEdgeCm)
-水面Z = min(河床底Z + WaterSinkOffset, min(LeftEdgeZ, RightEdgeZ) - 15cm)
-```
-
-- 平地时: 河床底+沉入量 < 边缘地形-15cm → 水面保持原水深
-- 坡地时: 较低边缘地形-15cm 更低 → 水面压低, 封住下坡岸缝
-
-**边界条件与可能问题:**
-
-| 条件 | 后果 | 规避 |
-|------|------|------|
-| bed_depth_m = 0 | 不冲刷, WaterSinkOffset=2cm, 水面几乎贴地, 边缘检测仍工作但深度不足 | 保持 bed_depth_m ≥ 0.5m |
-| bed_depth_m ≤ 0.3 | WaterSinkOffset 退化为固定 2cm, 水面仅沉入 2cm | bed_depth_m ≥ 0.5m |
-| width_m < 0.5m | 平面半宽 < 0.3m, 边缘采样离中心太近, 坡地可能采不到下坡边 → 缝隙 | width_m ≥ 1m |
-| 折点穿过悬崖/陡崖 | 边缘采样落在悬崖外, GetTerrainZ 返回远处地形, 水面 Z 异常(悬空或深埋) | 折点不直接穿悬崖, 或拆段+waterfall |
-| U profile + 大 flat_ratio | 深水区更窄, 边缘检测灵敏度下降 | 一般无需改; 若缝隙可加 bed_depth_m 0.5m |
-| width_end_m 比 width_m 小很多 | 河流逆流变窄(支流汇入场景), 正常 | 无 |
-| 两河折点重叠 | 汇入处水面重叠 20cm, Opaque 材质无暗缝 | 正常设计, 无需处理 |
+**水面 Z 由 C++ 自动计算（不可配置）**。JSON 参数约束：
+- `bed_depth_m` ≥ 0.5m（≤0.3 时水面仅沉入 2cm 深度不足；0=不冲刷仅水面 ribbon）
+- `width_m` ≥ 1m（<0.5 时边缘采样失效可能缝隙）
+- 折点不直接穿悬崖/陡崖（否则水面悬空或深埋），需拆段加 waterfall
+- 两河折点重叠正常（汇入处水面重叠 20cm，Opaque 材质无暗缝）
 

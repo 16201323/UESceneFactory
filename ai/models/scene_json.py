@@ -106,3 +106,25 @@ class SceneJSON(BaseModel):
     placements: list[PlacementConfig] = Field(default_factory=list)  # 放置列表（可选，默认空）
     lighting: LightingConfig | None = None                # 光照（可选）
     weather: WeatherConfig | None = None                  # 天气（可选）
+
+
+def normalize_height_pattern(hp: dict | None) -> None:
+    """后处理: 补全道路推平参数 + 散布道路排除字段(就地修改 height_pattern dict)。
+
+    在 JSONBuilderAgent 生成场景 JSON 后、QualityGuardAgent 校验前调用,
+    也在 QualityGuardAgent 输出后作为安全网再调用一次(防止 LLM 修复时丢弃字段)。
+
+    补全的字段:
+    - roads[].level_depth_m (默认 0.1): 道路下切深度, 缺失时 C++ 跳过地形推平导致路面悬空
+    - roads[].shoulder_width_m (默认 2.0): 路肩过渡宽度, 缺失时 C++ 跳过地形推平导致路面悬空
+    - scatter[].road_exclude_distance_m (默认 3.0): 道路边缘外扩排除距离, 缺失时 C++ 散布无法避开道路
+    """
+    if not isinstance(hp, dict):
+        return
+    # 补全道路推平参数: level_depth_m + shoulder_width_m
+    for road in hp.get("roads", []):
+        road.setdefault("level_depth_m", 0.1)
+        road.setdefault("shoulder_width_m", 2.0)
+    # 补全散布道路排除距离
+    for sc in hp.get("scatter", []):
+        sc.setdefault("road_exclude_distance_m", 3.0)

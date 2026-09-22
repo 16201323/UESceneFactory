@@ -15,6 +15,7 @@ import tempfile
 import time
 import logging
 import asyncio
+import threading               # AgentWorker 跨线程同步: Event 用于 Stage0 用户确认等待
 from collections import deque
 
 from PyQt6.QtWidgets import (
@@ -23,7 +24,7 @@ from PyQt6.QtWidgets import (
     QFileDialog, QFrame, QGroupBox, QMessageBox, QSizePolicy, QSpacerItem,
     QComboBox, QTextEdit, QSplitter, QTabWidget, QScrollArea,
     QDialog, QFormLayout, QDialogButtonBox, QListWidget, QListWidgetItem,
-    QMenu, QApplication
+    QMenu, QApplication, QCheckBox    # Stage0 叙事扩写启用/关闭开关
 )
 from PyQt6.QtCore import (
     Qt, QThread, pyqtSignal, QTimer, QSize, QEvent, QPoint,
@@ -50,10 +51,31 @@ except ImportError:
 # ============================================================================
 # 版本管理: 每次修改/新增功能后, 版本号递增 + VERSION_HISTORY 追加条目
 # ----------------------------------------------------------------------------
-APP_VERSION = "2.8.3"
+APP_VERSION = "2.9.6"
 
 # 版本更新记录: [(版本号, 日期, [更新条目]), ...] 最新在最前
 VERSION_HISTORY = [
+    ("2.9.6", "2026-09-21", [
+        "[修复] build_scene.py spawn_blueprint 移除无效 reregister_all_components() 调用: 该方法在 UE5.8 Python 反射层不存在(Actor 对象无此属性), 每次蓝图放置都抛 AttributeError 被 try/except 捕获后打印 BP_REREG_FAIL 日志(25栋房屋=25条报错), 属无效噪音且让用户误以为转换失败; 根因分析: spawn_actor_from_class 在 UE5.8 中已自动注册蓝图所有组件, get_actor_bounds 能直接返回正确的非平凡包围盒(extent.z≈327), reregister 实为冗余的保险调用; 移除后 Z_FIX 逻辑不变, bounds 正确性不受影响, 日志不再产生误导性报错",
+    ]),
+    ("2.9.5", "2026-09-21", [
+        "[重构] build_scene.py 方案B: 移除 v2.9.4 的 set_static_mesh 类型守卫(守卫会静默跳过 Blueprint 资产导致 25 栋房屋无法放置), 改为按资产类型 auto-route 让 JSON 所有内容落实到 UE 场景; (1) instanced_grid 块: 资产类型为 Blueprint 时循环 spawn_blueprint 批量放置(世界坐标=base_loc+instance局部偏移), StaticMesh 仍走 spawn_hism HISM 高效批量路径; (2) blueprint 块扩展 grid 参数支持: 含 grid 时通过 _gen_instances_from_grid 生成实例循环 spawn_blueprint, 无 grid 保持原单次放置(向后兼容); (3) ground 段移除 elif lscape 普通拦截, 改为加载资产后按类型精准分流(StaticMesh→spawn_mesh, Material/其他→跳过避免卡死); (4) 新增 _gen_instances_from_grid helper 函数(circle/rows-cols/explicit 三种模式 + snap_to_ground)供 instanced_grid 与 blueprint-grid 共用避免重复",
+    ]),
+    ("2.9.4", "2026-09-21", [
+        "[修复] build_scene.py 全调用点 set_static_mesh 类型守卫: 在 spawn_mesh/spawn_hism 函数内及 instanced_grid 块共三处 set_static_mesh 调用点增加资产类型检查(asset.get_class().get_name() != 'StaticMesh' 则跳过并打印日志); 根因是 Agent 流水线生成的 JSON 可能在 placements[].asset 填入蓝图路径(BP_前缀如 BP_House_RuralBrickFarm)而非静态网格, set_static_mesh(Blueprint) 会触发 UE 主线程死锁(卡死在 5%); 此前修复仅逐点补丁(ground段空守卫→ground段landscape守卫→ground段类型跳过), 每次只堵一个调用点导致同类 bug 反复出现; 本次在所有 set_static_mesh 调用点统一加类型守卫, 彻底封死该 bug 类(defense-in-depth: instanced_grid 块提前跳过避免网格生成+snap查询浪费, spawn_hism/spawn_mesh 函数内兜底确保 crop_field/village/group 等所有路径均被拦截)",
+    ]),
+    ("2.9.3", "2026-09-21", [
+        "[修复] build_scene.py ground 段增加 Landscape 存在性双重保护守卫: 当场景 JSON 同时含 landscape 段和 ground 段时, 构建时跳过 ground (不写死互斥校验规则拒绝 JSON, 仅按场景实际情况跳过); 根因是 Agent 流水线生成的 JSON 可能在 ground.asset 填入材质路径(M_前缀如 M_MS_Decal)而非静态网格, spawn_mesh 把 Material 喂给 set_static_mesh 会触发 UE 主线程死锁(卡死在 parent material saved 之后); 双重保护=守卫1(空asset跳过)+守卫2(有landscape跳过), 无 Landscape 时 ground 仍正常生效",
+    ]),
+    ("2.9.2", "2026-09-21", [
+        "[新增] AI生成和Agent流水线模块增加下载JSON按钮: 两个面板底部操作栏各新增'下载JSON'按钮, 点击后弹出QFileDialog.getSaveFileName将当前场景JSON保存为.json文件; 下载过程中按钮禁用, 流水线完成后启用; Dark/Light双主题QSS样式(绿色系)与复制JSON(蓝色/紫色)视觉区分",
+    ]),
+    ("2.9.1", "2026-09-21", [
+        "[修复] build_scene.py ground段补全空asset防御守卫: 与placements循环一致, 跳过asset为空字符串的ground条目, 避免load_asset(\"\")导致UE编辑器主线程卡死在5%",
+    ]),
+    ("2.9.0", "2026-09-15", [
+        "[新增] Stage 0 叙事扩写 Agent (NarrativeEnricherAgent): 在 Stage1 之前用 LLM 把简短输入扩写为文学画面+要素清单的丰富叙事, GUI 可编辑后确认再继续; 支持 stage_models[\"stage0\"] 配置扩写专用模型, 默认启用可手动关闭; NarrativeEnricherAgent 继承 AgentBase, output_type=str(直接返回原始文本无 JSON 解析), 系统提示词含6条规则(文学扩写/要素清单/定性空间关系/参数原样保留/绝对坐标禁止/中文输出); AgentWorker 新增 enable_enrichment 参数+stage0_done 信号+threading.Event 跨线程同步(GUI 编辑确认后释放阻塞继续 Stage1); AgentPipelinePanel 新增启用复选框+可编辑 Stage0 面板+确认按钮; 进度条调整(启用: 0->20->40->70->100, 禁用: 0->33->66->100); 新增 14 项单元测试 test_v09_narrative_enricher.py",
+    ]),
     ("2.8.3", "2026-09-15", [
         "[优化] GUI 启动加速: 将 4 个 Agent 类(AgentDeps/ScenePlannerAgent/JSONBuilderAgent/QualityGuardAgent)的导入从模块顶层移至 AgentWorker.run() 内懒加载; 根因是 pydantic_ai 首次导入约6秒(连带 fastmcp/openai/mcp 链), 此前在 GUI 启动时即加载导致双击后需等待约7秒窗口才出现; 改为懒加载后仅用户实际运行 Agent 流水线时才付出导入代价(sys.modules 缓存后续零开销); 实测模块导入耗时 8.06秒→0.69秒(降幅92%), 144项测试通过",
     ]),
@@ -1216,6 +1238,7 @@ class AgentWorker(QThread):
     """
 
     # 阶段信号: 传递该阶段输出产物的 JSON 字符串 (供面板折叠展示)
+    stage0_done = pyqtSignal(str)       # 叙事扩写文本 (供 GUI 展示/编辑)
     stage1_done = pyqtSignal(str)       # 蓝图 JSON
     stage2_done = pyqtSignal(str)       # 场景 JSON
     stage3_done = pyqtSignal(str)       # 校验报告 JSON
@@ -1224,10 +1247,13 @@ class AgentWorker(QThread):
     error_occurred = pyqtSignal(str)    # 异常
     log_line = pyqtSignal(str)          # 日志行
 
-    def __init__(self, config, user_desc):
+    def __init__(self, config, user_desc, enable_enrichment=False):
         super().__init__()
         self._config = config
         self._user_desc = user_desc
+        self._enable_enrichment = enable_enrichment  # 是否启用 Stage0 叙事扩写
+        self._enrich_event = threading.Event()       # 跨线程同步: 等待用户编辑确认
+        self._enriched_text = ""                     # 用户编辑后的文本(由 GUI 线程设置)
 
     def run(self):
         """运行三阶段 Agent 流水线, 每阶段发信号到 UI
@@ -1245,6 +1271,8 @@ class AgentWorker(QThread):
             api_key = resolve_env_value(config.get("llm_api_key", ""))
             model_name = config.get("llm_model", "glm-5.2")
             base_url = config.get("llm_base_url", "")
+            # 分级模型策略: 每阶段可用不同模型, 未配置则用主模型(完全向后兼容)
+            stage_models = config.get("stage_models", {})
             if not api_key:
                 self.error_occurred.emit("API Key 未配置, 请在设置对话框中填写")
                 return
@@ -1261,17 +1289,26 @@ class AgentWorker(QThread):
 
             # content_dir: UE 项目 Content 目录, 用于 QualityGuardAgent 资产路径校验
             # validator 字段复用为 content_dir; project_path 未配置时为 None (跳过磁盘校验)
+            # BUG修复: project_path 是 .uproject 文件路径(如 .../MyUETest5_8_2.uproject),
+            # 不是目录! 直接 os.path.join(project_path, "Content") 会生成
+            # .../MyUETest5_8_2.uproject/Content (无效路径), 导致全部资产校验失败。
+            # 正确做法: 先 dirname 取项目目录, 再 join "Content" (与 BuildWorker L1007 一致)
             project_path = config.get("project_path", "")
-            content_dir = os.path.join(project_path, "Content") if project_path else None
+            content_dir = (
+                os.path.join(os.path.dirname(project_path), "Content")
+                if project_path else None
+            )
 
             # 懒加载 Agent 框架: pydantic_ai 首次导入约6秒(连带 fastmcp/openai/mcp),
             # 延迟到用户实际运行流水线时再加载, GUI 启动无需等待。
             # 模块导入由 sys.modules 缓存, 后续调用零额外开销。
             self.log_line.emit("加载 Agent 框架(首次约6秒)...")
             from ai.agents.base import AgentDeps
+            from ai.agents.narrative_enricher import NarrativeEnricherAgent
             from ai.agents.scene_planner import ScenePlannerAgent
             from ai.agents.json_builder import JSONBuilderAgent
             from ai.agents.quality_guard import QualityGuardAgent
+            from ai.models.scene_json import normalize_height_pattern
 
             deps = AgentDeps(
                 knowledge=knowledge,
@@ -1285,9 +1322,56 @@ class AgentWorker(QThread):
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
 
+            # 流水线总计时起点 — 诊断各 Stage 耗时, 写入 uescenefactory.log
+            _t_pipeline_start = time.time()
+            logger.info("Agent 流水线启动: model=%s, enrichment=%s",
+                        model_name, self._enable_enrichment)
+
+            # ---- Stage 0: 叙事扩写 (可选) ----
+            # 启用时先调 LLM 把简短输入扩写为丰富叙事, GUI 展示供用户编辑确认,
+            # 再用编辑后的文本替换原始输入, 提升 Stage1 结构化提取精度。
+            # threading.Event 实现 QThread → GUI 主线程的跨线程同步:
+            #   QThread 在 wait() 阻塞期间 GUI 完全不受影响(不依赖 Qt 事件循环),
+            #   用户确认后 GUI 调 confirm_enrichment() → Event.set() → QThread 恢复。
+            if self._enable_enrichment:
+                self.log_line.emit("Stage 0: 叙事扩写 (NarrativeEnricherAgent)...")
+                # 扩写专用模型: stage_models["stage0"], 未配置则用主模型
+                model_stage0 = stage_models.get("stage0", model_name)
+                enricher = NarrativeEnricherAgent(
+                    model_stage0, api_key, base_url=base_url, deps=deps)
+                _t0 = time.time()  # Stage 0 计时起点
+                result0 = loop.run_until_complete(enricher.run(user_desc))
+                narrative = result0.output
+                # 在 emit signal 之前先 clear Event, 消除竞态窗口:
+                # 若自动继续勾选, _on_stage0 会同步调 _on_confirm_stage0 → _enrich_event.set(),
+                # GIL 切换极可能导致 GUI 线程在 clear() 之前执行 set(),
+                # 随后 clear() 覆盖 set() 造成 wait() 永久阻塞 (流水线卡死)
+                self._enrich_event.clear()
+                self.stage0_done.emit(narrative)
+                # 提取 Stage 0 token 消耗并上报全局累计器
+                u0 = result0.usage
+                token_tracker.add(u0.input_tokens, u0.output_tokens)
+                # 记录 Stage 0 耗时与 LLM 调用次数到日志 (requests 字段可能不存在于旧版 pydantic_ai)
+                logger.info("Stage 0 耗时: %.1fs | input=%d output=%d requests=%d",
+                            time.time() - _t0, u0.input_tokens, u0.output_tokens,
+                            getattr(u0, 'requests', 0))
+                # UI 日志: 同步 Stage 0 耗时与 token 到运行日志面板
+                self.log_line.emit("Stage 0 完成: 耗时=%.1fs | input=%d output=%d requests=%d" % (
+                    time.time() - _t0, u0.input_tokens, u0.output_tokens,
+                    getattr(u0, 'requests', 0)))
+                # 阻塞等待用户编辑确认 (threading.Event 跨线程同步)
+                self.log_line.emit("等待用户确认扩写叙事...")
+                self._enrich_event.wait()
+                # 诊断日志: 确认 wait() 已被 set() 释放, 便于排查自动继续卡死问题
+                logger.info("_enrich_event.wait() 已释放, 继续 Stage 1")
+                # 用编辑后的文本替换原始输入
+                user_desc = self._enriched_text
+                self.log_line.emit("用户确认扩写叙事，继续 Stage 1")
+
             # ---- Stage 1: 场景规划 ----
             self.log_line.emit("Stage 1: 场景规划 (ScenePlannerAgent)...")
             planner = ScenePlannerAgent(model_name, api_key, base_url=base_url, deps=deps)
+            _t1 = time.time()  # Stage 1 计时起点
             result1 = loop.run_until_complete(planner.run(user_desc))
             blueprint = result1.output
             blueprint_json = blueprint.model_dump_json()
@@ -1299,31 +1383,139 @@ class AgentWorker(QThread):
             #  与 LLMClient.complete() 上报的 tokens 汇总, 实现"所有用到 LLM 的 tokens 都计算")
             u1 = result1.usage
             token_tracker.add(u1.input_tokens, u1.output_tokens)
+            # 记录 Stage 1 耗时与 LLM 调用次数到日志
+            logger.info("Stage 1 耗时: %.1fs | input=%d output=%d requests=%d",
+                        time.time() - _t1, u1.input_tokens, u1.output_tokens,
+                        getattr(u1, 'requests', 0))
+            # UI 日志: 同步 Stage 1 耗时与 token 到运行日志面板
+            self.log_line.emit("Stage 1 完成: 耗时=%.1fs | input=%d output=%d requests=%d" % (
+                time.time() - _t1, u1.input_tokens, u1.output_tokens,
+                getattr(u1, 'requests', 0)))
 
             # ---- Stage 2: 场景 JSON 生成 ----
             self.log_line.emit("Stage 2: 场景 JSON 生成 (JSONBuilderAgent)...")
             builder = JSONBuilderAgent(model_name, api_key, base_url=base_url, deps=deps)
+            _t2 = time.time()  # Stage 2 计时起点
             result2 = loop.run_until_complete(builder.run(blueprint_json))
             scene_json = result2.output
-            scene_json_str = scene_json.model_dump_json()
+            # UI 日志: Stage 2 LLM 生成完成 (修复前)
+            self.log_line.emit("Stage 2 LLM 生成完成: scene.name=%s, 开始确定性修复..." % (
+                scene_json.scene.name if scene_json.scene else "unnamed"))
+            # 后处理: 补全道路推平参数 + 散布道路排除字段(防止C++跳过地形推平/物体落在路上)
+            if scene_json.landscape and scene_json.landscape.height_pattern:
+                normalize_height_pattern(scene_json.landscape.height_pattern)
+            # 确定性修复-校验闭环: 绿色层修复→质量校验→黄色层修复→再校验
+            # 在 LLM 校验前先自动修复可确定性修复的语义缺陷, 减少 LLM 往返次数
+            logger.info("[Stage2] ===== 确定性修复-校验闭环开始 =====")
+            from scripts.auto_repair_scene import repair_and_validate
+            _scene_dict = scene_json.model_dump()
+            _repairs, _q_errors, _q_warnings = repair_and_validate(_scene_dict)
+            if _repairs:
+                self.log_line.emit("确定性修复: %d 项" % len(_repairs))
+                logger.info("[Stage2] 确定性修复: %d 项", len(_repairs))
+                for _r in _repairs:
+                    logger.info("[Stage2] [REPAIR] %s", _r)
+                    self.log_line.emit("  [修复] %s" % _r)
+            else:
+                self.log_line.emit("确定性修复: 0 项 (无需修复)")
+                logger.info("[Stage2] 确定性修复: 0 项 (无需修复)")
+            if _q_errors:
+                self.log_line.emit("残留质量错误: %d 项 (交由 Stage 3 LLM 修复)" % len(_q_errors))
+                logger.warning("[Stage2] 残留质量错误: %d 项 (需 LLM 修复)", len(_q_errors))
+                for i, _e in enumerate(_q_errors, 1):
+                    logger.warning("[Stage2]   残留错误 %d/%d: %s", i, len(_q_errors), _e)
+                    self.log_line.emit("  [残留错误 %d/%d] %s" % (i, len(_q_errors), _e))
+            else:
+                self.log_line.emit("残留质量错误: 0 项")
+                logger.info("[Stage2] 残留质量错误: 0 项")
+            if _q_warnings:
+                self.log_line.emit("质量警告: %d 项" % len(_q_warnings))
+                logger.info("[Stage2] 质量警告: %d 项", len(_q_warnings))
+                for i, _w in enumerate(_q_warnings, 1):
+                    logger.info("[Stage2]   警告 %d/%d: %s", i, len(_q_warnings), _w)
+                    self.log_line.emit("  [警告 %d/%d] %s" % (i, len(_q_warnings), _w))
+            logger.info("[Stage2] ===== 确定性修复-校验闭环结束 =====")
+            scene_json_str = json.dumps(_scene_dict, ensure_ascii=False)
             self.stage2_done.emit(scene_json_str)
             scene_name = scene_json.scene.name if scene_json.scene else "unnamed"
             self.log_line.emit("场景 JSON 生成完成: scene.name=%s" % scene_name)
             # 提取 Stage 2 token 消耗并上报全局累计器
             u2 = result2.usage
             token_tracker.add(u2.input_tokens, u2.output_tokens)
+            # 记录 Stage 2 耗时与 LLM 调用次数到日志
+            logger.info("Stage 2 耗时: %.1fs | input=%d output=%d requests=%d",
+                        time.time() - _t2, u2.input_tokens, u2.output_tokens,
+                        getattr(u2, 'requests', 0))
+            # UI 日志: 同步 Stage 2 总耗时与 token 到运行日志面板
+            self.log_line.emit("Stage 2 完成: 耗时=%.1fs | input=%d output=%d requests=%d" % (
+                time.time() - _t2, u2.input_tokens, u2.output_tokens,
+                getattr(u2, 'requests', 0)))
 
             # ---- Stage 3: 质量校验 ----
             self.log_line.emit("Stage 3: 质量校验 (QualityGuardAgent)...")
             guard = QualityGuardAgent(model_name, api_key, base_url=base_url, deps=deps)
+            _t3 = time.time()  # Stage 3 计时起点
             result3 = loop.run_until_complete(guard.run(scene_json_str))
             report = result3.output
+            # UI 日志: Stage 3 LLM 校验完成 (安全网修复前)
+            self.log_line.emit("Stage 3 LLM 校验完成: is_valid=%s, errors=%d, repair_rounds=%d, 开始安全网修复..." % (
+                report.is_valid, len(report.errors), report.repair_rounds))
+            # 安全网: 确保质量守护LLM未丢弃道路推平+散布排除字段
+            _ls = report.scene.get("landscape")
+            if isinstance(_ls, dict) and _ls.get("height_pattern"):
+                normalize_height_pattern(_ls["height_pattern"])
+            # 安全网: 确定性修复-校验闭环 (防止 LLM 修复引入新的语义缺陷)
+            logger.info("[Stage3] ===== 安全网修复-校验闭环开始 =====")
+            from scripts.auto_repair_scene import repair_and_validate
+            _repairs, _q_errors, _q_warnings = repair_and_validate(report.scene)
+            if _repairs:
+                self.log_line.emit("安全网修复: %d 项" % len(_repairs))
+                logger.info("[Stage3] 安全网修复: %d 项", len(_repairs))
+                for _r in _repairs:
+                    logger.info("[Stage3] [REPAIR] %s", _r)
+                    self.log_line.emit("  [安全网修复] %s" % _r)
+            else:
+                self.log_line.emit("安全网修复: 0 项 (LLM 未引入新缺陷)")
+                logger.info("[Stage3] 安全网修复: 0 项 (LLM 未引入新缺陷)")
+            if _q_errors:
+                report.errors.extend(_q_errors)
+                report.is_valid = False
+                self.log_line.emit("安全网残留质量错误: %d 项" % len(_q_errors))
+                logger.warning("[Stage3] 安全网残留质量错误: %d 项", len(_q_errors))
+                for i, _e in enumerate(_q_errors, 1):
+                    logger.warning("[Stage3]   残留错误 %d/%d: %s", i, len(_q_errors), _e)
+                    self.log_line.emit("  [安全网残留错误 %d/%d] %s" % (i, len(_q_errors), _e))
+            else:
+                self.log_line.emit("安全网残留质量错误: 0 项")
+                logger.info("[Stage3] 安全网残留质量错误: 0 项")
+            if _q_warnings:
+                self.log_line.emit("安全网质量警告: %d 项" % len(_q_warnings))
+                logger.info("[Stage3] 安全网质量警告: %d 项", len(_q_warnings))
+                for i, _w in enumerate(_q_warnings, 1):
+                    logger.info("[Stage3]   警告 %d/%d: %s", i, len(_q_warnings), _w)
+                    self.log_line.emit("  [安全网警告 %d/%d] %s" % (i, len(_q_warnings), _w))
+            logger.info("[Stage3] ===== 安全网修复-校验闭环结束 =====")
             self.stage3_done.emit(report.model_dump_json())
             self.log_line.emit("校验完成: is_valid=%s, errors=%d, repair_rounds=%d" % (
                 report.is_valid, len(report.errors), report.repair_rounds))
             # 提取 Stage 3 token 消耗并上报全局累计器 (最终值)
             u3 = result3.usage
             token_tracker.add(u3.input_tokens, u3.output_tokens)
+            # 记录 Stage 3 耗时与 LLM 调用次数到日志
+            logger.info("Stage 3 耗时: %.1fs | input=%d output=%d requests=%d",
+                        time.time() - _t3, u3.input_tokens, u3.output_tokens,
+                        getattr(u3, 'requests', 0))
+            # UI 日志: 同步 Stage 3 总耗时与 token 到运行日志面板
+            self.log_line.emit("Stage 3 完成: 耗时=%.1fs | input=%d output=%d requests=%d" % (
+                time.time() - _t3, u3.input_tokens, u3.output_tokens,
+                getattr(u3, 'requests', 0)))
+            # 记录流水线总耗时
+            _total_elapsed = time.time() - _t_pipeline_start
+            logger.info("Agent 流水线完成: 总耗时=%.1fs, is_valid=%s, repair_rounds=%d",
+                        _total_elapsed, report.is_valid, report.repair_rounds)
+            # UI 日志: 流水线总耗时汇总
+            self.log_line.emit("流水线总耗时: %.1fs | is_valid=%s | errors=%d | repair_rounds=%d" % (
+                _total_elapsed, report.is_valid, len(report.errors), report.repair_rounds))
 
             # 最终场景 = ValidationReport.scene (已修复)
             success = report.is_valid
@@ -1344,6 +1536,19 @@ class AgentWorker(QThread):
                     bank.close()
                 except Exception as e:
                     logger.debug("关闭 ExperienceBank 连接失败: %s", e)
+
+    def confirm_enrichment(self, edited_text: str):
+        """GUI 线程调用: 设置编辑后的文本并释放等待。
+
+        AgentWorker 在 Stage0 完成后阻塞于 _enrich_event.wait(),
+        GUI 主线程在用户点击"确认并继续"后调用本方法,
+        将编辑后的文本存入 _enriched_text 并 _enrich_event.set() 释放阻塞,
+        AgentWorker 线程恢复后用 _enriched_text 替换原始 user_desc 继续 Stage1。
+        """
+        self._enriched_text = edited_text
+        self._enrich_event.set()
+        # 诊断日志: 确认 set() 已调用, 便于排查 worker wait() 是否被正确释放
+        logger.info("confirm_enrichment: _enrich_event.set() 已调用, 释放 worker wait() 阻塞")
 
 
 # ============================================================================
@@ -1874,6 +2079,14 @@ class ChatPanel(QWidget):
         self._copy_json_btn.setToolTip("将场景 JSON 复制到系统剪贴板")
         action_bar.addWidget(self._copy_json_btn)
 
+        # 下载 JSON 按钮: 将当前场景 JSON 保存为 .json 文件
+        self._download_json_btn = QPushButton("下载 JSON")
+        self._download_json_btn.setObjectName("downloadJsonBtn")
+        self._download_json_btn.clicked.connect(self._on_download_json)
+        self._download_json_btn.setEnabled(False)
+        self._download_json_btn.setToolTip("将场景 JSON 保存为 .json 文件到本地")
+        action_bar.addWidget(self._download_json_btn)
+
         # 弹性空隙: 把审核类按钮推到左侧, 评分类控件推到右侧
         action_bar.addStretch()
 
@@ -2036,6 +2249,7 @@ class ChatPanel(QWidget):
         self._star_rating.set_enabled(False)
         self._submit_rating_btn.setEnabled(False)
         self._copy_json_btn.setEnabled(False)
+        self._download_json_btn.setEnabled(False)
 
         # 保存原始用户描述，供反馈重试时使用（_on_send 已清空输入框）
         self._last_user_desc = user_desc
@@ -2072,8 +2286,9 @@ class ChatPanel(QWidget):
         self._worker.start()
 
     def _on_log(self, line):
-        """日志行追加"""
-        self._log.append(line)
+        """日志行追加 — 自动加时间戳前缀 [HH:MM:SS]，方便排查问题"""
+        ts = time.strftime("%H:%M:%S")
+        self._log.append("[%s] %s" % (ts, line))
 
     def _append_chat(self, msg):
         """统一追加聊天历史，自动加时间戳前缀 [HH:MM:SS]
@@ -2102,8 +2317,9 @@ class ChatPanel(QWidget):
         self._send_btn.setEnabled(True)
         self._approve_btn.setEnabled(True)
         self._reject_btn.setEnabled(True)
-        # JSON 生成完毕, 启用复制按钮
+        # JSON 生成完毕, 启用复制/下载按钮
         self._copy_json_btn.setEnabled(True)
+        self._download_json_btn.setEnabled(True)
         status = "✅ 成功" if success else "⚠️ 有错误，请审核"
         self._append_chat(f"[AI] {message} ({status})")
 
@@ -2205,6 +2421,22 @@ class ChatPanel(QWidget):
         QApplication.clipboard().setText(text)
         self._append_chat("[系统] 场景 JSON 已复制到剪贴板")
 
+    def _on_download_json(self):
+        """下载 JSON 按钮: 将当前场景 JSON 保存为 .json 文件"""
+        if not self._last_scene:
+            return
+        save_path, _ = QFileDialog.getSaveFileName(
+            self, "保存场景 JSON", "scene.json", "JSON 文件 (*.json)"
+        )
+        if not save_path:
+            return
+        try:
+            with open(save_path, "w", encoding="utf-8") as f:
+                json.dump(self._last_scene, f, ensure_ascii=False, indent=2)
+            self._append_chat("[系统] 场景 JSON 已保存到: " + save_path)
+        except Exception as e:
+            QMessageBox.critical(self, "错误", "保存文件失败:\n" + str(e))
+
     def _on_submit_rating(self):
         """提交评分按钮: 将用户星级评分写入经验库 (update_rating)
 
@@ -2261,6 +2493,7 @@ class AgentPipelinePanel(QWidget):
         self._worker = None          # AgentWorker 引用, 防止被 GC 回收
         self._last_scene = None      # 最终场景 dict (ValidationReport.scene)
         self._umap_signal_connected = False
+        self._enable_enrich = False  # 是否启用叙事扩写(由 _start_pipeline 读取复选框设置)
         self._init_ui()
 
     def _init_ui(self):
@@ -2298,10 +2531,44 @@ class AgentPipelinePanel(QWidget):
         left.addLayout(input_row)
         self._input.installEventFilter(self)
 
-        # 进度条: 指示三阶段流水线整体进度 (0→33→66→100)
+        # 叙事扩写开关 (Stage 0) — 用户手动控制是否启用 AI 扩写
+        enrich_row = QHBoxLayout()
+        self._enrich_checkbox = QCheckBox("启用叙事扩写 (Stage 0: AI 先把简短描述扩写成画面感叙事)")
+        self._enrich_checkbox.setChecked(True)  # 默认启用
+        self._enrich_checkbox.setToolTip(
+            "勾选后，流水线先调用 LLM 把输入扩写为丰富叙事，用户可编辑后再进入 Stage 1\n"
+            "取消勾选则直接把原始输入传给 Stage 1（行为同 v2.8.x）")
+        enrich_row.addWidget(self._enrich_checkbox)
+        left.addLayout(enrich_row)
+
+        # 自动继续开关 — 勾选后自动确认 Stage0 + 自动采纳构建 UMAP, 无需手动点击
+        auto_row = QHBoxLayout()
+        self._auto_continue_checkbox = QCheckBox("自动继续 (Stage 0 自动确认, 完成后自动采纳构建 UMAP)")
+        self._auto_continue_checkbox.setChecked(True)  # 默认选中
+        self._auto_continue_checkbox.setToolTip(
+            "勾选后，Stage 0 扩写完成自动确认继续，流水线完成后自动采纳并构建 UMAP\n"
+            "取消勾选则每步需手动点击「确认并继续 Stage 1」和「采纳并构建 UMAP」")
+        auto_row.addWidget(self._auto_continue_checkbox)
+        left.addLayout(auto_row)
+
+        # 进度条: 指示流水线整体进度
+        # 启用扩写: 0→20→40→70→100; 关闭扩写: 0→33→66→100
         self._progress = QProgressBar()
         self._progress.setVisible(False)
         left.addWidget(self._progress)
+
+        # ---- Stage 0 折叠面板: 可编辑叙事文本 + 确认按钮 ----
+        # 与 Stage1/2/3 不同, Stage0 内容区可编辑(用户修改 AI 扩写结果)
+        self._stage0_btn, self._stage0_content = self._make_collapsible("Stage 0: 叙事扩写")
+        self._stage0_content.setReadOnly(False)  # 覆盖 _make_collapsible 的只读默认值, 允许用户编辑
+        self._stage0_content.setMaximumHeight(200)  # 扩写叙事较长, 给更大空间
+        self._stage0_confirm_btn = QPushButton("确认并继续 Stage 1")
+        self._stage0_confirm_btn.setObjectName("reviewBtn")
+        self._stage0_confirm_btn.setEnabled(False)  # Stage0 完成前禁用
+        self._stage0_confirm_btn.clicked.connect(self._on_confirm_stage0)
+        left.addWidget(self._stage0_btn)
+        left.addWidget(self._stage0_content)
+        left.addWidget(self._stage0_confirm_btn)
 
         # ---- 三个折叠阶段面板: 标题按钮(checkable) + 内容区 ----
         # 每阶段完成后填充内容, 默认折叠避免初始界面过长
@@ -2314,6 +2581,14 @@ class AgentPipelinePanel(QWidget):
         left.addWidget(self._stage2_content)
         left.addWidget(self._stage3_btn)
         left.addWidget(self._stage3_content)
+
+        # 所有阶段折叠面板列表 (手风琴模式: 同时只允许展开1个, 展开新的自动收起其他)
+        self._stage_panels = [
+            (self._stage0_btn, self._stage0_content, "Stage 0: 叙事扩写"),
+            (self._stage1_btn, self._stage1_content, "Stage 1: 场景蓝图"),
+            (self._stage2_btn, self._stage2_content, "Stage 2: 场景 JSON"),
+            (self._stage3_btn, self._stage3_content, "Stage 3: 校验报告"),
+        ]
 
         # ==================== 右栏: JSON 预览 + 运行日志 ====================
         right_widget = QWidget()
@@ -2365,6 +2640,13 @@ class AgentPipelinePanel(QWidget):
         self._copy_json_btn.setEnabled(False)
         self._copy_json_btn.setToolTip("将最终场景 JSON 复制到系统剪贴板")
         action_bar.addWidget(self._copy_json_btn)
+        # 下载 JSON 按钮: 将最终场景 JSON 保存为 .json 文件
+        self._download_json_btn = QPushButton("下载 JSON")
+        self._download_json_btn.setObjectName("downloadJsonBtn")
+        self._download_json_btn.clicked.connect(self._on_download_json)
+        self._download_json_btn.setEnabled(False)
+        self._download_json_btn.setToolTip("将最终场景 JSON 保存为 .json 文件到本地")
+        action_bar.addWidget(self._download_json_btn)
         action_bar.addStretch()
         # 打开 UE 编辑器按钮 (UMAP 生成后显示)
         self._open_ue_btn = QPushButton("在 UE 编辑器中打开")
@@ -2394,9 +2676,14 @@ class AgentPipelinePanel(QWidget):
         return btn, content
 
     def _on_stage_toggle(self, btn, content, title, checked):
-        """折叠面板切换: 同步箭头方向 + 内容区可见性"""
+        """折叠面板切换: 同步箭头方向 + 内容区可见性 + 手风琴(同时只展开1个)"""
         content.setVisible(checked)
         btn.setText("▼ " + title if checked else "▶ " + title)
+        # 手风琴模式: 展开本面板时, 自动收起其他所有阶段面板
+        if checked and hasattr(self, "_stage_panels"):
+            for other_btn, other_content, other_title in self._stage_panels:
+                if other_btn is not btn and other_btn.isChecked():
+                    other_btn.setChecked(False)  # 触发各自 _on_stage_toggle(checked=False) 收起
 
     def _create_json_editor(self):
         """创建 JSON 预览编辑器 (QScintilla 优先, 降级 QPlainTextEdit)
@@ -2470,17 +2757,25 @@ class AgentPipelinePanel(QWidget):
         self._send_btn.setEnabled(False)
         self._approve_btn.setEnabled(False)
         self._copy_json_btn.setEnabled(False)
+        self._download_json_btn.setEnabled(False)
         self._open_ue_btn.setVisible(False)
 
+        # 记录是否启用叙事扩写, 供 _on_stage1/_on_stage2 判断进度条数值
+        self._enable_enrich = self._enrich_checkbox.isChecked()
+
         # 重置阶段面板内容 (新一轮流水线开始)
+        self._stage0_content.clear()
+        self._stage0_confirm_btn.setEnabled(False)
         self._stage1_content.clear()
         self._stage2_content.clear()
         self._stage3_content.clear()
         self._json_editor.setText("")
 
         # 创建并启动后台线程
-        self._worker = AgentWorker(self._config, user_desc)
+        self._worker = AgentWorker(self._config, user_desc,
+                                   enable_enrichment=self._enable_enrich)
         self._worker.log_line.connect(self._on_log)
+        self._worker.stage0_done.connect(self._on_stage0)
         self._worker.stage1_done.connect(self._on_stage1)
         self._worker.stage2_done.connect(self._on_stage2)
         self._worker.stage3_done.connect(self._on_stage3)
@@ -2495,16 +2790,54 @@ class AgentPipelinePanel(QWidget):
     # ------------------------------------------------------------------
 
     def _on_log(self, line):
-        """日志行追加"""
-        self._log.append(line)
+        """日志行追加 — 自动加时间戳前缀 [HH:MM:SS]，方便排查问题"""
+        ts = time.strftime("%H:%M:%S")
+        self._log.append("[%s] %s" % (ts, line))
 
     def _append_chat(self, msg):
         """统一追加聊天历史, 自动加时间戳前缀 [HH:MM:SS]"""
         ts = time.strftime("%H:%M:%S")
         self._chat_history.append("[%s] %s" % (ts, msg))
 
+    def _on_stage0(self, narrative):
+        """Stage 0 完成: 填充可编辑面板 + 自动展开 + 启用确认按钮 + 进度 20%
+
+        AgentWorker 在 Stage0 LLM 扩写完成后 emit stage0_done(narrative),
+        本回调在 GUI 主线程执行: 将扩写文本填入可编辑面板, 自动展开让用户看到,
+        启用"确认并继续 Stage 1"按钮。用户编辑文本后点击确认,
+        _on_confirm_stage0 调用 worker.confirm_enrichment() 释放阻塞。
+        """
+        self._stage0_content.setPlainText(narrative)
+        self._stage0_btn.setChecked(True)  # 自动展开 Stage0 面板
+        self._stage0_confirm_btn.setEnabled(True)
+        self._progress.setValue(20)
+        self._append_chat("[Stage 0] 叙事扩写完成，请查看并编辑后确认")
+        # 自动继续: 勾选后自动确认 Stage 0, 无需手动点击「确认并继续 Stage 1」
+        # 用 QTimer.singleShot(0,...) 延迟到下一轮事件循环再执行,
+        # 避免在 stage0_done 信号回调内同步调用 confirm_enrichment → _enrich_event.set(),
+        # 否则 threading.Event.set() 在 Qt 信号处理函数内同步执行时
+        # 无法正确释放 QThread 的 wait() 阻塞 (流水线卡死)
+        if self._auto_continue_checkbox.isChecked():
+            QTimer.singleShot(0, self._on_confirm_stage0)
+
+    def _on_confirm_stage0(self):
+        """用户确认扩写叙事: 取编辑后文本 → 通知 Worker 继续 → 禁用按钮
+
+        threading.Event 跨线程同步的 GUI 端:
+        用户编辑完扩写文本后点击"确认并继续 Stage 1"按钮触发本方法,
+        从面板取出编辑后的文本, 调 worker.confirm_enrichment() 将文本存入
+        worker._enriched_text 并 _enrich_event.set() 释放 AgentWorker 的 wait() 阻塞。
+        """
+        edited = self._stage0_content.toPlainText().strip()
+        if not edited:
+            self._append_chat("[Stage 0] 扩写内容为空，请编辑后重试")
+            return
+        self._worker.confirm_enrichment(edited)
+        self._stage0_confirm_btn.setEnabled(False)
+        self._append_chat("[Stage 0] 用户已确认，继续 Stage 1")
+
     def _on_stage1(self, blueprint_json):
-        """Stage 1 完成: 填充蓝图折叠面板 + 进度 33%"""
+        """Stage 1 完成: 填充蓝图折叠面板 + 进度 40%(扩写启用)/33%(关闭)"""
         import json as _json
         try:
             bp = _json.loads(blueprint_json)
@@ -2523,11 +2856,11 @@ class AgentPipelinePanel(QWidget):
             self._stage1_content.setPlainText(blueprint_json)
         # 自动展开本阶段面板, 让用户即时看到产物
         self._stage1_btn.setChecked(True)
-        self._progress.setValue(33)
+        self._progress.setValue(40 if self._enable_enrich else 33)
         self._append_chat("[Stage 1] 蓝图生成完成")
 
     def _on_stage2(self, scene_json_str):
-        """Stage 2 完成: 填充场景JSON折叠面板 + 右栏JSON预览 + 进度 66%"""
+        """Stage 2 完成: 填充场景JSON折叠面板 + 右栏JSON预览 + 进度 70%(扩写启用)/66%(关闭)"""
         import json as _json
         try:
             scene = _json.loads(scene_json_str)
@@ -2551,8 +2884,16 @@ class AgentPipelinePanel(QWidget):
             pretty = scene_json_str
         self._json_editor.setText(pretty)
         self._stage2_btn.setChecked(True)
-        self._progress.setValue(66)
+        self._progress.setValue(70 if self._enable_enrich else 66)
         self._append_chat("[Stage 2] 场景 JSON 生成完成")
+        # 保存场景 JSON 到 _last_scene, 供复制/下载按钮使用 (Stage 3 完成后 _on_finished 会覆盖为最终版本)
+        try:
+            self._last_scene = _json.loads(scene_json_str)
+        except Exception:
+            self._last_scene = None
+        # JSON 生成完毕, 启用复制/下载按钮 (用户可在 Stage 3 校验前就获取 JSON)
+        self._copy_json_btn.setEnabled(True)
+        self._download_json_btn.setEnabled(True)
 
     def _on_stage3(self, report_json):
         """Stage 3 完成: 填充校验报告折叠面板 + 进度 100%"""
@@ -2582,13 +2923,26 @@ class AgentPipelinePanel(QWidget):
         self._send_btn.setEnabled(True)
         self._approve_btn.setEnabled(True)
         self._copy_json_btn.setEnabled(True)
+        self._download_json_btn.setEnabled(True)
         status = "✅ 成功" if success else "⚠️ 有错误, 请审核"
         self._append_chat("[系统] %s (%s)" % (message, status))
+        # 自动继续: 勾选后自动采纳并构建 UMAP (仅成功时, 校验失败仍需用户审核)
+        # 同样用 QTimer.singleShot(0,...) 延迟执行, 与 _on_stage0 一致,
+        # 确保 finished 信号回调完整返回后下一轮事件循环再触发采纳
+        if self._auto_continue_checkbox.isChecked() and success:
+            QTimer.singleShot(0, self._on_approve)
 
     def _on_error(self, msg):
-        """异常回调"""
+        """异常回调: 隐藏进度条 + 重置发送按钮 + 重新启用确认/采纳按钮
+
+        错误发生时若 Stage0 确认按钮或采纳按钮被禁用 (自动继续场景),
+        需重新启用以便用户手动重试, 避免界面卡在不可点击状态
+        """
         self._progress.setVisible(False)
         self._send_btn.setEnabled(True)
+        # 重新启用确认/采纳按钮, 防止自动继续中断后界面锁死
+        self._stage0_confirm_btn.setEnabled(True)
+        self._approve_btn.setEnabled(True)
         self._append_chat("[错误] %s" % msg)
 
     # ------------------------------------------------------------------
@@ -2603,6 +2957,10 @@ class AgentPipelinePanel(QWidget):
         """
         if not self._last_scene:
             return
+        # 重入防护: _approve_btn 在一次采纳后会被禁用, 若已禁用说明已执行过
+        if not self._approve_btn.isEnabled():
+            return
+        self._approve_btn.setEnabled(False)  # 禁用按钮, 防止双击或自动继续二次触发
         try:
             tmp = tempfile.NamedTemporaryFile(
                 mode="w", suffix=".json", delete=False, encoding="utf-8")
@@ -2632,6 +2990,22 @@ class AgentPipelinePanel(QWidget):
         text = json.dumps(self._last_scene, ensure_ascii=False, indent=2)
         QApplication.clipboard().setText(text)
         self._append_chat("[系统] 场景 JSON 已复制到剪贴板")
+
+    def _on_download_json(self):
+        """下载 JSON: 将最终场景 JSON 保存为 .json 文件"""
+        if not self._last_scene:
+            return
+        save_path, _ = QFileDialog.getSaveFileName(
+            self, "保存场景 JSON", "scene.json", "JSON 文件 (*.json)"
+        )
+        if not save_path:
+            return
+        try:
+            with open(save_path, "w", encoding="utf-8") as f:
+                json.dump(self._last_scene, f, ensure_ascii=False, indent=2)
+            self._append_chat("[系统] 场景 JSON 已保存到: " + save_path)
+        except Exception as e:
+            QMessageBox.critical(self, "错误", "保存文件失败:\n" + str(e))
 
     def _on_open_ue_editor(self):
         """打开 UE 编辑器: 委托给 MainWindow 的统一打开逻辑"""
@@ -2979,6 +3353,14 @@ QPushButton#copyJsonBtn {
 }
 QPushButton#copyJsonBtn:hover { border-color: #89b4fa; background-color: #3a3a52; }
 QPushButton#copyJsonBtn:disabled { background-color: #181825; color: #45475a; border-color: #313244; }
+/* 下载 JSON 按钮: 绿色强调, 区分于复制JSON的蓝色 */
+QPushButton#downloadJsonBtn {
+    background-color: #313244; color: #a6e3a1;
+    border: 1px solid #45475a; border-radius: 6px;
+    padding: 8px 16px; font-size: 13px;
+}
+QPushButton#downloadJsonBtn:hover { border-color: #a6e3a1; background-color: #3a3a52; }
+QPushButton#downloadJsonBtn:disabled { background-color: #181825; color: #45475a; border-color: #313244; }
 QTextEdit#chatInput {
     background-color: #313244; color: #cdd6f4;
     border: 1px solid #45475a; border-radius: 6px;
@@ -3201,6 +3583,14 @@ QPushButton#copyJsonBtn {
 }
 QPushButton#copyJsonBtn:hover { border-color: #6d4aff; background-color: rgba(109, 74, 255, 0.08); }
 QPushButton#copyJsonBtn:disabled { background-color: rgba(255, 255, 255, 0.02); color: #475569; border: none; }
+/* 下载 JSON 按钮: 绿色强调, 区分于复制JSON的紫色 */
+QPushButton#downloadJsonBtn {
+    background-color: rgba(255, 255, 255, 0.05); color: #10b981;
+    border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px;
+    padding: 8px 16px; font-size: 13px;
+}
+QPushButton#downloadJsonBtn:hover { border-color: #10b981; background-color: rgba(16, 185, 129, 0.08); }
+QPushButton#downloadJsonBtn:disabled { background-color: rgba(255, 255, 255, 0.02); color: #475569; border: none; }
 QTextEdit#chatInput {
     background-color: rgba(255, 255, 255, 0.03); color: #e2e8f0;
     border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px;
@@ -3966,8 +4356,9 @@ class MainWindow(QMainWindow):
         self.statusBar().showMessage(msg)
 
     def _on_log_line(self, line):
-        """日志行追加回调"""
-        self.log_display.appendPlainText(line)
+        """日志行追加回调 — 自动加时间戳前缀 [HH:MM:SS]，方便排查问题"""
+        ts = time.strftime("%H:%M:%S")
+        self.log_display.appendPlainText("[%s] %s" % (ts, line))
 
     def _on_finished(self, success, message, umap_path):
         """构建完成回调"""
@@ -3984,8 +4375,9 @@ class MainWindow(QMainWindow):
             self.open_ue_btn.setEnabled(True)
             self.log_display.appendPlainText("")
             self.log_display.appendPlainText("=" * 50)
-            self.log_display.appendPlainText("UMAP 文件已生成: " + umap_path)
-            self.log_display.appendPlainText("点击下方按钮下载或打开输出目录")
+            _ts = time.strftime("%H:%M:%S")
+            self.log_display.appendPlainText("[%s] UMAP 文件已生成: %s" % (_ts, umap_path))
+            self.log_display.appendPlainText("[%s] 点击下方按钮下载或打开输出目录" % _ts)
             # 通知 ChatPanel (及其他监听者) UMAP 已就绪
             self.umap_ready.emit(umap_path)
             self._add_history(umap_path)
@@ -3995,7 +4387,8 @@ class MainWindow(QMainWindow):
             self._pill_build.setState("error", "构建失败")
             self.log_display.appendPlainText("")
             self.log_display.appendPlainText("=" * 50)
-            self.log_display.appendPlainText("生成失败: " + message)
+            _ts = time.strftime("%H:%M:%S")
+            self.log_display.appendPlainText("[%s] 生成失败: %s" % (_ts, message))
 
         # 释放 worker 引用, 使一键两用逻辑恢复为"生成"
         self.worker = None

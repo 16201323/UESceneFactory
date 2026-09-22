@@ -23,6 +23,15 @@ scene / landscape / ground / placements[] / lighting / weather
 | lighting | directional_light, sky_light, sky_atmosphere, height_fog | 各含 location/rotation/intensity/color |
 | weather | volumetric_clouds | location |
 
+## landscape 尺寸换算公式（当蓝图含 size_m 时必查）
+
+- 默认 section_size_quads=63, num_subsections=1, scale=[100,100,100]
+- 每 component 物理尺寸 = 63×1×(100/100) = 63 米
+- 换算公式：component_count_x = component_count_y = round(size_m[0] / 63)
+- 例：size_m=[2000,2000] → component_count_x=component_count_y=32（32×63=2016m≈2km）
+- size_m 为空列表时用默认 component_count_x=component_count_y=8（504m）
+- region/user_desc：参考地域特征选取植被资产（如南方多竹/稻田，西北多枯树），按 user_desc 氛围修饰词调整密度与光照风格
+
 ## _note 注释规范（必须遵守）
 
 生成的 JSON 中，**每个结构块和子块**都必须包含 `_note` 字段，写明该块的用途和**每个参数的意义**。

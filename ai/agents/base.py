@@ -44,7 +44,11 @@ class AgentBase:
             api_key: API 密钥
             base_url: 自定义 API 基础 URL（可选，用于代理或兼容端点）
             deps: 依赖注入容器，默认创建空的 AgentDeps
-            retries: 工具调用失败时的重试次数
+            retries: LLM 输出无效时的重试次数（默认3次）。
+                glm-5.2 推理模型偶发 reasoning_content 耗尽 token 但 content 为空,
+                retries=1 时仅1次重试不足以度过空响应抖动, 实测触发
+                "Exceeded maximum output retries" 异常。retries=3 给足3次机会。
+                注: 此参数不影响单次调用的速度, Stage 2/3 提速靠减少上下文体积实现。
         """
         self._model_name = model_name
         self._api_key = api_key

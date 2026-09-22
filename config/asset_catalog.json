@@ -6953,15 +6953,6 @@
       "shading_model": "<MaterialShadingModel.MSM_DEFAULT_LIT: 1>"
     },
     {
-      "path": "/Game/MapForgeTest/Materials/M_Tree_Static.M_Tree_Static",
-      "folder": "Game",
-      "subfolder": "MapForgeTest",
-      "name": "M_Tree_Static.M_Tree_Static",
-      "category": "vegetation_tree",
-      "class": "Material",
-      "shading_model": "<MaterialShadingModel.MSM_TWO_SIDED_FOLIAGE: 6>"
-    },
-    {
       "path": "/Game/MapForgeTest/ProbeTestLevel.ProbeTestLevel",
       "folder": "Game",
       "subfolder": "MapForgeTest",
@@ -209681,6 +209672,60 @@
         72440.9,
         43960.1
       ]
+    },
+    {
+      "path": "/Game/Fab/Megascans/Plants/Wheat_Grass_tdcrdbur/High/tdcrdbur_tier_1/StaticMeshes/SM_tdcrdbur_VarA.SM_tdcrdbur_VarA",
+      "folder": "Game",
+      "subfolder": "Fab/Megascans/Plants/Wheat_Grass_tdcrdbur",
+      "name": "SM_tdcrdbur_VarA.SM_tdcrdbur_VarA",
+      "category": "vegetation_crop",
+      "class": "StaticMesh",
+      "note": "Fab Megascans麦穗变体A: 6变体麦子资产,替代旧wheat/realistic_wheat"
+    },
+    {
+      "path": "/Game/Fab/Megascans/Plants/Wheat_Grass_tdcrdbur/High/tdcrdbur_tier_1/StaticMeshes/SM_tdcrdbur_VarB.SM_tdcrdbur_VarB",
+      "folder": "Game",
+      "subfolder": "Fab/Megascans/Plants/Wheat_Grass_tdcrdbur",
+      "name": "SM_tdcrdbur_VarB.SM_tdcrdbur_VarB",
+      "category": "vegetation_crop",
+      "class": "StaticMesh",
+      "note": "Fab Megascans麦穗变体B"
+    },
+    {
+      "path": "/Game/Fab/Megascans/Plants/Wheat_Grass_tdcrdbur/High/tdcrdbur_tier_1/StaticMeshes/SM_tdcrdbur_VarC.SM_tdcrdbur_VarC",
+      "folder": "Game",
+      "subfolder": "Fab/Megascans/Plants/Wheat_Grass_tdcrdbur",
+      "name": "SM_tdcrdbur_VarC.SM_tdcrdbur_VarC",
+      "category": "vegetation_crop",
+      "class": "StaticMesh",
+      "note": "Fab Megascans麦穗变体C"
+    },
+    {
+      "path": "/Game/Fab/Megascans/Plants/Wheat_Grass_tdcrdbur/High/tdcrdbur_tier_1/StaticMeshes/SM_tdcrdbur_VarD.SM_tdcrdbur_VarD",
+      "folder": "Game",
+      "subfolder": "Fab/Megascans/Plants/Wheat_Grass_tdcrdbur",
+      "name": "SM_tdcrdbur_VarD.SM_tdcrdbur_VarD",
+      "category": "vegetation_crop",
+      "class": "StaticMesh",
+      "note": "Fab Megascans麦穗变体D"
+    },
+    {
+      "path": "/Game/Fab/Megascans/Plants/Wheat_Grass_tdcrdbur/High/tdcrdbur_tier_1/StaticMeshes/SM_tdcrdbur_VarE.SM_tdcrdbur_VarE",
+      "folder": "Game",
+      "subfolder": "Fab/Megascans/Plants/Wheat_Grass_tdcrdbur",
+      "name": "SM_tdcrdbur_VarE.SM_tdcrdbur_VarE",
+      "category": "vegetation_crop",
+      "class": "StaticMesh",
+      "note": "Fab Megascans麦穗变体E"
+    },
+    {
+      "path": "/Game/Fab/Megascans/Plants/Wheat_Grass_tdcrdbur/High/tdcrdbur_tier_1/StaticMeshes/SM_tdcrdbur_VarF.SM_tdcrdbur_VarF",
+      "folder": "Game",
+      "subfolder": "Fab/Megascans/Plants/Wheat_Grass_tdcrdbur",
+      "name": "SM_tdcrdbur_VarF.SM_tdcrdbur_VarF",
+      "category": "vegetation_crop",
+      "class": "StaticMesh",
+      "note": "Fab Megascans麦穗变体F"
     }
   ],
   "stats": {

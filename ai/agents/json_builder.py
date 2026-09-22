@@ -24,38 +24,30 @@ class JSONBuilderAgent(AgentBase):
         return SceneJSON
 
     def _system_prompt(self) -> str:
-        """系统提示词 — 指导 LLM 生成符合 build_scene.py 规范的场景 JSON。"""
+        """系统提示词 — 指导 LLM 生成符合 build_scene.py 规范的场景 JSON。
+
+        性能优化: 详细规则（landscape尺寸/asset字段/贴地/村落/山脉/水系）
+        已移入对应知识文档（core/asset_guide/placements/height_pattern），
+        通过 inject_knowledge 工具按需注入，避免每次调用都携带冗长指令。
+        系统提示词从~4KB精简到~1KB，减少推理模型(glm-5.2)的上下文处理开销。
+        """
         return (
             "你是一个 UE5 场景 JSON 生成专家。根据输入的场景蓝图（SceneBlueprint JSON），"
             "调用工具注入知识文档和搜索资产，生成完整的场景 JSON。\n\n"
             "关键步骤：\n"
-            "1. 解析蓝图中的意图字段（terrain_type/has_water/has_river/has_grass/"
+            "1. 解析蓝图意图字段（terrain_type/has_water/has_river/has_grass/"
             "has_wheat/placements/keywords）及结构化参数（size_m/region/user_desc）\n"
-            "2. 调用 inject_knowledge 注入分层知识文档（核心知识+模式文档+模板标杆）\n"
+            "2. 调用 inject_knowledge 注入分层知识文档（含尺寸换算/资产规则/贴地规则/"
+            "村落规则/山脉规则/水系规则等详细约束）\n"
             "3. 调用 search_assets 搜索蓝图 keywords 对应的 UE 资产路径\n"
-            "4. 根据知识文档和资产路径，生成符合 build_scene.py 规范的场景 JSON\n\n"
+            "4. 严格遵守知识文档中的约束，生成符合 build_scene.py 规范的场景 JSON\n\n"
             "JSON 顶层结构：scene(必填) / landscape / ground / placements / lighting / weather\n"
             "资产路径格式：/Game/类别/Name（不含 .uasset 后缀）\n"
             "单位：location/spacing=厘米(cm)，height_pattern 内=米(m)\n"
             "weight 范围：0~1 浮点数\n\n"
-            "⚠️ landscape 尺寸配置（当蓝图含 size_m 时必查）：\n"
-            "- 默认 section_size_quads=63, num_subsections=1, scale=[100,100,100]，\n"
-            "  每 component 物理尺寸 = 63×1×(100/100) = 63 米\n"
-            "- 换算公式：component_count_x = component_count_y = round(size_m[0] / 63)\n"
-            "- 例：size_m=[2000,2000] → component_count_x=component_count_y=32（32×63=2016m≈2km）\n"
-            "- size_m 为空列表时用默认 component_count_x=component_count_y=8（504m）\n"
-            "- region/user_desc：参考地域特征选取植被资产（如南方多竹/稻田，西北多枯树），\n"
-            "  按 user_desc 氛围修饰词调整密度与光照风格\n\n"
-            "⚠️ 放置条目 asset 字段规则（重要）：\n"
-            "- static/instanced_grid/blueprint/crop_field 类型：asset 必须是非空的 /Game/ 路径\n"
-            "- group 类型：用 asset_prefix 代替 asset，asset_prefix 也必须非空\n"
-            "- 如果 search_assets 未找到匹配资产，不要生成该放置条目（宁可省略也不要留空）\n"
-            "- 严禁输出 asset 为空字符串的占位条目，空 asset 会导致 UE 编辑器卡死\n\n"
-            "⚠️ 贴地规则（重要）：\n"
-            "- 所有放置条目默认贴地(snap_to_ground=true)：树木/房屋/栅栏/灯柱等自动跟随地形起伏\n"
-            "- 放置条目的 grid/field/顶层均可写 snap_to_ground 字段，默认 true 无需显式写出\n"
-            "- 仅当资产需要悬空（如桥梁、高架、飞行物）时才写 \"snap_to_ground\": false 并指定 location Z\n"
-            "- 植被类(Tree/Pine/Grass/Plant/Flower/Bush/Crop/Wheat)必须保持贴地，不可设为 false\n\n"
+            "⚠️ 所有详细规则（landscape尺寸换算、asset字段规则、贴地规则、"
+            "村落房屋数量、远景山脉、水系flow_speed等）均在 inject_knowledge 返回的"
+            "知识文档中，生成 JSON 前务必仔细阅读并严格遵守。\n\n"
             "输出 SceneJSON。"
         )
 

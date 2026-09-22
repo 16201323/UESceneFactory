@@ -34,7 +34,7 @@
          "transition_m": 20,
          "max_slope": 0.8
        }},
-      {"_note": "Layer4 Grass草地: height_based(6~20m invert=false + fade_max_m=60 fade_width_m=20)→带状分布: 海拔≤6m(水位5m以下/湖底)权重0不长草, 6~20m渐增, 20~40m全权重满草, 40~60m随高度渐稀(越高越稀疏), ≥60m权重0无草; 另加exclude_regions排除麦田区(230~290,620~660)→麦田内纯麦穗无杂草; corridor_exclude=true→河流/道路走廊(宽×1.25)内权重清零, 河岸/路侧不长草, 消除贴图感",
+      {"_note": "Layer4 Grass草地: height_based(6~20m invert=false + fade_max_m=60 fade_width_m=20)→带状分布: 海拔≤6m(水位5m以下/湖底)权重0不长草, 6~20m渐增, 20~40m全权重满草, 40~60m随高度渐稀(越高越稀疏), ≥60m权重0无草; 另加exclude_regions排除麦田区(230~290,620~660)和湖盆区(380~820,330~770)→麦田内纯麦穗无杂草, 湖中无草; corridor_exclude=true→河流/道路走廊(宽×1.25)内权重清零, 河岸/路侧不长草, 消除贴图感",
        "info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer4_LayerInfo", "weight": 1.0,
        "weight_pattern": {
          "pattern": "height_based",
@@ -44,7 +44,10 @@
          "fade_width_m": 20,
          "invert": false,
          "corridor_exclude": true,
-         "exclude_regions": [{"min_x": 230, "min_y": 620, "max_x": 290, "max_y": 660}]
+         "exclude_regions": [
+           {"min_x": 230, "min_y": 620, "max_x": 290, "max_y": 660},
+           {"_note": "湖盆排除: 中心(600,550) r220m的外接矩形, 防止湖中长草", "min_x": 380, "min_y": 330, "max_x": 820, "max_y": 770}
+         ]
        }},
       {"_note": "Layer5 Gravel碎石坡: slope_based(0.35~0.9)→陡坡(山体侧面/崖壁)出碎石,平地无; 模拟重力碎屑堆积",
        "info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer5_LayerInfo", "weight": 1.0,
@@ -94,15 +97,16 @@
         {"_note": "NW山脊波纹: 区域(50,50)~(420,420)覆盖西北山区,amp6m freq0.02 dir30°→在山区叠加东北-西南向正弦山脊,增强山脊线立体感", "region_min_x_m": 50, "region_min_y_m": 50, "region_max_x_m": 420, "region_max_y_m": 420, "amplitude_m": 6, "frequency": 0.02, "direction_deg": 30}
       ],
       "water": {
-        "_note": "湖面水位5m: 注入湖盆(中心600,550 底-15m)形成440m冰川湖; 材质Water_Lake半透明水面",
+        "_note": "湖面水位5m: 注入湖盆(中心600,550 底-15m)形成440m冰川湖; 材质Water_Lake半透明水面; flow_speed=0.3缓流(湖面几乎静止微荡)",
         "level_m": 5,
-        "material_path": "/Game/Modular_Rural_Cabin/Materials/Instances/Water_Lake"
+        "material_path": "/Game/Modular_Rural_Cabin/Materials/Instances/Water_Lake",
+        "flow_speed": 0.3
       },
       "rivers": [
-        {"_note": "NW山溪: 从主峰南麓(250,350 约20m)沿自然下坡蜿蜒入湖(600,550),8折点宽12m; C++已升级: 每段按≤10m细分+俯仰角贴合地形坡度+转角盖片补缝+抬升50cm防Z-fighting→连续水面不断节; 路径不穿越任何山丘",
-         "points": [[250,350],[310,390],[380,420],[450,450],[510,480],[560,510],[590,530],[600,550]], "width_m": 12, "material_path": "/Game/Modular_Rural_Cabin/Materials/Instances/Water_Lake"},
-        {"_note": "NE山麓溪流: 从东北丘陵南缘(760,400 约25m)入湖(610,540),7折点宽8m; C++已升级: 细分+俯仰+盖片+抬升→连续水面; 路径从丘陵南缘低处出发沿南坡入湖",
-         "points": [[760,400],[730,440],[700,470],[670,495],[640,515],[615,530],[610,540]], "width_m": 8, "material_path": "/Game/Modular_Rural_Cabin/Materials/Instances/Water_Lake"}
+        {"_note": "NW山溪: 从主峰南麓(250,350 约20m)沿自然下坡蜿蜒入湖(600,550),8折点宽12m; C++已升级: 每段按≤10m细分+俯仰角贴合地形坡度+转角盖片补缝+抬升50cm防Z-fighting→连续水面不断节; 路径不穿越任何山丘; flow_speed=1.5正常流速(小溪)",
+         "points": [[250,350],[310,390],[380,420],[450,450],[510,480],[560,510],[590,530],[600,550]], "width_m": 12, "material_path": "/Game/Modular_Rural_Cabin/Materials/Instances/Water_Lake", "flow_speed": 1.5},
+        {"_note": "NE山麓溪流: 从东北丘陵南缘(760,400 约25m)入湖(610,540),7折点宽8m; C++已升级: 细分+俯仰+盖片+抬升→连续水面; 路径从丘陵南缘低处出发沿南坡入湖; flow_speed=1.5正常流速(小溪)",
+         "points": [[760,400],[730,440],[700,470],[670,495],[640,515],[615,530],[610,540]], "width_m": 8, "material_path": "/Game/Modular_Rural_Cabin/Materials/Instances/Water_Lake", "flow_speed": 1.5}
       ],
       "roads": [
         {"_note": "主干土路: 从南麦田区(250,830)沿西边缘蜿蜒至北山麓(220,280),8折点宽4m; 沿西边缘(x≤250)上行连接农田与山区,避开森林(240~380,420~560)和麦田(230~290,620~660); C++已升级: 细分+俯仰贴合地形+转角盖片+抬升20cm→道路连续无断节",
@@ -142,11 +146,11 @@
         {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Beach_01e", "density": 6, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 3000, "end_cull_dist": 30000}
       ],
       "wheat_varieties": [
-        {"_note": "麦穗变体: 5种realistic_wheat网格,密度200/10㎡,scale0.03~0.055(网格原始大需缩小); C++自动bUseGrid=true田垄行列式排列; 需先运行gen_2km_scene.py生成/Game/Generated/LGT_Wheat", "mesh_path": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_001_wheat_texture_0", "density": 200, "scale_min": 0.032, "scale_max": 0.040, "jitter": 0.2, "random_rotation": true, "start_cull_dist": 3000, "end_cull_dist": 50000},
-        {"mesh_path": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_002_wheat_texture_0", "density": 200, "scale_min": 0.042, "scale_max": 0.052, "jitter": 0.2, "random_rotation": true, "start_cull_dist": 3000, "end_cull_dist": 50000},
-        {"mesh_path": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_003_wheat_texture_0", "density": 200, "scale_min": 0.028, "scale_max": 0.034, "jitter": 0.2, "random_rotation": true, "start_cull_dist": 3000, "end_cull_dist": 50000},
-        {"mesh_path": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_004_wheat_texture_0", "density": 200, "scale_min": 0.045, "scale_max": 0.055, "jitter": 0.2, "random_rotation": true, "start_cull_dist": 3000, "end_cull_dist": 50000},
-        {"mesh_path": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_wheat_texture_0", "density": 200, "scale_min": 0.032, "scale_max": 0.040, "jitter": 0.2, "random_rotation": true, "start_cull_dist": 3000, "end_cull_dist": 50000}
+        {"_note": "麦穗变体: 5种realistic_wheat网格,密度200/10㎡,scale0.08~0.15(网格原始约10m需缩小; 缩放后约80~150cm高于草); C++自动bUseGrid=true田垄行列式排列; 需先运行gen_2km_scene.py生成/Game/Generated/LGT_Wheat", "mesh_path": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_001_wheat_texture_0", "density": 200, "scale_min": 0.08, "scale_max": 0.10, "jitter": 0.2, "random_rotation": true, "start_cull_dist": 3000, "end_cull_dist": 50000},
+        {"mesh_path": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_002_wheat_texture_0", "density": 200, "scale_min": 0.10, "scale_max": 0.12, "jitter": 0.2, "random_rotation": true, "start_cull_dist": 3000, "end_cull_dist": 50000},
+        {"mesh_path": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_003_wheat_texture_0", "density": 200, "scale_min": 0.08, "scale_max": 0.10, "jitter": 0.2, "random_rotation": true, "start_cull_dist": 3000, "end_cull_dist": 50000},
+        {"mesh_path": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_004_wheat_texture_0", "density": 200, "scale_min": 0.12, "scale_max": 0.15, "jitter": 0.2, "random_rotation": true, "start_cull_dist": 3000, "end_cull_dist": 50000},
+        {"mesh_path": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_wheat_texture_0", "density": 200, "scale_min": 0.08, "scale_max": 0.10, "jitter": 0.2, "random_rotation": true, "start_cull_dist": 3000, "end_cull_dist": 50000}
       ]
     }
   },

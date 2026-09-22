@@ -2,9 +2,21 @@
 
 > 本文件是 UE5_JSON 技能的按需参考文档（由 SKILL.md 第 4 节拆分）。公共字段（4.1）、blueprint（4.3）、group 基本字段、static（4.5）见 SKILL.md 主文件；本文件只放 instanced_grid 的 grid 子字段表与高压电塔电线连接规则。
 
+## 贴地规则（重要）
+
+- 所有放置条目默认贴地(snap_to_ground=true)：树木/房屋/栅栏/灯柱等自动跟随地形起伏
+- 放置条目的 grid/field/顶层均可写 snap_to_ground 字段，默认 true 无需显式写出
+- 仅当资产需要悬空（如桥梁、高架、飞行物）时才写 "snap_to_ground": false 并指定 location Z
+- 植被类(Tree/Pine/Grass/Plant/Flower/Bush/Crop/Wheat)必须保持贴地，不可设为 false
+
 ## instanced_grid 的 grid 子字段
 
 二选一：grid 自动生成 或 instances 显式数组。
+
+> ⚠️ **grid/instances 互斥规则（必须遵守）**：
+> 1. 若使用 instances 显式数组，**不要提供 grid 字段**（省略或设 null）。同时写 grid(rows=0/cols=0) + instances 会导致 grid 吞掉 instances，生成 0 个实例。
+> 2. 若使用 grid 矩形模式，**rows 和 cols 必须 > 0**。rows=0 或 cols=0 → 0 个实例。
+> 3. grid 圆环模式(pattern="circle")用 count，不需要 rows/cols。
 
 grid 子字段（pattern="circle" 走圆环，缺省走矩形）：
 
@@ -32,6 +44,23 @@ grid 子字段（pattern="circle" 走圆环，缺省走矩形）：
 > ⚠️ **植物必填**：`cull_start`/`cull_end` 设 HISM 的 `InstanceStartCullDistance`/`InstanceEndCullDistance`。森林等大批量实例, 远处不画只画近处, 大幅省 GPU。**缺省不剔除(向后兼容)**——不写则无任何距离剔除，远处实例全部渲染消耗GPU。树木推荐 start=20000(200m)/end=50000(500m)，300m 渐隐带，覆盖大部分航拍高度。草/灌木等小型植物可设 start=15000(150m)/end=30000(300m)。生成树/草/灌木等植物的 instanced_grid 时**必须包含 cull_start/cull_end**，不可省略。仅 `instanced_grid` 生效, `static` grid 不支持(HISM 独有属性)。
 
 instances 子字段：数组，每项 {location, rotation, scale}。
+
+instances 显式数组示例（不提供 grid，适合少量特定位置物体）：
+
+```json
+{
+  "_note": "几棵特定位置的松树(显式实例模式,不提供grid)。type: instanced_grid; asset: 网格资产; instances: 显式实例数组,每项含location/rotation/scale; snap_to_ground: 贴地开关(顶层)",
+  "type": "instanced_grid",
+  "asset": "/Game/RuralHouse/Environment/Trees/SM_Pine_Tree_01",
+  "location": [0, 0, 0],
+  "snap_to_ground": true,
+  "instances": [
+    {"location": [1000, 2000, 0], "rotation": [0, 45, 0], "scale": [1.0, 1.0, 1.0]},
+    {"location": [3000, 1500, 0], "rotation": [0, 120, 0], "scale": [1.2, 1.2, 1.2]},
+    {"location": [500, 3500, 0], "rotation": [0, 200, 0], "scale": [0.9, 0.9, 0.9]}
+  ]
+}
+```
 
 ## 高压电塔电线连接规则（实测验证）
 

@@ -85,6 +85,19 @@
 
 **build_scene.py 容错**：build_scene.py 先用 JSON 中的短路径加载，失败时自动补 `.AssetName` 后缀重试（见 build_scene.py 第 847-853 行）。因此两种写法均可用，但推荐写短路径（无后缀）。
 
+## 放置条目 asset 字段规则（重要）
+
+- static/instanced_grid/blueprint/crop_field 类型：asset 必须是非空的 /Game/ 路径
+- group 类型：用 asset_prefix 代替 asset，asset_prefix 也必须非空
+- 如果 search_assets 未找到匹配资产，不要生成该放置条目（宁可省略也不要留空）
+- 严禁输出 asset 为空字符串的占位条目，空 asset 会导致 UE 编辑器卡死
+
+## 村落房屋数量规则（重要）
+
+- placements 含 village 时，必须配置 5~15 栋房屋，绝不能只放 1-2 栋
+- 房屋组合资产(asset_prefix 类型 group)配置 count≥5 或使用 instanced_grid rows×cols≥6
+- 房屋必须配置 snap_to_ground=true 和 skip_z_fix=true(多部件组合)
+
 ## 验证可用路径速查（已在项目中验证可用）
 
 以下路径在 `all_terrain_1km.json` 中已实际验证可用，可直接复制使用：
@@ -131,7 +144,34 @@
 | JSON 字段 | 路径 | 说明 |
 |-----------|------|------|
 | placements[].asset_prefix | `/Game/hourse/Imported/rural_brick_house_with_barn_and_chicken_coop/rural_brick_house_with_barn_and_chicken_coop/StaticMeshes/Object_` | 砖房+谷仓+鸡舍组合（73 部件，Object_4~148 偶数，count=149） |
+| placements[].asset (type=instanced_grid) | `/Game/Modular_Rural_Cabin/Meshes/Props/Outhouse_House` | 单体农舍（木屋，已验证，template_p16 使用） |
+| placements[].asset (type=blueprint) | `/Game/hourse/Blueprints/BP_House_RuralBrickFarm` | 蓝图砖房农舍（已验证，template_p16 使用） |
+| placements[].asset (type=blueprint) | `/Game/hourse/Blueprints/BP_House_Traditional` | 蓝图传统屋（已验证，template_p16 使用） |
+| placements[].asset (type=instanced_grid) | `/Game/RuralHouse/House/Meshes/ModularParts/SM_House_Base_300CM` | 模块化建筑基础件 300cm（已验证） |
 
-> ⚠️ **房屋 Z 偏移特殊（必读）**：该资产原点被特殊抬高 +180cm，放置时 **必须** 在 `location` 第三位写 `-180` 手动补偿，使房屋底部贴地。配置 `skip_z_fix: true`（部件原点混合 center/bottom/top）。**不可用 `ground_assembly: true`**——会与手动 -180 叠加导致房屋陷入地下。完整示例：`{"type":"group","asset_prefix":"...Object_","count":149,"location":[x,y,-180],"rotation":[0,0,0],"scale":[1,1,1],"skip_z_fix":true}`
+> ⚠️ **房屋放置规则（必读）**：房屋资产无需手动Z偏移，直接用 `snap_to_ground: true` 贴地即可。若房屋为多部件组合（`type: group`），需配置 `skip_z_fix: true` 防止Z-fix压平组装。完整示例：`{"type":"group","asset_prefix":"...Object_","count":149,"location":[x,y,0],"rotation":[0,0,0],"scale":[1,1,1],"skip_z_fix":true,"snap_to_ground":true}`
+
+> ⚠️ **路径格式注意（v2.9.8更新）**：`search_assets` 工具返回的路径含 `.ObjectName` 后缀（UE 长路径格式，如 `SM_House_Base_300CM.SM_House_Base_300CM`）。填入 JSON 时可保留后缀（校验器已兼容），也可去掉后缀只保留包路径。蓝图路径必须配 `type: "blueprint"`。单体农舍示例：`{"type":"instanced_grid","asset":"/Game/Modular_Rural_Cabin/Meshes/Props/Outhouse_House","location":[0,0,0],"grid":{"rows":2,"cols":2,"origin":[0,0,0],"spacing":[6000,6000,0],"random_yaw":true,"scale_min":[1.5,1.5,1.5],"scale_max":[2.2,2.2,2.2]}}`
+
+**树木/植被**：
+
+| JSON 字段 | 路径 | 说明 |
+|-----------|------|------|
+| placements[].asset (instanced_grid) | `/Game/RuralHouse/Environment/Trees/SM_FirTree_01` | 杉树 01（高~31m） |
+| placements[].asset (instanced_grid) | `/Game/RuralHouse/Environment/Trees/SM_FirTree_02` | 杉树 02（高~36m） |
+| placements[].asset (instanced_grid) | `/Game/RuralHouse/Environment/Trees/SM_FirTree_03` | 杉树 03（高~34m） |
+| placements[].asset (instanced_grid) | `/Game/RuralHouse/Environment/Trees/SM_FirTreeDead_01` | 枯杉树 01（高~38m） |
+
+> ⚠️ **树木材质规则（必读·v2.9.7更新）**：树木 placement **不要**配置 `material_override` 字段，让树木使用原生材质即可。
+> 
+> **历史问题**：此前推荐使用 `M_Tree_Static` 静态材质禁用风动（WPO），但该方案存在两个缺陷：
+> 1. **白色枝干**：`M_Tree_Static` 复制自树枝材质但不保留 Alpha 通道，覆盖后叶面透明度丢失 → 枝干变白
+> 2. **连根移动**：旧版 `set_material(0, mat)` 只覆盖 slot 0（树枝），slot 1（树皮）保留原生 WPO → 树干根部摇摆
+> 
+> **v2.9.7 修复**：`build_scene.py` 已改为遍历所有材质槽（`get_num_materials`），`material_override` 会覆盖全部槽位。但 `M_Tree_Static` 仍会破坏 Alpha 导致白色枝干，因此已弃用。
+> 
+> **当前方案**：不使用 `material_override`，树木使用原生材质。原生材质的 WPO 风动通过顶点色遮罩控制——树根处权重为 0（不动）、树梢处权重为 1（摆动），呈现自然风动效果，不会出现连根移动。
+> 
+> 完整示例：`{"type":"instanced_grid","asset":"/Game/RuralHouse/Environment/Trees/SM_FirTree_01","location":[0,0,0],"grid":{"rows":5,"cols":5,"origin":[0,0,0],"spacing":[1800,1800,0],"jitter":400,"random_yaw":true,"scale_min":[0.8,0.8,0.8],"scale_max":[1.3,1.3,1.3]}}`
 
 > 以上路径来自 `all_terrain_1km.json`（已成功生成 `GB_AllTerrain_1km.umap`）。如需其他资产，查阅完整清单并按上文"路径转换规则"转换路径。

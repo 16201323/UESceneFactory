@@ -17,6 +17,7 @@
 import argparse
 import asyncio
 import json
+import logging
 import os
 import sys
 
@@ -25,10 +26,20 @@ _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if _ROOT not in sys.path:
     sys.path.insert(0, _ROOT)
 
+# 配置日志 — CLI 模式下需要显式配置, 否则底层模块(validation_tools/auto_repair/quality_guard)
+# 的日志不会输出。格式: 时间 | 级别 | 模块 | 消息
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)-7s | %(name)s | %(message)s",
+    datefmt="%H:%M:%S",
+)
+logger = logging.getLogger("uescenefactory.pipeline")
+
 from ai.agents.base import AgentDeps
 from ai.agents.scene_planner import ScenePlannerAgent
 from ai.agents.json_builder import JSONBuilderAgent
 from ai.agents.quality_guard import QualityGuardAgent
+from ai.models.scene_json import normalize_height_pattern
 
 
 # ============================================================================
@@ -102,8 +113,15 @@ def init_deps(config):
 
     # content_dir: UE 项目 Content 目录（用于 QualityGuardAgent 的资产路径校验）
     # validator 字段复用为 content_dir 路径；project_path 未配置时为 None（跳过磁盘校验）
+    # BUG修复: project_path 是 .uproject 文件路径(如 .../MyUETest5_8_2.uproject),
+    # 不是目录! 直接 os.path.join(project_path, "Content") 会生成
+    # .../MyUETest5_8_2.uproject/Content (无效路径), 导致全部资产校验失败。
+    # 正确做法: 先 dirname 取项目目录, 再 join "Content" (与 BuildWorker L1007 一致)
     project_path = config.get("project_path", "")
-    content_dir = os.path.join(project_path, "Content") if project_path else None
+    content_dir = (
+        os.path.join(os.path.dirname(project_path), "Content")
+        if project_path else None
+    )
 
     deps = AgentDeps(
         knowledge=knowledge,
@@ -176,7 +194,36 @@ async def run_pipeline(user_desc, config, deps):
     builder = JSONBuilderAgent(model_stage2, api_key, base_url=base_url, deps=deps)
     result2 = await builder.run(blueprint_json)
     scene_json = result2.output
-    scene_json_str = scene_json.model_dump_json()
+    # 后处理: 补全道路推平参数 + 散布道路排除字段(防止C++跳过地形推平/物体落在路上)
+    if scene_json.landscape and scene_json.landscape.height_pattern:
+        normalize_height_pattern(scene_json.landscape.height_pattern)
+    # 确定性修复-校验闭环: 绿色层修复→质量校验→黄色层修复→再校验
+    # 在 LLM 校验前先自动修复可确定性修复的语义缺陷, 减少 LLM 往返次数
+    logger.info("[Stage2] ===== 确定性修复-校验闭环开始 =====")
+    from scripts.auto_repair_scene import repair_and_validate
+    _scene_dict = scene_json.model_dump()
+    _repairs, _q_errors, _q_warnings = repair_and_validate(_scene_dict)
+    if _repairs:
+        print("确定性修复: %d 项" % len(_repairs))
+        logger.info("[Stage2] 确定性修复: %d 项", len(_repairs))
+        for _r in _repairs:
+            print("  [REPAIR] %s" % _r)
+            logger.info("[Stage2] [REPAIR] %s", _r)
+    else:
+        logger.info("[Stage2] 确定性修复: 0 项 (无需修复)")
+    if _q_errors:
+        print("残留质量错误: %d 项 (交由 Stage 3 LLM 修复)" % len(_q_errors))
+        logger.warning("[Stage2] 残留质量错误: %d 项 (需 LLM 修复)", len(_q_errors))
+        for i, _e in enumerate(_q_errors, 1):
+            logger.warning("[Stage2]   残留错误 %d/%d: %s", i, len(_q_errors), _e)
+    else:
+        logger.info("[Stage2] 残留质量错误: 0 项")
+    if _q_warnings:
+        logger.info("[Stage2] 质量警告: %d 项", len(_q_warnings))
+        for i, _w in enumerate(_q_warnings, 1):
+            logger.info("[Stage2]   警告 %d/%d: %s", i, len(_q_warnings), _w)
+    logger.info("[Stage2] ===== 确定性修复-校验闭环结束 =====")
+    scene_json_str = json.dumps(_scene_dict, ensure_ascii=False)
     scene_name = scene_json.scene.name if scene_json.scene else "unnamed"
     print("场景 JSON 生成完成: scene.name = %s" % scene_name)
 
@@ -188,6 +235,36 @@ async def run_pipeline(user_desc, config, deps):
     guard = QualityGuardAgent(model_stage3, api_key, base_url=base_url, deps=deps)
     result3 = await guard.run(scene_json_str)
     report = result3.output
+    # 安全网: 确保质量守护LLM未丢弃道路推平+散布排除字段
+    _ls = report.scene.get("landscape")
+    if isinstance(_ls, dict) and _ls.get("height_pattern"):
+        normalize_height_pattern(_ls["height_pattern"])
+    # 安全网: 确定性修复-校验闭环 (防止 LLM 修复引入新的语义缺陷)
+    logger.info("[Stage3] ===== 安全网修复-校验闭环开始 =====")
+    from scripts.auto_repair_scene import repair_and_validate
+    _repairs, _q_errors, _q_warnings = repair_and_validate(report.scene)
+    if _repairs:
+        print("安全网修复: %d 项" % len(_repairs))
+        logger.info("[Stage3] 安全网修复: %d 项", len(_repairs))
+        for _r in _repairs:
+            print("  [REPAIR] %s" % _r)
+            logger.info("[Stage3] [REPAIR] %s", _r)
+    else:
+        logger.info("[Stage3] 安全网修复: 0 项 (LLM 未引入新缺陷)")
+    if _q_errors:
+        report.errors.extend(_q_errors)
+        report.is_valid = False
+        print("安全网残留质量错误: %d 项" % len(_q_errors))
+        logger.warning("[Stage3] 安全网残留质量错误: %d 项", len(_q_errors))
+        for i, _e in enumerate(_q_errors, 1):
+            logger.warning("[Stage3]   残留错误 %d/%d: %s", i, len(_q_errors), _e)
+    else:
+        logger.info("[Stage3] 安全网残留质量错误: 0 项")
+    if _q_warnings:
+        logger.info("[Stage3] 安全网质量警告: %d 项", len(_q_warnings))
+        for i, _w in enumerate(_q_warnings, 1):
+            logger.info("[Stage3]   警告 %d/%d: %s", i, len(_q_warnings), _w)
+    logger.info("[Stage3] ===== 安全网修复-校验闭环结束 =====")
     print("校验完成:")
     print("  is_valid      = %s" % report.is_valid)
     print("  errors        = %d 项" % len(report.errors))

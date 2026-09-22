@@ -338,6 +338,8 @@ def get_terrain_z(x, y):
     按 1m 精度缓存结果, 避免密集网格重复查询。
     用途: snap_to_ground=true 时, 树木/草地等HISM实例逐个查询地形Z实现贴地,
           使实例在山谷/山丘上自动跟随地形起伏而非悬浮。
+    【v2.9.7修复】Z=0不缓存+单次重试: 防止高度图未完全提交时Z=0被缓存导致
+      后续相同位置永远返回0(树根扎入山体); Z=0时等待0.2s重试一次, 给UE刷新数据的时间。
     """
     global _terrain_use_heightmap, _terrain_helper_available
     # 惰性检测: 首次调用时检查两个方法是否可用
@@ -370,11 +372,32 @@ def get_terrain_z(x, y):
             if z_fb is not None and z_fb != 0.0:
                 z = z_fb
                 method = "world_loc(fb)"
+        # 【v2.9.7修复】Z=0时单次重试: 高度图可能尚未完全提交, 等待0.2s后重试一次
+        # (diag_force_layers_update_and_dump 已在landscape创建后调用, 此处为二次保障)
+        if z is not None and z == 0.0:
+            import time as _tz_time
+            _tz_time.sleep(0.2)
+            try:
+                if _terrain_use_heightmap:
+                    z_retry = unreal.LandscapeHelper.get_height_from_heightmap(float(x), float(y))
+                    if z_retry is not None and z_retry != 0.0:
+                        z = z_retry
+                        method = "heightmap(retry)"
+                if (z is None or z == 0.0) and _terrain_helper_available:
+                    z_retry = unreal.LandscapeHelper.get_height_at_world_location(float(x), float(y))
+                    if z_retry is not None and z_retry != 0.0:
+                        z = z_retry
+                        method = "world_loc(retry)"
+            except Exception:
+                pass
     except Exception as e:
         log("TERRAIN_Z_FAIL: " + str(e))
         _terrain_helper_available = False
     if z is not None:
-        _terrain_cache[key] = z
+        # 【v2.9.7修复】Z=0不缓存: 防止高度图未提交时0值被永久缓存,
+        # 导致后续相同位置永远返回0(树根扎入山体); Z=0时返回但不缓存, 下次会重新查询
+        if z != 0.0:
+            _terrain_cache[key] = z
         global _terrain_z_log_count, _terrain_z_zero_count
         # 诊断: 前3次查询打印结果及所用方法, 验证地形Z值非0
         if _terrain_z_log_count < 3:
@@ -410,12 +433,16 @@ def spawn_mesh(asset_path, location, rotation=(0, 0, 0), scale=(1, 1, 1), materi
         log("  ASSET_MISSING " + asset_path)
         return actor
     mesh.set_static_mesh(asset)
-    # 材质覆盖: 将网格的第0号材质槽替换为指定材质(解决地面使用房屋木地板材质的问题)
+    # 材质覆盖: 遍历所有材质槽逐个覆盖(不只slot 0)
+    # 【v2.9.7修复】树木/建筑等多部件网格含多个材质槽(枝干alpha + 树皮WPO),
+    # 只覆盖slot 0会导致未覆盖槽沿用原材质, 与覆盖槽产生渲染冲突(白色枝干/渲染断裂)
     if material_override:
         mat = unreal.EditorAssetLibrary.load_asset(material_override)
         if mat:
-            mesh.set_material(0, mat)
-            log("  MATERIAL_OVERRIDE: " + material_override.split("/")[-1])
+            num_slots = mesh.get_num_materials()
+            for slot_idx in range(num_slots):
+                mesh.set_material(slot_idx, mat)
+            log("  MATERIAL_OVERRIDE: " + material_override.split("/")[-1] + " (覆盖" + str(num_slots) + "个材质槽)")
         else:
             log("  MATERIAL_OVERRIDE_FAIL: " + material_override)
     if scale != (1, 1, 1):
@@ -523,12 +550,17 @@ def spawn_hism(asset_path, location, instances, base_rotation=(0, 0, 0), base_sc
             log("  HISM_CULL_FAIL: " + str(e_cull))
     # 材质覆盖: HISM 继承自 StaticMeshComponent, set_material 对所有实例生效
     # 用途: 地面 tile 用统一草地材质, 避免 UV 被大缩放拉伸成纯色
-    # 注意: 树木风动问题改用方案B(引擎着色器修复), 不再用材质覆写
+    # 【v2.9.7修复】遍历所有材质槽(不只slot 0): 树木等资产含多个材质槽(树枝+树皮),
+    #   只覆盖slot 0会导致slot 1(树皮)保留原生WPO风动→连根移动;
+    #   且不匹配的材质覆盖slot 0会破坏Alpha→白色枝干。
     if material_override:
         mat = unreal.EditorAssetLibrary.load_asset(material_override)
         if mat:
-            him.set_material(0, mat)
-            log("  HISM_MATERIAL_OVERRIDE: " + material_override.split("/")[-1])
+            # 遍历所有材质槽, 确保每个槽都被覆盖(不只slot 0)
+            num_slots = him.get_num_materials()
+            for slot_idx in range(num_slots):
+                him.set_material(slot_idx, mat)
+            log("  HISM_MATERIAL_OVERRIDE: " + material_override.split("/")[-1] + " (覆盖" + str(num_slots) + "个材质槽)")
         else:
             log("  HISM_MATERIAL_OVERRIDE_FAIL: " + material_override)
     # 5. 批量添加实例
@@ -607,16 +639,14 @@ def spawn_blueprint(bp_path, location, rotation=(0, 0, 0), scale=(1, 1, 1)):
     # 自动修正Z位置: 获取蓝图Actor世界包围盒, 将底部对齐到location的Z坐标
     # 修复: 蓝图原点常在中心/顶部, 若不修正会导致房屋等建筑悬浮离地或沉入地下
     # (spawn_mesh 已有此逻辑, spawn_blueprint 此前缺失, 现补齐使两者落地行为一致)
-    # 关键修复1: spawn后蓝图组件可能未完全注册, get_actor_bounds返回trivial bounds
-    #   (extent≈0), 导致z_correction≈0, Z_FIX不触发, 蓝图网格保持默认偏移→房屋离地
-    #   解决: 调用reregister_all_components强制组件注册后再取bounds
+    # v2.9.6修复: spawn_actor_from_class 在 UE5.8 中已自动注册蓝图所有组件,
+    #   get_actor_bounds 能直接返回正确的非平凡包围盒(extent>0);
+    #   此前额外调用 actor.reregister_all_components() 在 UE5.8 Python 反射层
+    #   不存在(Actor 对象无此属性), 每次抛 AttributeError 被捕获后打印 BP_REREG_FAIL,
+    #   属无效噪音且误导用户; 实测移除后 bounds 仍正确(extent.z≈327), Z_FIX 正常触发。
     # 关键修复2: z_correction是delta(偏移量), 不是绝对Z坐标
     #   原bug: set_actor_location(loc.x, loc.y, z_correction) → 移到z=50(埋地)
     #   修正: set_actor_location(loc.x, loc.y, loc.z + z_correction) → 正确抬升底部到loc.z
-    try:
-        actor.reregister_all_components()
-    except Exception as e_reg:
-        log("  BP_REREG_FAIL: " + str(e_reg))
     try:
         b_origin, b_extent = unreal.SystemLibrary.get_actor_bounds(actor)
         z_bottom = b_origin.z - b_extent.z
@@ -633,6 +663,118 @@ def spawn_blueprint(bp_path, location, rotation=(0, 0, 0), scale=(1, 1, 1)):
     except Exception as e_zfix:
         log("  BP_Z_FIX_SKIP: " + str(e_zfix))
     return actor
+
+
+def _gen_instances_from_grid(p, idx):
+    """从 placement 的 grid 配置或 instances 数组生成实例列表
+    支持: grid.pattern="circle" (圆环布局), grid.rows/cols (矩形网格), instances[] (显式数组)
+    被 instanced_grid 块和 blueprint 块(grid模式)共用, 避免代码重复
+    参数:
+      p: placement 字典 (含 grid 或 instances 字段)
+      idx: placement 索引 (用作随机种子, 保证可复现)
+    返回: [{location, rotation, scale}, ...]
+    """
+    gr = p.get("grid")
+    # 【修复】当 grid 存在但 rows=0 且 cols=0 (矩形网格模式无实例) 时,
+    # 回退到显式 instances 数组, 避免返回空列表导致0个实例被放置。
+    # 场景: 智能体生成JSON时, 部分placement仅写grid壳(rows=0/cols=0)+显式instances,
+    # 但原代码因grid非空直接进入rows/cols循环, range(0)生成0实例, 忽略了instances
+    if gr and gr.get("pattern") != "circle":
+        if gr.get("rows", 0) == 0 and gr.get("cols", 0) == 0:
+            gr = None  # 视为无grid, 走显式instances路径
+    if not gr:
+        # 无 grid: 返回显式 instances 数组, 并按 snap_to_ground 逐实例贴地
+        instances = p.get("instances", [])
+        snap_ground = p.get("snap_to_ground", True)
+        if snap_ground:
+            for inst in instances:
+                iloc = inst.get("location", [0, 0, 0])
+                tz = get_terrain_z(iloc[0], iloc[1])
+                if tz is not None:
+                    iloc[2] = tz
+                    inst["location"] = iloc
+        return instances
+    # 支持 pattern: "circle" 圆环布局(围栏/环形阵列)
+    # 其它 pattern 或缺省: 走 rows/cols 矩形网格
+    if gr.get("pattern") == "circle":
+        import math
+        cnt = gr["count"]
+        radius = gr.get("radius", 1000)
+        center = gr.get("center", [0, 0, 0])
+        # face_center: 实例朝向圆心, yaw = 角度+yaw_offset
+        # yaw_offset 默认90度(适配面板默认朝+Y); 可在JSON覆盖以适配不同网格朝向
+        face_center = gr.get("face_center", True)
+        yaw_off = gr.get("yaw_offset", 90.0)
+        z_off = gr.get("z_offset", 0)
+        cpitch = gr.get("pitch", 0.0)
+        smin = gr.get("scale_min", [1, 1, 1])
+        smax = gr.get("scale_max", [1, 1, 1])
+        # snap_to_ground: 默认贴地, 逐实例查地形表面Z使实例贴地; 设false+显式Z可悬空
+        snap_ground = gr.get("snap_to_ground", True)
+        random.seed(idx * 7 + 13)
+        instances = []
+        for k in range(cnt):
+            ang = (float(k) / cnt) * 2.0 * math.pi
+            x = center[0] + math.cos(ang) * radius
+            y = center[1] + math.sin(ang) * radius
+            if snap_ground:
+                tz = get_terrain_z(x, y)
+                z = (tz if tz is not None else center[2]) + z_off
+            else:
+                z = center[2] + z_off
+            yaw = (math.degrees(ang) + yaw_off) if face_center else 0.0
+            sx = random.uniform(smin[0], smax[0])
+            sy = random.uniform(smin[1], smax[1])
+            sz = random.uniform(smin[2], smax[2])
+            instances.append({
+                "location": [x, y, z],
+                "rotation": [cpitch, yaw, 0],
+                "scale": [sx, sy, sz],
+            })
+        return instances
+    else:
+        rows = gr["rows"]; cols = gr["cols"]
+        origin = gr.get("origin", [0, 0, 0])
+        spacing = gr.get("spacing", [100, 100, 0])
+        jitter = gr.get("jitter", 0)
+        random_yaw = gr.get("random_yaw", False)
+        # pitch: 每实例俯仰角(光伏板向南倾斜), 0=保持网格平面朝上
+        gpitch = gr.get("pitch", 0.0)
+        # scale_min/scale_max 控制每实例缩放随机范围
+        smin = gr.get("scale_min", [1, 1, 1])
+        smax = gr.get("scale_max", [1, 1, 1])
+        # snap_to_ground: 默认贴地, 逐实例查地形表面Z使实例贴地; 设false+显式Z可悬空
+        snap_ground = gr.get("snap_to_ground", True)
+        random.seed(idx * 7 + 13)
+        instances = []
+        for r in range(rows):
+            for c in range(cols):
+                jx = (random.random() - 0.5) * jitter * 2
+                jy = (random.random() - 0.5) * jitter * 2
+                jz = (random.random() - 0.5) * max(spacing[2], 1) * 0.3
+                x = origin[0] + c * spacing[0] + jx
+                y = origin[1] + r * spacing[1] + jy
+                if snap_ground:
+                    tz = get_terrain_z(x, y)
+                    z = (tz if tz is not None else origin[2]) + jz
+                else:
+                    z = origin[2] + jz
+                yaw = random.random() * 360.0 if random_yaw else 0.0
+                sx = random.uniform(smin[0], smax[0])
+                sy = random.uniform(smin[1], smax[1])
+                sz = random.uniform(smin[2], smax[2])
+                instances.append({
+                    "location": [x, y, z],
+                    "rotation": [gpitch, yaw, 0],
+                    "scale": [sx, sy, sz],
+                })
+        # 诊断摘要: snap_to_ground生效时打印Z范围及零值数, 验证贴地
+        # zero_z: Z=0的实例数(疑似悬浮), 理想为0; >0说明高度图快照未覆盖该区域
+        if snap_ground and instances:
+            zs = [inst["location"][2] for inst in instances]
+            zero_count = sum(1 for v in zs if v == 0.0)
+            log("SNAP_SUMMARY[i=" + str(idx) + "]: snap=True n=" + str(len(zs)) + " z_min=" + str(round(min(zs), 1)) + " z_max=" + str(round(max(zs), 1)) + " zero_z=" + str(zero_count) + " (疑似悬浮)")
+        return instances
 
 
 def get_component(actor, comp_class):
@@ -1167,16 +1309,78 @@ def main():
         except Exception as e:
             log("landscape creation failed: " + str(e))
 
+        # 【v2.9.7修复】地形创建后: 强制刷新高度图数据 + 清空高度缓存
+        # 问题: CreateLandscapeWithLayers 调用 Import()+ForceLayersFullUpdate() 后,
+        #   高度图纹理可能尚未完全提交到GPU/碰撞体, GetHeightAtLocation 对部分位置返回0,
+        #   导致后续树木/草地 snap_to_ground 贴地失败 → 树根扎入山体内部而非贴在表面
+        # 修复: 调用 DiagForceLayersUpdateAndDump 强制同步执行"编辑层→最终高度图"合并重建,
+        #   确保高度数据已完全提交; 同时清空 Python 端地形高度缓存, 避免旧值(可能为0)被复用
+        # 【v2.9.9修复】此处原为 if landscape_cfg: — landscape_cfg 在整个文件中从未被赋值定义,
+        #   导致 NameError 崩溃。该变量名疑为 v2.9.8 编写时的笔误(应为 lscape, 第1171行已定义)。
+        #   NameError 发生在 try/except 块之外(第1173-1310行的 try 仅覆盖到 wheat save),
+        #   未被捕获 → Python 脚本直接崩溃 → 日志停在 "wheat type saved" → 构建卡在 5%
+        if lscape:
+            # 【v2.9.8修复】TERRAIN_FLUSH 超时保护: diag_force_layers_update_and_dump
+            # 是C++函数, 在部分场景下会无限阻塞(日志在"wheat type saved"后无任何输出),
+            # 导致构建中断、umap未保存。修复: 用daemon子线程执行C++调用, 主线程等待30秒,
+            # 超时则跳过(依赖_cache清除+sleep兜底), 避免构建完全中断。
+            # 注意: unreal API非线程安全, 子线程调用有风险, 但优于主线程无限阻塞
+            import threading
+            _flush_result = {"done": False, "error": None}
+            def _do_flush():
+                try:
+                    unreal.LandscapeHelper.diag_force_layers_update_and_dump()
+                    _flush_result["done"] = True
+                except Exception as e_t:
+                    _flush_result["error"] = str(e_t)
+            _flush_thread = threading.Thread(target=_do_flush, daemon=True)
+            _flush_thread.start()
+            _flush_thread.join(30)
+            if _flush_thread.is_alive():
+                log("TERRAIN_FLUSH_TIMEOUT: diag_force_layers_update_and_dump 超时30s, 跳过(疑似C++层死锁)")
+            elif _flush_result["done"]:
+                log("TERRAIN_FLUSH: diag_force_layers_update_and_dump executed (高度图强制刷新)")
+            elif _flush_result["error"]:
+                log("TERRAIN_FLUSH_FAIL: " + _flush_result["error"])
+            _terrain_cache.clear()
+            log("TERRAIN_CACHE: cleared after landscape creation (防止旧Z=0缓存导致树根扎入山体)")
+            _time.sleep(0.5)
+
     # ---- 地面 (静态网格) ----
-    # 与 Landscape 二选一: 如果已有 Landscape, 通常不需要 ground
-    # 但也可以叠加使用 (如 Landscape 作为地形 + ground 作为特殊区域)
+    # 双重保护: 场景含 Landscape 地形 + ground 段有内容时, 跳过 ground 段
+    # (Landscape 已提供完整地形表面, ground 叠加静态网格会重叠冲突;
+    #  且 ground 的 asset 可能是材质等非静态网格路径, 叠加 Landscape 会导致
+    #  set_static_mesh 类型不匹配死锁. 此处不写死"互斥"校验规则拒绝 JSON,
+    #  仅在构建时按场景实际情况跳过, 保留 JSON 灵活性 — 无 Landscape 时 ground 仍生效)
     g = scene.get("ground")
     if g:
-        spawn_mesh(g["asset"], g.get("location", [0, 0, 0]),
-                   g.get("rotation", [0, 0, 0]), g.get("scale", [1, 1, 1]),
-                   g.get("material_override"))
-        count += 1
-        log("ground placed")
+        # 防御守卫: 跳过 asset 字段为空字符串的 ground 条目
+        # (Agent 流水线生成的 JSON 可能含未填充 asset 的占位条目,
+        #  load_asset("") 会导致 UE 编辑器主线程卡死, 表现为转 UMAP 卡在 5%)
+        asset = g.get("asset", "")
+        if not asset:
+            log("SKIP ground: empty asset path (load_asset(\"\") would hang UE)")
+        else:
+            # 类型 auto-route: 加载资产后按类型分流
+            # (StaticMesh → spawn_mesh 正常放置; Material/其他 → 跳过, 避免卡死;
+            #  历史问题: v2.9.3 的 elif lscape 普通拦了所有 Landscape 场景的 ground,
+            #  现改为按资产类型精准拦截, 让合法的 StaticMesh ground 也能落地)
+            if asset not in _asset_cache:
+                _asset_cache[asset] = unreal.EditorAssetLibrary.load_asset(asset)
+            ga = _asset_cache[asset]
+            if not ga:
+                log("SKIP ground: asset load failed " + asset)
+            else:
+                ac = ga.get_class().get_name()
+                if ac == "StaticMesh":
+                    spawn_mesh(asset, g.get("location", [0, 0, 0]),
+                               g.get("rotation", [0, 0, 0]), g.get("scale", [1, 1, 1]),
+                               g.get("material_override"))
+                    count += 1
+                    log("ground placed: " + asset.split("/")[-1])
+                else:
+                    # Material / 其他非网格资产: 设给 StaticMeshComponent 会卡死 UE, 跳过
+                    log("SKIP ground: non-StaticMesh asset (" + ac + ") " + asset)
 
     # ---- 放置列表 ----
     # 支持 type 字段分发:
@@ -1209,110 +1413,37 @@ def main():
             base_loc = p.get("location", [0, 0, 0])
             base_rot = p.get("rotation", [0, 0, 0])
             base_scl = p.get("scale", [1, 1, 1])
-            # 支持两种方式生成实例: 显式 instances 数组 / grid 自动生成
-            gr = p.get("grid")
-            if gr:
-                # 支持 pattern: "circle" 圆环布局(围栏/环形阵列)
-                # 其它 pattern 或缺省: 走 rows/cols 矩形网格
-                if gr.get("pattern") == "circle":
-                    import math
-                    cnt = gr["count"]
-                    radius = gr.get("radius", 1000)
-                    center = gr.get("center", [0, 0, 0])
-                    # face_center: 实例朝向圆心, yaw = 角度+yaw_offset
-                    # yaw_offset 默认90度(适配面板默认朝+Y); 可在JSON覆盖以适配不同网格朝向
-                    face_center = gr.get("face_center", True)
-                    yaw_off = gr.get("yaw_offset", 90.0)
-                    z_off = gr.get("z_offset", 0)
-                    cpitch = gr.get("pitch", 0.0)
-                    smin = gr.get("scale_min", [1, 1, 1])
-                    smax = gr.get("scale_max", [1, 1, 1])
-                    # snap_to_ground: 默认贴地(2.6.0改True), 逐实例查地形表面Z使实例贴地; 设false+显式Z可悬空
-                    snap_ground = gr.get("snap_to_ground", True)
-                    random.seed(i * 7 + 13)
-                    instances = []
-                    for k in range(cnt):
-                        ang = (float(k) / cnt) * 2.0 * math.pi
-                        x = center[0] + math.cos(ang) * radius
-                        y = center[1] + math.sin(ang) * radius
-                        if snap_ground:
-                            tz = get_terrain_z(x, y)
-                            z = (tz if tz is not None else center[2]) + z_off
-                        else:
-                            z = center[2] + z_off
-                        yaw = (math.degrees(ang) + yaw_off) if face_center else 0.0
-                        sx = random.uniform(smin[0], smax[0])
-                        sy = random.uniform(smin[1], smax[1])
-                        sz = random.uniform(smin[2], smax[2])
-                        instances.append({
-                            "location": [x, y, z],
-                            "rotation": [cpitch, yaw, 0],
-                            "scale": [sx, sy, sz],
-                        })
-                    n = len(instances)
-                else:
-                    rows = gr["rows"]; cols = gr["cols"]
-                    origin = gr.get("origin", [0, 0, 0])
-                    spacing = gr.get("spacing", [100, 100, 0])
-                    jitter = gr.get("jitter", 0)
-                    random_yaw = gr.get("random_yaw", False)
-                    # pitch: 每实例俯仰角(光伏板向南倾斜), 0=保持网格平面朝上
-                    gpitch = gr.get("pitch", 0.0)
-                    # scale_min/scale_max 控制每实例缩放随机范围 (文档: Scale=0.80~1.25)
-                    smin = gr.get("scale_min", [1, 1, 1])
-                    smax = gr.get("scale_max", [1, 1, 1])
-                    # snap_to_ground: 默认贴地(2.6.0改True), 逐实例查地形表面Z使实例贴地; 设false+显式Z可悬空
-                    snap_ground = gr.get("snap_to_ground", True)
-                    random.seed(i * 7 + 13)
-                    instances = []
-                    for r in range(rows):
-                        for c in range(cols):
-                            jx = (random.random() - 0.5) * jitter * 2
-                            jy = (random.random() - 0.5) * jitter * 2
-                            jz = (random.random() - 0.5) * max(spacing[2], 1) * 0.3
-                            x = origin[0] + c * spacing[0] + jx
-                            y = origin[1] + r * spacing[1] + jy
-                            if snap_ground:
-                                tz = get_terrain_z(x, y)
-                                z = (tz if tz is not None else origin[2]) + jz
-                            else:
-                                z = origin[2] + jz
-                            yaw = random.random() * 360.0 if random_yaw else 0.0
-                            sx = random.uniform(smin[0], smax[0])
-                            sy = random.uniform(smin[1], smax[1])
-                            sz = random.uniform(smin[2], smax[2])
-                            instances.append({
-                                "location": [x, y, z],
-                                "rotation": [gpitch, yaw, 0],
-                                "scale": [sx, sy, sz],
-                            })
-                    # 诊断摘要: snap_to_ground生效时打印Z范围及零值数, 验证贴地(山谷Z为负,山丘Z为正)
-                    # zero_z: Z=0的实例数(疑似悬浮), 理想为0; >0说明高度图快照未覆盖该区域
-                    if snap_ground and instances:
-                        zs = [inst["location"][2] for inst in instances]
-                        zero_count = sum(1 for v in zs if v == 0.0)
-                        log("SNAP_SUMMARY[i=" + str(i) + "]: snap=True n=" + str(len(zs)) + " z_min=" + str(round(min(zs), 1)) + " z_max=" + str(round(max(zs), 1)) + " zero_z=" + str(zero_count) + " (疑似悬浮)")
-                    n = len(instances)
-            else:
-                instances = p.get("instances", [])
-                # snap_to_ground: 默认贴地(2.6.0改True), 覆盖每个实例的Z为地形表面Z; 设false+显式Z可悬空
-                snap_ground = p.get("snap_to_ground", True)
-                if snap_ground:
-                    for inst in instances:
-                        iloc = inst.get("location", [0, 0, 0])
-                        tz = get_terrain_z(iloc[0], iloc[1])
-                        if tz is not None:
-                            iloc[2] = tz
-                            inst["location"] = iloc
-                n = len(instances)
+            # 生成实例列表: 调用公共 helper (circle/rows-cols/explicit 三种模式)
+            instances = _gen_instances_from_grid(p, i)
+            n = len(instances)
             mat_override = p.get("material_override")
+            gr = p.get("grid")
             # 距离剔除: 从 grid 配置读取 cull_start/cull_end (世界厘米), 传给 HISM.
             # 仅当 grid 存在且含这两个字段时启用, 缺省则不剔除(向后兼容).
             cull_start = gr.get("cull_start") if gr else None
             cull_end = gr.get("cull_end") if gr else None
-            spawn_hism(asset, base_loc, instances, base_rot, base_scl, mat_override, cull_start, cull_end)
-            count += n
-            log("instanced_grid[" + str(i) + "]: " + str(n) + " x " + asset.split("/")[-1])
+            # 方案B auto-route: 按资产类型自动路由放置
+            # - StaticMesh: 走 spawn_hism (HISM 批量实例化, 高效渲染, draw call 合并)
+            # - Blueprint: 走 spawn_blueprint 循环 (蓝图无法用 HISM 的 set_static_mesh,
+            #   逐个 spawn_actor 生成; 实例坐标为相对 Actor 的局部偏移,
+            #   转为世界坐标 = base_loc + instance.location, 与 HISM add_instance 语义一致)
+            asset_class = _asset_cache[asset].get_class().get_name()
+            if asset_class == "Blueprint":
+                bp_cnt = 0
+                for inst in instances:
+                    il = inst.get("location", [0, 0, 0])
+                    ir = inst.get("rotation", [0, 0, 0])
+                    isc = inst.get("scale", [1, 1, 1])
+                    # 世界坐标 = base_loc(Actor基准) + instance局部偏移, 与 HISM 语义一致
+                    bp_loc = [base_loc[0] + il[0], base_loc[1] + il[1], base_loc[2] + il[2]]
+                    spawn_blueprint(asset, bp_loc, ir, isc)
+                    bp_cnt += 1
+                count += bp_cnt
+                log("instanced_grid_blueprint[" + str(i) + "]: " + str(bp_cnt) + " x " + asset.split("/")[-1])
+            else:
+                spawn_hism(asset, base_loc, instances, base_rot, base_scl, mat_override, cull_start, cull_end)
+                count += n
+                log("instanced_grid[" + str(i) + "]: " + str(n) + " x " + asset.split("/")[-1])
             continue
 
         # ---- 模块4新增: 农田行垄作物 (type=crop_field) ----
@@ -1526,17 +1657,40 @@ def main():
 
         # ---- 蓝图 Actor 放置 ----
         if ptype == "blueprint":
-            loc = p.get("location", [0, 0, 0])
-            rot = p.get("rotation", [0, 0, 0])
-            scl = p.get("scale", [1, 1, 1])
-            # snap_to_ground: 默认贴地(2.6.0新增), 蓝图Actor查地形Z覆盖location的Z; 设false可悬空
-            if p.get("snap_to_ground", True):
-                tz = get_terrain_z(loc[0], loc[1])
-                if tz is not None:
-                    loc = [loc[0], loc[1], tz]
-            spawn_blueprint(asset, loc, rot, scl)
-            count += 1
-            log("blueprint[" + str(i) + "]: " + asset.split("/")[-1])
+            # 方案B: blueprint 类型支持 grid 批量放置
+            # 若 placement 含 grid 参数, 则生成实例列表并循环 spawn_blueprint (与 instanced_grid 蓝图分支语义一致)
+            # 若无 grid, 保持原单次放置行为不变 (向后兼容)
+            gr = p.get("grid")
+            if gr:
+                # ---- grid 模式: 批量放置 ----
+                base_loc = p.get("location", [0, 0, 0])
+                # 生成实例列表: 调用公共 helper (circle/rows-cols/explicit 三种模式, 内部已处理 snap_to_ground)
+                instances = _gen_instances_from_grid(p, i)
+                bp_cnt = 0
+                for inst in instances:
+                    il = inst.get("location", [0, 0, 0])
+                    ir = inst.get("rotation", [0, 0, 0])
+                    isc = inst.get("scale", [1, 1, 1])
+                    # 世界坐标 = base_loc(基准) + instance 局部偏移, 与 instanced_grid 蓝图分支语义一致
+                    bp_loc = [base_loc[0] + il[0], base_loc[1] + il[1], base_loc[2] + il[2]]
+                    # 蓝图实例的 snap_to_ground: helper 已对 instance.location 做贴地, 这里无需重复
+                    spawn_blueprint(asset, bp_loc, ir, isc)
+                    bp_cnt += 1
+                count += bp_cnt
+                log("blueprint_grid[" + str(i) + "]: " + str(bp_cnt) + " x " + asset.split("/")[-1])
+            else:
+                # ---- 单次放置 (原行为) ----
+                loc = p.get("location", [0, 0, 0])
+                rot = p.get("rotation", [0, 0, 0])
+                scl = p.get("scale", [1, 1, 1])
+                # snap_to_ground: 默认贴地(2.6.0新增), 蓝图Actor查地形Z覆盖location的Z; 设false可悬空
+                if p.get("snap_to_ground", True):
+                    tz = get_terrain_z(loc[0], loc[1])
+                    if tz is not None:
+                        loc = [loc[0], loc[1], tz]
+                spawn_blueprint(asset, loc, rot, scl)
+                count += 1
+                log("blueprint[" + str(i) + "]: " + asset.split("/")[-1])
             continue
 
         # ---- 多Object组合放置 (停机坪/通信塔/高压塔等由多部件组成的单体) ----
@@ -1641,12 +1795,17 @@ def main():
             loc = p.get("location", [0, 0, 0])
             rot = p.get("rotation", [0, 0, 0])
             scl = p.get("scale", [1, 1, 1])
+            # 读取材质覆写路径(可选, 空字符串=不覆写)
+            mat_override = p.get("material_override", "") or None
+            # 读取skip_z_fix(多部件组合资产需跳过Z修正)
+            skip_z = p.get("skip_z_fix", False)
             # snap_to_ground: 默认贴地(2.6.0改True), 查询地形Z覆盖location的Z; 设false+显式Z可悬空
             if p.get("snap_to_ground", True):
                 tz = get_terrain_z(loc[0], loc[1])
                 if tz is not None:
                     loc = [loc[0], loc[1], tz]
-            spawn_mesh(asset, loc, rot, scl)
+            # 传递材质覆写和skip_z_fix给spawn_mesh, 确保static路径与group路径行为一致
+            spawn_mesh(asset, loc, rot, scl, mat_override, skip_z)
             count += 1
             log("single[" + str(i) + "]: " + asset.split("/")[-1])
 
