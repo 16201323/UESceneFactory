@@ -11,6 +11,11 @@ class AssetEntry(BaseModel):
     name: str = ""
     category: str = ""
     subfolder: str = ""
+    # 人工标注的建议缩放值（1.0=不缩放，0.001=缩小1000倍等）
+    # LLM 在搜索结果中看到此值后应直接填入 JSON 的 scale 字段
+    recommended_scale: float = 1.0
+    # 标注理由（如"Fab模型设计单位为米，UE导入后需缩小"）
+    recommended_scale_note: str = ""
 
 
 class ExperienceRef(BaseModel):

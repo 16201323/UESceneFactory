@@ -1446,6 +1446,54 @@ def main():
                 log("instanced_grid[" + str(i) + "]: " + str(n) + " x " + asset.split("/")[-1])
             continue
 
+        # ---- static_grid 放置: 逐个 StaticMeshActor (非HISM) ----
+        # 用途: 树木等需要原生材质WPO风动的资产。
+        # HISM 的 WorldPosition 在材质中解析为组件原点而非逐顶点实际坐标,
+        # 导致顶点色风动遮罩失效→整树旋转(连根摇摆);
+        # StaticMeshActor 的 WorldPosition 为逐顶点世界坐标, 顶点色遮罩正常工作,
+        # 仅树梢摇摆, 与手动拖入编辑器的效果完全一致。
+        # 代价: draw call 增加(每棵树一个Actor), 但视觉正确性优先。
+        if ptype == "static_grid":
+            if asset not in _asset_cache:
+                _asset_cache[asset] = unreal.EditorAssetLibrary.load_asset(asset)
+            if not _asset_cache[asset]:
+                log("SKIP[" + str(i) + "] static_grid missing: " + asset)
+                continue
+            base_loc = p.get("location", [0, 0, 0])
+            mat_override = p.get("material_override")
+            # 距离剔除: 从 grid 配置读取 cull_end (世界厘米), 用于 StaticMeshComponent 的
+            # LDMaxDrawDistance 属性. 与 HISM 的 cull_start~cull_end 渐隐区间不同,
+            # StaticMeshActor 只有硬切(距相机 > cull_end 直接不渲染), 无渐隐过渡.
+            # 仅当 grid 存在且含 cull_end 字段时启用, 缺省则不剔除(向后兼容).
+            gr = p.get("grid")
+            sg_cull_end = gr.get("cull_end") if gr else None
+            # 复用 _gen_instances_from_grid 生成实例列表 (circle/rows-cols/explicit 三种模式)
+            instances = _gen_instances_from_grid(p, i)
+            # 逐实例用 spawn_mesh 放置 StaticMeshActor (与手动拖入效果一致)
+            # 世界坐标 = base_loc(placement基准) + instance局部偏移, 与 HISM/Blueprint 语义一致
+            sg_cnt = 0
+            for inst in instances:
+                il = inst.get("location", [0, 0, 0])
+                ir = inst.get("rotation", [0, 0, 0])
+                isc = inst.get("scale", [1, 1, 1])
+                sg_loc = [base_loc[0] + il[0], base_loc[1] + il[1], base_loc[2] + il[2]]
+                sg_actor = spawn_mesh(asset, sg_loc, ir, isc, mat_override)
+                # 距离剔除: 给每个 StaticMeshComponent 设 LDMaxDrawDistance,
+                # 超过该距离(世界厘米)时 GPU 不渲染该 Actor, 省远处 draw call.
+                # 注意: StaticMeshActor 不支持 HISM 的 start~end 渐隐, 仅硬切消失.
+                if sg_cull_end is not None and sg_actor:
+                    try:
+                        sg_mesh = sg_actor.static_mesh_component
+                        if sg_mesh:
+                            sg_mesh.set_editor_property("LDMaxDrawDistance", int(sg_cull_end))
+                    except Exception as e_sg_cull:
+                        log("  STATIC_GRID_CULL_FAIL: " + str(e_sg_cull))
+                sg_cnt += 1
+            count += sg_cnt
+            log("static_grid[" + str(i) + "]: " + str(sg_cnt) + " x " + asset.split("/")[-1]
+                + ("" if sg_cull_end is None else " (cull_end=" + str(int(sg_cull_end)) + "cm)"))
+            continue
+
         # ---- 模块4新增: 农田行垄作物 (type=crop_field) ----
         # 封装行垄布局生成: 行距/株距/垄向可配, jitter 控制整齐度, snap_to_ground 贴地
         # 本质是 instanced_grid rows 的作物专用封装, 复用 spawn_hism 高效渲染

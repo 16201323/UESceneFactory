@@ -161,23 +161,59 @@ def test_weather_with_clouds():
 # ─── SceneJSON 整体测试 ───
 
 def test_scene_json_minimal():
-    """SceneJSON 仅传必填的 scene 分区，其余可选分区为 None 或空列表。"""
+    """SceneJSON 仅传必填的 scene/landscape/grass/height_pattern/lighting/weather 分区。
+
+    L1 根因修复后 grass/height_pattern/lighting/weather 均为必填,
+    缺失会分别导致灰色地形/平坦地形/场景全黑/无云。
+    """
     sj = SceneJSON(
         scene=SceneInfo(name="最小场景", target_level="/Game/Maps/Generated/Min"),
+        landscape=LandscapeConfig(
+            grass={"grass_type": "/Game/RuralHouse/Landscape/LandscapeFoliage/LGT_Grass",
+                   "grass_mesh": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Tall_Wild_01a",
+                   "layer_name": "Grass", "density": 120.0},
+            height_pattern={"type": "flat"},
+        ),
+        lighting=LightingConfig(),
+        weather=WeatherConfig(),
     )
     assert sj.scene.name == "最小场景"
-    assert sj.landscape is None
+    assert sj.landscape is not None
+    assert sj.landscape.grass is not None
+    assert sj.landscape.height_pattern is not None
     assert sj.ground is None
     assert sj.placements == []
-    assert sj.lighting is None
-    assert sj.weather is None
+    assert sj.lighting is not None
+    assert sj.weather is not None
+
+
+def test_scene_json_rejects_null_landscape():
+    """SceneJSON 拒绝 landscape=null — 根因修复: 蓝图 terrain_type 始终暗示需要地形。"""
+    with pytest.raises(ValueError, match="landscape.*必填"):
+        SceneJSON(
+            scene=SceneInfo(name="错误场景", target_level="/Game/Maps/Generated/Bad"),
+            landscape=None,
+        )
+
+
+def test_scene_json_rejects_missing_landscape():
+    """SceneJSON 拒绝省略 landscape 分区 — 等价于 landscape=None。"""
+    with pytest.raises(ValueError, match="landscape.*必填"):
+        SceneJSON(
+            scene=SceneInfo(name="错误场景", target_level="/Game/Maps/Generated/Bad"),
+        )
 
 
 def test_scene_json_full():
     """SceneJSON 传入所有分区。"""
     sj = SceneJSON(
         scene=SceneInfo(name="完整场景", target_level="/Game/Maps/Generated/Full"),
-        landscape=LandscapeConfig(height_pattern={"type": "hill"}),
+        landscape=LandscapeConfig(
+            grass={"grass_type": "/Game/RuralHouse/Landscape/LandscapeFoliage/LGT_Grass",
+                   "grass_mesh": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Tall_Wild_01a",
+                   "layer_name": "Grass", "density": 120.0},
+            height_pattern={"type": "hill"},
+        ),
         ground={"asset": "/Game/Ground/Plane"},
         placements=[
             PlacementConfig(asset="/Game/Props/Tree"),
@@ -198,13 +234,20 @@ def test_scene_json_model_dump():
     """SceneJSON.model_dump() 生成 build_scene.py 可消费的 dict 结构。"""
     sj = SceneJSON(
         scene=SceneInfo(name="测试", target_level="/Game/Maps/Generated/Test"),
-        landscape=LandscapeConfig(height_pattern={"type": "flat"}),
+        landscape=LandscapeConfig(
+            grass={"grass_type": "/Game/RuralHouse/Landscape/LandscapeFoliage/LGT_Grass",
+                   "grass_mesh": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Tall_Wild_01a",
+                   "layer_name": "Grass", "density": 120.0},
+            height_pattern={"type": "flat"},
+        ),
         placements=[PlacementConfig(asset="/Game/Props/Rock")],
+        lighting=LightingConfig(),
+        weather=WeatherConfig(),
     )
     d = sj.model_dump()
     assert d["scene"]["name"] == "测试"
     assert d["landscape"]["height_pattern"]["type"] == "flat"
     assert d["placements"][0]["asset"] == "/Game/Props/Rock"
     assert d["ground"] is None
-    assert d["lighting"] is None
-    assert d["weather"] is None
+    assert d["lighting"] is not None
+    assert d["weather"] is not None

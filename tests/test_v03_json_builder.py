@@ -60,11 +60,32 @@ def test_deps_injection():
 
 
 def test_run_with_test_model():
-    """使用 TestModel 运行 Agent，输出 SceneJSON。"""
+    """使用 TestModel 运行 Agent，输出 SceneJSON。
+
+    custom_output_args 提供包含 landscape 的有效 SceneJSON，
+    防止 TestModel 随机生成 landscape=null 被 model_validator 拦截。
+    """
 
     class TestJSONBuilder(JSONBuilderAgent):
         def _create_model(self):
-            return TestModel()
+            # landscape 现为必填字段 (model_validator 拦截 null)，
+            # 必须在 custom_output_args 中提供非空 landscape
+            return TestModel(custom_output_args={
+                "scene": {"name": "test", "target_level": "/Game/Maps/Test"},
+                "landscape": {
+                    "material": "/Game/M",
+                    # L1 根因修复后 grass 为必填字段 (model_validator 拦截 null)
+                    "grass": {
+                        "grass_type": "/Game/RuralHouse/Landscape/LandscapeFoliage/LGT_Grass",
+                        "grass_mesh": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Tall_Wild_01a",
+                        "layer_name": "Grass", "density": 120.0
+                    },
+                    "height_pattern": {"type": "flat"}
+                },
+                # L1 根因修复后 lighting/weather 为必填字段
+                "lighting": {"directional_light": {"intensity": 10.0}},
+                "weather": {"volumetric_clouds": {"location": [0, 0, 2000]}},
+            })
 
     agent_base = TestJSONBuilder("test-model", "fake-key", deps=AgentDeps())
     blueprint_json = '{"terrain_type": "flat", "has_water": false, "has_river": false, "has_grass": true, "has_wheat": false, "scene_type": "flat"}'

@@ -292,12 +292,7 @@ group 类型按 `prefix + str(k)` 顺序生成路径，k 从0到 count-1。当�
 | village | 房屋聚集/散布 | house_assets, house_count, layout(scatter/cluster), radius_m, min_distance_m, seed, snap_to_ground, scale_min/max |
 | blueprint | 蓝图Actor房屋 | asset, location, rotation, scale, snap_to_ground |
 
-**真实尺寸 scale 计算：**
-- scale = 目标真实宽度(m) x 100 / 原始模型宽度(cm)
-- 微缩模型（如 tavern 原始 200cm）需放大 scale=8.0 到 16m
-- 整场景模型（如 Free_Small_Old_House 原始 77431cm）需缩小 scale=0.0129 到 10m
-
-**派生方法：** 复制模板后改 target_level，增删 village placement，替换 house_assets 路径，按公式重算 scale。新增资产需先用 probe_fab_house_dims.py 获取原始尺寸。
+**派生方法：** 复制模板后改 target_level，增删 village placement，替换 house_assets 路径。资产缩放值参考搜索结果中的 `recommended_scale` 字段（已在资产清单中人工标注）。
 
 ## 派生要点
 

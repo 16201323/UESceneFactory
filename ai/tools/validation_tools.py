@@ -65,7 +65,9 @@ def validate_scene_core(scene: dict) -> dict:
         {"errors": [...], "warnings": [...]} — errors 为空表示字段校验通过
     """
     from scripts.validate_scene_json import validate_scene
-    _logger.info("[FIELD] 开始字段完整性校验 (场景名=%s)", scene.get("scene", {}).get("name", "(未命名)"))
+    # 用 or {} 保护: LLM 可能生成 "scene": null, 此时 .get("scene", {}) 返回 None 而非 {},
+    # 直接 .get("name") 会抛 'NoneType' 无属性 'get'
+    _logger.info("[FIELD] 开始字段完整性校验 (场景名=%s)", (scene.get("scene") or {}).get("name", "(未命名)"))
     errors, warnings = validate_scene(scene)
 
     # 逐条记录字段错误 — 方便定位缺字段/类型错/枚举值非法

@@ -4,6 +4,7 @@ from ai.client import LLMClient
 from ai.knowledge import KnowledgePack
 from ai.asset_index import AssetIndex
 from ai.utils import extract_json
+from ai.tools.asset_tools import search_assets_core
 
 
 class SceneGenerator:
@@ -14,13 +15,13 @@ class SceneGenerator:
         self._model = model
 
     def generate(self, user_description, intent, few_shots=None):
-        # 1. 搜索资产
+        # 1. 搜索资产（用 search_assets_core 获取含 recommended_scale 的 AssetEntry）
         keywords = intent.get("keywords", [])
-        asset_paths = self._asset_index.search(keywords, max_results=30)
+        asset_entries = search_assets_core(self._asset_index, keywords, max_results=30)
 
-        # 2. 组装 system prompt
+        # 2. 组装 system prompt（AssetEntry 含缩放建议，由 build_system_prompt 注入）
         system_prompt = self._knowledge.build_system_prompt(
-            intent, asset_paths, few_shots or []
+            intent, asset_entries, few_shots or []
         )
 
         # 3. 组装 user prompt

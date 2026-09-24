@@ -67,6 +67,24 @@ def test_search_assets_core_results():
     assert results[0].category == "vegetation"
 
 
+def test_search_assets_core_recommended_scale():
+    """recommended_scale 从清单字典透传到 AssetEntry。"""
+    idx = StubAssetIndex(
+        assets=[
+            {
+                "path": "/Game/Props/House",
+                "name": "SM_House",
+                "recommended_scale": 0.001,
+                "recommended_scale_note": "Fab模型需缩小",
+            },
+        ]
+    )
+    results = search_assets_core(idx, ["house"])
+    assert len(results) == 1
+    assert results[0].recommended_scale == 0.001
+    assert results[0].recommended_scale_note == "Fab模型需缩小"
+
+
 def test_search_assets_core_no_match():
     """无匹配资产时返回空列表。"""
     idx = StubAssetIndex(assets=[{"path": "/Game/Rock"}])

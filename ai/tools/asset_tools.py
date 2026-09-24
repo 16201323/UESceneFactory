@@ -33,6 +33,9 @@ def search_assets_core(asset_index, keywords: list[str], max_results: int = 20) 
                 name=asset_dict.get("name", ""),
                 category=asset_dict.get("category", ""),
                 subfolder=asset_dict.get("subfolder", ""),
+                # 从资产清单读取人工标注的缩放值（默认1.0=不缩放）
+                recommended_scale=asset_dict.get("recommended_scale", 1.0),
+                recommended_scale_note=asset_dict.get("recommended_scale_note", ""),
             )
         )
     return results

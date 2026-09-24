@@ -463,15 +463,20 @@ class TestEdgeCases:
     """边界场景: 空场景/无 height_pattern/无 landscape"""
 
     def test_empty_scene(self):
-        """空场景 -> 无错误无警告"""
+        """空场景 -> 报 landscape 缺失错误 (根因修复: landscape 必填)"""
         errors, warnings = validate_scene_quality({})
-        assert errors == []
+        assert any("landscape" in e for e in errors), "空场景应报 landscape 缺失错误"
         assert warnings == []
 
     def test_no_landscape(self):
-        """无 landscape -> 无错误"""
+        """无 landscape -> 报 landscape 缺失错误 (根因修复: landscape 必填)"""
         errors, _ = validate_scene_quality({"scene": {}})
-        assert errors == []
+        assert any("landscape" in e for e in errors), "无 landscape 应报缺失错误"
+
+    def test_landscape_null(self):
+        """landscape=null -> 报 landscape 缺失错误 (根因修复: 防止下游 NoneType 崩溃)"""
+        errors, _ = validate_scene_quality({"scene": {}, "landscape": None})
+        assert any("landscape" in e for e in errors), "landscape=null 应报缺失错误"
 
     def test_no_height_pattern(self):
         """landscape 无 height_pattern -> 无错误"""

@@ -301,12 +301,17 @@ VILLAGE_FIELDS = {
 
 REQUIRED = {
     "scene": ["target_level"],
+    # landscape 新增 grass/height_pattern 为必填 — 缺失会导致灰色地形和完全平坦
     "landscape": ["material", "section_size_quads", "num_subsections",
-                  "component_count_x", "component_count_y"],
+                  "component_count_x", "component_count_y",
+                  "grass", "height_pattern"],
     "layer": ["info", "weight"],
     "placement": ["type"],
     "height_pattern": ["type"],
     "weight_pattern": ["pattern"],
+    # 新增: lighting/weather 为顶层必填 — 缺失会导致场景全黑无云
+    "lighting": ["directional_light", "sky_light", "sky_atmosphere"],
+    "weather": ["volumetric_clouds"],
 }
 
 # ===========================================================================
@@ -320,7 +325,9 @@ ENUM_VALUES = {
                                "multi_region", "noise_based", "aspect_based", "snow_line"},
     # 补齐 build_scene.py 实际支持的 type: "static"(缺省)与"blueprint"(spawn_blueprint, 1096行);
     # 此前漏登导致房屋蓝图类场景(如 smart_agri)误报无效值
-    "placement.type": {"group", "instanced_grid", "instances", "static", "blueprint", "crop_field", "village"},
+    # static_grid: 逐个 StaticMeshActor 放置(非HISM), 解决 HISM 树木材质 WorldPosition
+    #   解析为组件原点导致顶点色风动遮罩失效→整树旋转的问题, 与手动拖入编辑器效果一致
+    "placement.type": {"group", "instanced_grid", "instances", "static", "static_grid", "blueprint", "crop_field", "village"},
 }
 
 # ===========================================================================
@@ -377,10 +384,15 @@ def validate_semantic(scene):
         语义 warning 列表（空=无语义矛盾）
     """
     warnings = []
-    ls = scene.get("landscape", {})
-    hp = ls.get("height_pattern", {})
+    # 注意: JSON 中 landscape / height_pattern 可能为 null (而非缺失),
+    # .get(key, default) 只在 key 缺失时返回 default, 值为 None 时仍返回 None
+    # → 后续 .get() 会抛 'NoneType' 无属性 'get' (LLM 生成 "landscape": null 即触发)。
+    # 用 or {} 让 null/缺失 统一回退为空字典, 后续所有 .get(...) 安全。
+    ls = scene.get("landscape") or {}
+    hp = ls.get("height_pattern") or {}
     hp_type = hp.get("type", "")
-    desc = scene.get("scene", {}).get("description", "").lower()
+    # 同理: scene.scene / description 可能为 null, 一并判空避免 'NoneType' 无属性
+    desc = ((scene.get("scene") or {}).get("description") or "").lower()
 
     # 规则1: 地形-描述不匹配 — flat 地形但场景描述含山丘关键词
     if hp_type == "flat":
@@ -482,9 +494,18 @@ def validate_scene(scene):
                 validate_required(wp, REQUIRED["weight_pattern"], wp_path, errors)
                 validate_enum(wp, "pattern", "weight_pattern.pattern", wp_path, errors)
 
-        # grass
+        # grass — 必填字段, 缺失/null/空字典均报 error (防止 LLM 删除字段绕过校验)
+        # 原先用 if g: 守卫, g 为 None/{} 时静默跳过, LLM 删除 grass 即可让错误归零
         g = ls.get("grass")
-        if g:
+        if g is None:
+            errors.append("landscape.grass: 必填字段缺失或为 null — "
+                          "缺失会导致 build_scene.py 无草地材质, 产出灰色地形")
+        elif not isinstance(g, dict):
+            errors.append("landscape.grass: 类型错误, 期望 dict 实际 %s" % type(g).__name__)
+        elif not g:
+            errors.append("landscape.grass: 必填字段为空字典 {} — "
+                          "请填充 grass_type/grass_mesh/layer_name/density 等内容")
+        else:
             validate_section(g, GRASS_FIELDS, "landscape.grass", errors, warnings)
             for i, gv in enumerate(g.get("grass_varieties", [])):
                 validate_section(gv, HP_VARIETY_FIELDS, "landscape.grass.grass_varieties[%d]" % i, errors, warnings)
@@ -494,9 +515,19 @@ def validate_scene(scene):
         if w:
             validate_section(w, WHEAT_FIELDS, "landscape.wheat", errors, warnings)
 
-        # height_pattern
+        # height_pattern — 必填字段, 缺失/null/空字典均报 error (防止 LLM 删除字段绕过校验)
+        # 原先用 if hp: 守卫, hp 为 None/{} 时静默跳过, LLM 删除即让错误归零
+        # 缺失会导致 build_scene.py 传空字符串给 C++ 插件, 产出完全平坦地形
         hp = ls.get("height_pattern")
-        if hp:
+        if hp is None:
+            errors.append("landscape.height_pattern: 必填字段缺失或为 null — "
+                          "缺失会导致 build_scene.py 传空字符串给 C++ 插件, 产出完全平坦地形")
+        elif not isinstance(hp, dict):
+            errors.append("landscape.height_pattern: 类型错误, 期望 dict 实际 %s" % type(hp).__name__)
+        elif not hp:
+            errors.append("landscape.height_pattern: 必填字段为空字典 {} — "
+                          "请填充 type/hills/valleys 等内容以生成地形起伏")
+        else:
             validate_section(hp, HP_FIELDS, "landscape.height_pattern", errors, warnings)
             validate_required(hp, REQUIRED["height_pattern"], "landscape.height_pattern", errors)
             validate_enum(hp, "type", "height_pattern.type", "landscape.height_pattern", errors)
@@ -540,9 +571,19 @@ def validate_scene(scene):
         validate_section(p, PLACEMENT_FIELDS, p_path, errors, warnings)
         validate_required(p, REQUIRED["placement"], p_path, errors)
         validate_enum(p, "type", "placement.type", p_path, errors)
-        # grid 校验 (instanced_grid 类型时)
+        # grid 校验 (instanced_grid / static_grid 类型均使用 grid 字段生成实例)
+        # grid 类型缺失 grid 时, build_scene.py 回退为 [0,0,0] 单实例, 导致电塔/树木挤在原点(地形外)
         grd = p.get("grid")
-        if grd:
+        _is_grid_type = p.get("type") in ("instanced_grid", "static_grid")
+        if grd is None:
+            if _is_grid_type:
+                errors.append("%s.grid: 缺失或为 null — grid 类型 placement 必须提供 grid (spacing/count)" % p_path)
+        elif not isinstance(grd, dict):
+            errors.append("%s.grid: 类型错误, 期望 dict 实际 %s" % (p_path, type(grd).__name__))
+        elif not grd:
+            if _is_grid_type:
+                errors.append("%s.grid: 空字典 {} — grid 类型 placement 必须含 spacing/count 等字段" % p_path)
+        else:
             validate_section(grd, GRID_FIELDS, p_path + ".grid", errors, warnings)
         # crop_field 子字段校验
         fd = p.get("field")
@@ -553,9 +594,18 @@ def validate_scene(scene):
         if vd:
             validate_section(vd, VILLAGE_FIELDS, p_path + ".village", errors, warnings)
 
-    # lighting
+    # lighting — 顶层必填, 缺失/null/空字典均报 error (防止 LLM 删除字段绕过校验)
+    # 原先用 if lt: 守卫, lt 为 None/{} 时静默跳过, 缺失会导致场景全黑无光照
     lt = scene.get("lighting")
-    if lt:
+    if lt is None:
+        errors.append("lighting: 顶层必填字段缺失或为 null — 缺失会导致 build_scene.py 跳过光照, 场景全黑")
+    elif not isinstance(lt, dict):
+        errors.append("lighting: 类型错误, 期望 dict 实际 %s" % type(lt).__name__)
+    elif not lt:
+        errors.append("lighting: 顶层必填字段为空字典 {} — 请填充 directional_light/sky_light/sky_atmosphere")
+    else:
+        # 校验必填子项是否存在 (directional_light/sky_light/sky_atmosphere)
+        validate_required(lt, REQUIRED["lighting"], "lighting", errors)
         # sky_atmosphere 有专有字段 (render_in_main_pass 等), 使用独立 schema
         _light_schemas = {
             "directional_light": LIGHT_SUB_FIELDS,
@@ -565,15 +615,40 @@ def validate_scene(scene):
         }
         for sub, schema in _light_schemas.items():
             obj = lt.get(sub)
-            if obj:
-                validate_section(obj, schema, "lighting." + sub, errors, warnings)
+            # 必填子项键缺失已由 validate_required 报告; 此处检查值非 None 时的类型/空字典
+            if obj is not None:
+                if not isinstance(obj, dict):
+                    errors.append("lighting.%s: 类型错误, 期望 dict 实际 %s" % (sub, type(obj).__name__))
+                elif obj:
+                    validate_section(obj, schema, "lighting." + sub, errors, warnings)
+                elif sub in ("directional_light", "sky_light", "sky_atmosphere"):
+                    errors.append("lighting.%s: 必填子项为空字典 {}" % sub)
+            elif sub in ("directional_light", "sky_light", "sky_atmosphere") and sub in lt:
+                errors.append("lighting.%s: 必填子项为 null — 场景将缺%s" % (
+                    sub, {"directional_light": "方向光", "sky_light": "天光",
+                          "sky_atmosphere": "大气"}.get(sub, "该光源")))
 
-    # weather
+    # weather — 顶层必填, 缺失/null/空字典均报 error (防止 LLM 删除字段绕过校验)
+    # 原先用 if we: 守卫, we 为 None/{} 时静默跳过, 缺失会导致场景无体积云
     we = scene.get("weather")
-    if we:
+    if we is None:
+        errors.append("weather: 顶层必填字段缺失或为 null — 缺失会导致 build_scene.py 跳过天气, 无体积云")
+    elif not isinstance(we, dict):
+        errors.append("weather: 类型错误, 期望 dict 实际 %s" % type(we).__name__)
+    elif not we:
+        errors.append("weather: 顶层必填字段为空字典 {} — 请填充 volumetric_clouds")
+    else:
+        validate_required(we, REQUIRED["weather"], "weather", errors)
         vc = we.get("volumetric_clouds")
-        if vc:
-            validate_section(vc, LIGHT_SUB_FIELDS, "weather.volumetric_clouds", errors, warnings)
+        if vc is not None:
+            if not isinstance(vc, dict):
+                errors.append("weather.volumetric_clouds: 类型错误, 期望 dict 实际 %s" % type(vc).__name__)
+            elif vc:
+                validate_section(vc, LIGHT_SUB_FIELDS, "weather.volumetric_clouds", errors, warnings)
+            else:
+                errors.append("weather.volumetric_clouds: 必填子项为空字典 {}")
+        elif "volumetric_clouds" in we:
+            errors.append("weather.volumetric_clouds: 必填子项为 null")
 
     # top-level rivers[] (模块4: 与 height_pattern.rivers 分开, 支持 width_end_m/waterfalls)
     for i, rv in enumerate(scene.get("rivers", [])):

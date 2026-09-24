@@ -471,6 +471,9 @@ def auto_repair_scene(scene, aggressive=False):
     """
     repairs = []
 
+    # 注意: landscape 为 null/缺失时不做修复 (无法凭空生成地形配置),
+    # 但 validate_scene_quality 会将 null landscape 报为 error, 交由 Stage 3 LLM 修复。
+    # 这里用 isinstance 而非 "if not ls" 是为了区分 null/缺失 vs 空字典 {} 的情况。
     ls = scene.get("landscape")
     if not isinstance(ls, dict):
         return repairs
@@ -530,6 +533,133 @@ def auto_repair_scene(scene, aggressive=False):
 
 
 # ===========================================================================
+# L5 兜底层: 关键分区缺失时注入默认值 (防止 LLM 删除字段导致黑屏/无草/平坦)
+# ===========================================================================
+
+def ensure_critical_sections(scene):
+    """L5 安全网: 确保 lighting/weather/grass/height_pattern 关键分区存在。
+
+    在 repair_and_validate 的最开头调用 (早于绿色层 auto_repair_scene),
+    确保 LLM 即便在 Stage 3 误删了必填分区, 也至少注入一套经模板验证的默认值,
+    避免 build_scene.py 因 if X: 守卫静默跳过功能而产出黑屏/无草/平坦的废场景。
+
+    仅在字段为 null/缺失/非 dict/空字典 时注入, 已有内容则原样保留 (不覆盖)。
+
+    Args:
+        scene: 场景 JSON 字典 (就地修改)
+
+    Returns:
+        repairs: 注入日志列表, 每项描述注入了哪个分区及原因
+    """
+    repairs = []
+
+    # ---- lighting: 缺失/null/空 → 注入默认光照 (防场景全黑) ----
+    # 默认值来源: template_p11_all_terrain_realistic.json (已验证可正常渲染)
+    lt = scene.get("lighting")
+    if lt is None or not isinstance(lt, dict) or not lt:
+        scene["lighting"] = {
+            "directional_light": {
+                "location": [0, 0, 3000],
+                "rotation": [-15, 60, 0],
+                "intensity": 10.0,
+                "color": [1.0, 0.85, 0.7],
+                "cast_shadows": True,
+            },
+            "sky_light": {
+                "location": [0, 0, 3000],
+                "intensity": 1.0,
+                "color": [0.75, 0.85, 1.0],
+            },
+            "sky_atmosphere": {
+                "location": [0, 0, 0],
+            },
+            "height_fog": {
+                "location": [0, 0, 0],
+                "density": 0.0001,
+                "color": [0.7, 0.8, 0.9],
+            },
+        }
+        # 记录注入原因: 区分缺失/null/类型错误/空字典, 方便排查 LLM 为何删除了该字段
+        if lt is None:
+            _reason = "缺失或 null"
+        elif not isinstance(lt, dict):
+            _reason = "类型错误(%s)" % type(lt).__name__
+        else:
+            _reason = "空字典"
+        msg = "lighting: %s → 注入默认光照 (方向光+天光+大气+高度雾, 防场景全黑)" % _reason
+        repairs.append(msg)
+        _logger.warning("[L5-SAFETY] %s", msg)
+
+    # ---- weather: 缺失/null/空 → 注入默认天气 (防无云) ----
+    we = scene.get("weather")
+    if we is None or not isinstance(we, dict) or not we:
+        scene["weather"] = {
+            "volumetric_clouds": {
+                "location": [0, 0, 2000],
+            },
+        }
+        if we is None:
+            _reason = "缺失或 null"
+        elif not isinstance(we, dict):
+            _reason = "类型错误(%s)" % type(we).__name__
+        else:
+            _reason = "空字典"
+        msg = "weather: %s → 注入默认天气 (体积云, 防无云)" % _reason
+        repairs.append(msg)
+        _logger.warning("[L5-SAFETY] %s", msg)
+
+    # ---- landscape 下的 grass / height_pattern (仅当 landscape 是 dict 时) ----
+    # 若 landscape 整体缺失, L1 Pydantic 验证器应已拦截, 此处不凭空创建完整 landscape
+    ls = scene.get("landscape")
+    if isinstance(ls, dict):
+        # grass: 缺失/null/空 → 注入默认草地 (防灰色地形)
+        g = ls.get("grass")
+        if g is None or not isinstance(g, dict) or not g:
+            ls["grass"] = {
+                "grass_type": "/Game/RuralHouse/Landscape/LandscapeFoliage/LGT_Grass",
+                "grass_mesh": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Tall_Wild_01a",
+                "layer_name": "Grass",
+                "density": 120.0,
+            }
+            if g is None:
+                _reason = "缺失或 null"
+            elif not isinstance(g, dict):
+                _reason = "类型错误(%s)" % type(g).__name__
+            else:
+                _reason = "空字典"
+            msg = "landscape.grass: %s → 注入默认草地 (LGT_Grass+野草网格, 防灰色地形)" % _reason
+            repairs.append(msg)
+            _logger.warning("[L5-SAFETY] %s", msg)
+
+        # height_pattern: 缺失/null/空 → 注入最小可行高度模式 (防完全平坦)
+        hp = ls.get("height_pattern")
+        if hp is None or not isinstance(hp, dict) or not hp:
+            ls["height_pattern"] = {
+                "type": "features",
+                "blend_mode": "additive",
+                "hills": [],
+                "valleys": [],
+                "ridges": [],
+            }
+            if hp is None:
+                _reason = "缺失或 null"
+            elif not isinstance(hp, dict):
+                _reason = "类型错误(%s)" % type(hp).__name__
+            else:
+                _reason = "空字典"
+            msg = "landscape.height_pattern: %s → 注入最小可行高度模式 (features, 防完全平坦)" % _reason
+            repairs.append(msg)
+            _logger.warning("[L5-SAFETY] %s", msg)
+    else:
+        # landscape 整体缺失/null — L1 Pydantic 验证器应已拦截, 到此说明严重异常
+        _logger.error("[L5-SAFETY] landscape 整体缺失或非 dict (%s), 无法注入 grass/height_pattern — "
+                      "L1 验证器应已拦截此情况, 请检查 Stage 2 是否跳过了 Pydantic 校验",
+                      type(ls).__name__ if ls is not None else "None")
+
+    return repairs
+
+
+# ===========================================================================
 # 修复-校验闭环 (流水线后处理调用)
 # ===========================================================================
 
@@ -551,12 +681,26 @@ def repair_and_validate(scene):
     _scene_name = scene.get("scene", {}).get("name", "(未命名)")
     _logger.info("[REPAIR-LOOP] ===== 修复-校验闭环开始 (场景=%s) =====", _scene_name)
 
+    # 第零轮: L5 兜底层 — 在绿色层修复之前, 确保关键分区 (lighting/weather/grass/height_pattern) 存在。
+    # 若 LLM 在 Stage 3 误删了这些必填分区, auto_repair_scene 会因 isinstance 早期 return 跳过修复,
+    # 此处注入经模板验证的默认值, 防止 build_scene.py 静默跳过功能而产出黑屏/无草/平坦场景。
+    _logger.info("[REPAIR-LOOP] 第零轮: L5 关键分区兜底检查")
+    l5_repairs = ensure_critical_sections(scene)
+    if l5_repairs:
+        _logger.warning("[REPAIR-LOOP] L5 兜底注入: %d 项 (LLM 误删了必填分区, 已注入默认值)", len(l5_repairs))
+        for i, r in enumerate(l5_repairs, 1):
+            _logger.warning("[REPAIR-LOOP]   L5 注入 %d/%d: %s", i, len(l5_repairs), r)
+    else:
+        _logger.info("[REPAIR-LOOP] L5 兜底检查通过: 关键分区均已存在 (无需注入)")
+
     # 第一轮：绿色层修复（安全，始终执行）
     # 绿色层: 数值clamp + 条件必填填充 + 草麦默认值 + 河流参数下限 + placement一致性 — 无副作用
     _logger.info("[REPAIR-LOOP] 第一轮: 绿色层修复 (aggressive=False, 安全修复)")
     repairs = auto_repair_scene(scene, aggressive=False)
+    # 将 L5 兜底注入日志合并到总修复列表 (L5 在前, 绿色层在后, 保持时序)
+    repairs = l5_repairs + repairs
     if repairs:
-        _logger.info("[REPAIR-LOOP] 绿色层修复完成: %d 项", len(repairs))
+        _logger.info("[REPAIR-LOOP] 绿色层修复完成: %d 项 (含 L5 兜底 %d 项)", len(repairs), len(l5_repairs))
     else:
         _logger.info("[REPAIR-LOOP] 绿色层修复完成: 0 项 (无需安全修复)")
 

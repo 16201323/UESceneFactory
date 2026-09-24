@@ -7,8 +7,22 @@ GOOD_SCENE = {
     'landscape': {
         'material': '/Game/M', 'section_size_quads': 63,
         'num_subsections': 2, 'component_count_x': 8, 'component_count_y': 8,
-        'layers': [{'info': '/Game/L', 'weight': 1.0}]
-    }
+        'layers': [{'info': '/Game/L', 'weight': 1.0}],
+        # L1/L2 根因修复后 grass/height_pattern 为必填字段
+        'grass': {
+            'grass_type': '/Game/RuralHouse/Landscape/LandscapeFoliage/LGT_Grass',
+            'grass_mesh': '/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Tall_Wild_01a',
+            'layer_name': 'Grass', 'density': 120.0
+        },
+        'height_pattern': {'type': 'flat'}
+    },
+    # L1/L2 根因修复后 lighting/weather 为必填字段
+    'lighting': {
+        'directional_light': {'location': [0, 0, 3000]},
+        'sky_light': {'location': [0, 0, 3000]},
+        'sky_atmosphere': {'location': [0, 0, 0]}
+    },
+    'weather': {'volumetric_clouds': {'location': [0, 0, 2000]}}
 }
 
 FIXED_SCENE = json.dumps({
@@ -16,8 +30,20 @@ FIXED_SCENE = json.dumps({
     'landscape': {
         'material': '/Game/M', 'section_size_quads': 63,
         'num_subsections': 2, 'component_count_x': 8, 'component_count_y': 8,
-        'layers': [{'info': '/Game/L', 'weight': 1.0}]
-    }
+        'layers': [{'info': '/Game/L', 'weight': 1.0}],
+        'grass': {
+            'grass_type': '/Game/RuralHouse/Landscape/LandscapeFoliage/LGT_Grass',
+            'grass_mesh': '/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Tall_Wild_01a',
+            'layer_name': 'Grass', 'density': 120.0
+        },
+        'height_pattern': {'type': 'flat'}
+    },
+    'lighting': {
+        'directional_light': {'location': [0, 0, 3000]},
+        'sky_light': {'location': [0, 0, 3000]},
+        'sky_atmosphere': {'location': [0, 0, 0]}
+    },
+    'weather': {'volumetric_clouds': {'location': [0, 0, 2000]}}
 })
 
 # 坏场景：landscape 非空但缺少 section_size_quads 等 4 个必填字段

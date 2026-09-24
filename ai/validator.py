@@ -14,7 +14,7 @@ REPAIR_PROMPT_TEMPLATE = """你是 UE5 场景 JSON 修复器。以下 JSON 有�
 - landscape 必填: material, section_size_quads, num_subsections, component_count_x/y
 - height_pattern.type 枚举: flat, ridge, hill, noise, hill_ridge, features, terraced, karst, gully
 - weight_pattern.pattern 枚举: uniform, height_based, slope_based, region, multi_region, noise_based, aspect_based, snow_line
-- placement.type 枚举: group, instanced_grid, instances, static, blueprint, crop_field, village
+- placement.type 枚举: group, instanced_grid, instances, static, static_grid, blueprint, crop_field, village
 - weight 值范围: 0~1
 - 资产路径格式: /Game/类别/Name (不含 .uasset)
 

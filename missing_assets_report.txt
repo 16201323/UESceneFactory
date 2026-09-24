@@ -1,0 +1,21 @@
+[catalog]  c:\Users\25868\Desktop\UE5\UESceneFactory\config\asset_catalog.json
+[content]  D:\code\UEEnvironment\MyUETest5_8_2\MyUETest5_8_2\Content
+[disk]     扫描到 .uasset/.umap 文件数: 8926
+
+========== 缺失清单 ==========
+目录约束: <Content> = D:\code\UEEnvironment\MyUETest5_8_2\MyUETest5_8_2\Content
+清单资产总数: 8215   存在: 8209   缺失: 6
+缺失率: 0.1%
+
+缺失资产按类别统计:
+  vegetation_crop: 6
+
+缺失资产明细(路径 / 类别 / 类型):
+  MISSING | /Game/Fab/Megascans/Plants/Wheat_Grass_tdcrdbur/High/tdcrdbur_tier_1/StaticMeshes/SM_tdcrdbur_VarA.SM_tdcrdbur_VarA | vegetation_crop | StaticMesh
+  MISSING | /Game/Fab/Megascans/Plants/Wheat_Grass_tdcrdbur/High/tdcrdbur_tier_1/StaticMeshes/SM_tdcrdbur_VarB.SM_tdcrdbur_VarB | vegetation_crop | StaticMesh
+  MISSING | /Game/Fab/Megascans/Plants/Wheat_Grass_tdcrdbur/High/tdcrdbur_tier_1/StaticMeshes/SM_tdcrdbur_VarC.SM_tdcrdbur_VarC | vegetation_crop | StaticMesh
+  MISSING | /Game/Fab/Megascans/Plants/Wheat_Grass_tdcrdbur/High/tdcrdbur_tier_1/StaticMeshes/SM_tdcrdbur_VarD.SM_tdcrdbur_VarD | vegetation_crop | StaticMesh
+  MISSING | /Game/Fab/Megascans/Plants/Wheat_Grass_tdcrdbur/High/tdcrdbur_tier_1/StaticMeshes/SM_tdcrdbur_VarE.SM_tdcrdbur_VarE | vegetation_crop | StaticMesh
+  MISSING | /Game/Fab/Megascans/Plants/Wheat_Grass_tdcrdbur/High/tdcrdbur_tier_1/StaticMeshes/SM_tdcrdbur_VarF.SM_tdcrdbur_VarF | vegetation_crop | StaticMesh
+
+(反向) Content 中存在但清单未收录的资产文件数: 8926

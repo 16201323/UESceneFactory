@@ -51,10 +51,19 @@ except ImportError:
 # ============================================================================
 # 版本管理: 每次修改/新增功能后, 版本号递增 + VERSION_HISTORY 追加条目
 # ----------------------------------------------------------------------------
-APP_VERSION = "2.9.6"
+APP_VERSION = "2.9.9"
 
 # 版本更新记录: [(版本号, 日期, [更新条目]), ...] 最新在最前
 VERSION_HISTORY = [
+    ("2.9.9", "2026-09-24", [
+        "[修复] 根因修复: JSON构建智能体生成 landscape=null 导致下游全链路 AttributeError 崩溃; 症状层先在 validate_scene_json.py/validation_tools.py 补 or {} 空值保护(防 NoneType.get 崩溃), 但用户指出根因是'为何会生成不合规的JSON'; 追查7层防御链发现所有层(系统提示词/知识文档/Pydantic模型/后处理/自动修复/质量校验/UI显示)均将 landscape=null 视为合法可选状态而静默放行; 根因修复跨4层: (1) json_builder.py 系统提示词标注 landscape(必填) + terrain_type 始终暗示需要地形的警告; (2) scene_json.py 新增 @model_validator(mode='after') 硬性拦截 landscape=None, 校验失败时 Pydantic 抛 ValueError, pydantic_ai retries=3 自动反馈错误给 LLM 要求重新生成(最上游防线); (3) validate_scene_quality.py 将 null landscape 从'静默放行'改为'报 error 返回'; (4) auto_repair_scene.py 补注释说明 null 时不修复(交由 Stage 3 LLM 处理); 同步更新 core.md 顶层结构标注 landscape(必填); 新增3项测试覆盖 null/缺失 landscape 拒绝场景 + 修改 TestModel 提供 custom_output_args 防止随机生成 null; 全部291项测试通过",
+    ]),
+    ("2.9.8", "2026-09-22", [
+        "[新增] build_scene.py static_grid 分支新增距离剔除: 从 grid.cull_end 读取阈值(世界厘米), 对每个 StaticMeshComponent 设 LDMaxDrawDistance, 超过该距离时 GPU 不渲染该 Actor, 省远处 draw call; 与 HISM(instanced_grid) 的 cull_start~cull_end 渐隐区间不同, StaticMeshActor 仅支持硬切(超过 cull_end 直接消失无渐隐), cull_start 字段对 static_grid 不生效; 仅当 grid 含 cull_end 时启用, 缺省不剔除(向后兼容); 日志追加 cull_end 值显示便于排查",
+    ]),
+    ("2.9.7", "2026-09-22", [
+        "[新增] build_scene.py 新增 static_grid 放置类型: 逐个 StaticMeshActor 放置(调用 spawn_mesh)而非 HISM 批量实例化; 根因是 HISM 组件的 WorldPosition/ObjectPosition 在材质中解析为组件原点而非逐实例逐顶点的实际世界坐标, 导致树木材质的顶点色风动遮罩(根部权重0/树梢权重1)失效→整树连根大幅旋转; StaticMeshActor 的 WorldPosition 为逐顶点真实世界坐标, 顶点色遮罩正常工作→仅树梢摇摆, 与手动拖入编辑器的效果完全一致; 代价是 draw call 增加(每棵树一个Actor), 但视觉正确性优先; 同步更新 validate_scene_json.py 枚举集合与 ai/validator.py 知识库注释",
+    ]),
     ("2.9.6", "2026-09-21", [
         "[修复] build_scene.py spawn_blueprint 移除无效 reregister_all_components() 调用: 该方法在 UE5.8 Python 反射层不存在(Actor 对象无此属性), 每次蓝图放置都抛 AttributeError 被 try/except 捕获后打印 BP_REREG_FAIL 日志(25栋房屋=25条报错), 属无效噪音且让用户误以为转换失败; 根因分析: spawn_actor_from_class 在 UE5.8 中已自动注册蓝图所有组件, get_actor_bounds 能直接返回正确的非平凡包围盒(extent.z≈327), reregister 实为冗余的保险调用; 移除后 Z_FIX 逻辑不变, bounds 正确性不受影响, 日志不再产生误导性报错",
     ]),

@@ -401,8 +401,17 @@ def validate_scene_quality(scene):
     errors = []
     warnings = []
 
-    ls = scene.get("landscape", {})
+    # 注意: 用 or {} 保护 — LLM 可能生成 "landscape": null, 此时 .get("landscape", {})
+    # 返回 None 而非 {}, 后续 ls.get(...) 会抛 'NoneType' 无属性 'get'
+    ls = scene.get("landscape") or {}
     if not ls:
+        # 根因修复: landscape 为 null/缺失不是合法状态, 而是严重缺陷
+        # 蓝图 terrain_type 始终暗示需要地形, null 会导致 build_scene.py 崩溃
+        errors.append(
+            "landscape: landscape 分区缺失或为 null — "
+            "蓝图 terrain_type 始终暗示需要 UE5 Landscape 地形, "
+            "请根据 terrain_type 生成完整的 landscape 配置"
+        )
         return errors, warnings
 
     # ---- landscape.grass 下的 grass_varieties ----

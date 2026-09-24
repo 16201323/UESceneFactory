@@ -88,10 +88,34 @@ def test_layered_injection():
     assert len(prompt_complex) > len(prompt_simple), '复杂场景 prompt 应更长'
     print(f'分层注入验证通过: simple={len(prompt_simple)}, complex={len(prompt_complex)}')
 
+def test_scale_note_injection():
+    """recommended_scale≠1.0 时注入缩放提示，=1.0 时不注入。"""
+    from ai.knowledge import KnowledgePack
+    from ai.models.blueprint import AssetEntry
+    kp = KnowledgePack('data/knowledge', templates_dir='data/templates')
+    # 含缩放建议的 AssetEntry
+    entries = [
+        AssetEntry(path="/Game/House", recommended_scale=0.001, recommended_scale_note="需缩小"),
+        AssetEntry(path="/Game/Tree", recommended_scale=1.0),
+    ]
+    prompt = kp.build_system_prompt(
+        {'terrain_type': 'flat', 'placements': ['house']}, entries, []
+    )
+    assert '⚠️' in prompt, '缺少缩放警告'
+    assert '0.001' in prompt, '缺少缩放值'
+    assert '/Game/House' in prompt, '缺少资产路径'
+    # 全部 scale=1.0 时不应有警告
+    prompt_flat = kp.build_system_prompt(
+        {'terrain_type': 'flat'}, [AssetEntry(path="/Game/Tree")], []
+    )
+    assert '⚠️' not in prompt_flat, 'scale=1.0 不应触发警告'
+    print('缩放提示注入验证通过')
+
 if __name__ == '__main__':
     test_knowledge_files()
     test_template_files()
     test_build_prompt()
     test_template_matching()
     test_layered_injection()
+    test_scale_note_injection()
     print('=== Phase 2 全部测试通过 ===')

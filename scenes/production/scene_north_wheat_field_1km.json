@@ -4,7 +4,6 @@
     "target_level": "/Game/MapForgeTest/GB_NorthWheatField",
     "description": "1km×1km 华北平原麦收时节农村场景 — 纯平坦黄淮海平原(地形基准z=0,仅水塘下挖河谷) + 8块方田网格麦田(行播realistic_wheat,田内无杂草) + 西北角村落(4栋砖瓦农舍+水塘+院落围栏+松树) + 3条松树防风林(沿主干土路/南北路/田间路) + 土路网格(2横1纵+村道,均贴合地形) + 东西向灌溉渠+水塘引水支渠(C++自动河床冲刷+水面贴合) + 沿主干路一排电线杆 + 水塘边香蒲 + 稀疏田埂岩石; 6层权重分区(基底土/泥地/村落土/草地/碎石/麦田); 芒种时节暖金色夕照光照"
   },
-
   "landscape": {
     "_note": "【真实华北平原布局】地形纯平坦z=0(平原本色,无穹隆无山丘),仅水塘处下挖河谷(d5m→底-5m); 水位-2m(低于田面2m,只在河谷内形成可见水面,田面0m高于水位不会积水→无随机水洼); 灌溉渠(东西向y500宽6m)+引水支渠(水塘y255→干渠y500,沿x160南北向)均由C++自动冲刷U型河床+水面ribbon逐顶点采样地形沉入河床-30cm→连续水面; 4条道路: 主干土路(y300横贯)+田间路(y660)+南北路(x500纵贯)+村道(x150,村落到主干路),均C++路基平整+贴合高差; 西北角(0-300,0-300)村落: 4栋BP_House_RuralBrickFarm砖瓦农舍沿村北街道(y50)排列+水塘(160,200 r60 d5)+香蒲+院落铁丝网围栏; 8块方田麦田(multi_region,避开村落/道路/干渠): W1(300-500,0-300)W2(500-1008,0-300)W3(0-500,300-500)W4(500-1008,300-500)W5(0-500,500-660)W6(500-1008,500-660)W7(0-500,660-1008)W8(500-1008,660-1008); 3条松树防风林: SM_Pine_Tree_04沿主干路南侧(y310)+SM_Pine_Tree_01沿南北路西侧(x485)+SM_Pine_Tree_02沿田间路北侧(y645); 沿主干路一排SM_PowerPole_01电线杆; 6层权重: Layer1基底uniform0.3防秃 + Layer2泥地height_based(-2~0m invert)水岸低洼 + Layer3村落土region(村落0-300²) + Layer4草地height_based(-1.5~0m)+exclude麦田8区+corridor_exclude(道路/渠旁无草) + Layer5碎石slope_based陡坡(水塘驳岸) + Layer6麦田multi_region(8区); 麦田需先运行gen_2km_scene.py生成/Game/Generated/LGT_Wheat与LIS_Wheat资产,否则C++仅Warning跳过(不影响其余地形); 松树(MI_Pine_Tree_Branches)有WorldPositionOffset微风摆动,在麦田场景中反而真实(风过麦浪树影婆娑)",
     "material": "/Game/RuralHouse/Landscape/MI_Landscape",
@@ -16,66 +15,12 @@
     "rotation": [0, 0, 0],
     "scale": [100, 100, 100],
     "layers": [
-      {"_note": "Layer1 TrailSoil基底: uniform权重0.3,全图薄层基底土防止秃斑(其他层权重0处回退到此);权重压低避免在麦田内过度稀释麦穗层",
-       "info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer1_LayerInfo", "weight": 0.3},
-      {"_note": "Layer2 Mud泥地: height_based(-2~0m invert=true)→低海拔(水位-2m附近/水塘驳岸)权重1,田面0m权重0; 模拟水塘边沿/渠岸湿润泥地",
-       "info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer2_LayerInfo", "weight": 1.0,
-       "weight_pattern": {
-         "pattern": "height_based",
-         "height_min_m": -2,
-         "height_max_m": 0,
-         "invert": true
-       }},
-      {"_note": "Layer3 ForestGround村落土: region(村落区0-300,0-300)→村落范围内铺设院落/街道踩踏土层,与田间草地形成区分",
-       "info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer3_LayerInfo", "weight": 0.8,
-       "weight_pattern": {
-         "pattern": "region",
-         "region_min_x": 0,
-         "region_min_y": 0,
-         "region_max_x": 300,
-         "region_max_y": 300
-       }},
-      {"_note": "Layer4 Grass草地: height_based(-1.5~0m invert=false)→低于-1.5m(水塘底/渠底)权重0不长草,-1.5~0m渐增,田面0m及以上满草; 另加exclude_regions排除8块麦田→田内无杂草(纯麦穗); corridor_exclude=true→道路/干渠走廊(宽×1.25)内权重清零,路侧渠旁无草,消除贴图感; 草只长在田埂/村落/水塘驳岸",
-       "info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer4_LayerInfo", "weight": 1.0,
-       "weight_pattern": {
-         "pattern": "height_based",
-         "height_min_m": -1.5,
-         "height_max_m": 0,
-         "invert": false,
-         "corridor_exclude": true,
-         "exclude_regions": [
-           {"min_x": 300, "min_y": 0, "max_x": 500, "max_y": 300},
-           {"min_x": 500, "min_y": 0, "max_x": 1008, "max_y": 300},
-           {"min_x": 0, "min_y": 300, "max_x": 500, "max_y": 500},
-           {"min_x": 500, "min_y": 300, "max_x": 1008, "max_y": 500},
-           {"min_x": 0, "min_y": 500, "max_x": 500, "max_y": 660},
-           {"min_x": 500, "min_y": 500, "max_x": 1008, "max_y": 660},
-           {"min_x": 0, "min_y": 660, "max_x": 500, "max_y": 1008},
-           {"min_x": 500, "min_y": 660, "max_x": 1008, "max_y": 1008}
-         ]
-       }},
-      {"_note": "Layer5 Gravel碎石: slope_based(0.3~0.9)→陡坡(水塘驳岸/渠岸)出碎石,平坦田面无; 模拟水冲刷裸露砾石",
-       "info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer5_LayerInfo", "weight": 1.0,
-       "weight_pattern": {
-         "pattern": "slope_based",
-         "slope_min": 0.3,
-         "slope_max": 0.9
-       }},
-      {"_note": "Layer6 Wheat麦田: multi_region 8块方田(避开村落0-300²/主干路y300/田间路y660/南北路x500/干渠y500); 选址全在平坦田面0m; C++自动在GrassOutput添加Wheat条目采样本层权重,区内=1触发麦穗生成(bUseGrid行播),区外=0无麦; Layer4草地exclude_regions同步排除此8区→麦田内无杂草; 需先运行gen_2km_scene.py生成/Game/Generated/LGT_Wheat与LIS_Wheat",
-       "info": "/Game/Generated/LIS_Wheat", "weight": 1.0,
-       "weight_pattern": {
-         "pattern": "multi_region",
-         "regions": [
-           {"min_x": 300, "min_y": 0, "max_x": 500, "max_y": 300},
-           {"min_x": 500, "min_y": 0, "max_x": 1008, "max_y": 300},
-           {"min_x": 0, "min_y": 300, "max_x": 500, "max_y": 500},
-           {"min_x": 500, "min_y": 300, "max_x": 1008, "max_y": 500},
-           {"min_x": 0, "min_y": 500, "max_x": 500, "max_y": 660},
-           {"min_x": 500, "min_y": 500, "max_x": 1008, "max_y": 660},
-           {"min_x": 0, "min_y": 660, "max_x": 500, "max_y": 1008},
-           {"min_x": 500, "min_y": 660, "max_x": 1008, "max_y": 1008}
-         ]
-       }}
+      {"_note": "Layer1 TrailSoil基底: uniform权重0.3,全图薄层基底土防止秃斑(其他层权重0处回退到此);权重压低避免在麦田内过度稀释麦穗层", "info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer1_LayerInfo", "weight": 0.3},
+      {"_note": "Layer2 Mud泥地: height_based(-2~0m invert=true)→低海拔(水位-2m附近/水塘驳岸)权重1,田面0m权重0; 模拟水塘边沿/渠岸湿润泥地", "info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer2_LayerInfo", "weight": 1.0, "weight_pattern": {"pattern": "height_based", "height_min_m": -2, "height_max_m": 0, "invert": true}},
+      {"_note": "Layer3 ForestGround村落土: region(村落区0-300,0-300)→村落范围内铺设院落/街道踩踏土层,与田间草地形成区分", "info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer3_LayerInfo", "weight": 0.8, "weight_pattern": {"pattern": "region", "region_min_x": 0, "region_min_y": 0, "region_max_x": 300, "region_max_y": 300}},
+      {"_note": "Layer4 Grass草地: height_based(-1.5~0m invert=false)→低于-1.5m(水塘底/渠底)权重0不长草,-1.5~0m渐增,田面0m及以上满草; 另加exclude_regions排除8块麦田→田内无杂草(纯麦穗); corridor_exclude=true→道路/干渠走廊(宽×1.25)内权重清零,路侧渠旁无草,消除贴图感; 草只长在田埂/村落/水塘驳岸", "info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer4_LayerInfo", "weight": 1.0, "weight_pattern": {"pattern": "height_based", "height_min_m": -1.5, "height_max_m": 0, "invert": false, "corridor_exclude": true, "exclude_regions": [{"min_x": 300, "min_y": 0, "max_x": 500, "max_y": 300}, {"min_x": 500, "min_y": 0, "max_x": 1008, "max_y": 300}, {"min_x": 0, "min_y": 300, "max_x": 500, "max_y": 500}, {"min_x": 500, "min_y": 300, "max_x": 1008, "max_y": 500}, {"min_x": 0, "min_y": 500, "max_x": 500, "max_y": 660}, {"min_x": 500, "min_y": 500, "max_x": 1008, "max_y": 660}, {"min_x": 0, "min_y": 660, "max_x": 500, "max_y": 1008}, {"min_x": 500, "min_y": 660, "max_x": 1008, "max_y": 1008}]}},
+      {"_note": "Layer5 Gravel碎石: slope_based(0.3~0.9)→陡坡(水塘驳岸/渠岸)出碎石,平坦田面无; 模拟水冲刷裸露砾石", "info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer5_LayerInfo", "weight": 1.0, "weight_pattern": {"pattern": "slope_based", "slope_min": 0.3, "slope_max": 0.9}},
+      {"_note": "Layer6 Wheat麦田: multi_region 8块方田(避开村落0-300²/主干路y300/田间路y660/南北路x500/干渠y500); 选址全在平坦田面0m; C++自动在GrassOutput添加Wheat条目采样本层权重,区内=1触发麦穗生成(bUseGrid行播),区外=0无麦; Layer4草地exclude_regions同步排除此8区→麦田内无杂草; 需先运行gen_2km_scene.py生成/Game/Generated/LGT_Wheat与LIS_Wheat", "info": "/Game/Generated/LIS_Wheat", "weight": 1.0, "weight_pattern": {"pattern": "multi_region", "regions": [{"min_x": 300, "min_y": 0, "max_x": 500, "max_y": 300}, {"min_x": 500, "min_y": 0, "max_x": 1008, "max_y": 300}, {"min_x": 0, "min_y": 300, "max_x": 500, "max_y": 500}, {"min_x": 500, "min_y": 300, "max_x": 1008, "max_y": 500}, {"min_x": 0, "min_y": 500, "max_x": 500, "max_y": 660}, {"min_x": 500, "min_y": 500, "max_x": 1008, "max_y": 660}, {"min_x": 0, "min_y": 660, "max_x": 500, "max_y": 1008}, {"min_x": 500, "min_y": 660, "max_x": 1008, "max_y": 1008}]}}
     ],
     "grass": {
       "_note": "UE5原生草地: C++自动在GrassOutput添加Grass条目采样Layer4权重; Layer4=height_based(-1.5~0m)+exclude麦田8区+corridor_exclude→草只长在田埂/村落/水塘驳岸,麦田与道路无草; 10种VOL22_WildGrass混合(5高草密度20+5矮草密度6); 总密度130/10㎡",
@@ -95,8 +40,7 @@
       "blend_mode": "additive",
       "hills": [],
       "valleys": [
-        {"_note": "村落水塘: 中心(160,200)半径60m深5m底半径30m→田面0m-5m=-5m,水位-2m注入形成3m深120m直径水塘; 选址村落中部(0-300,0-300)内,4栋农舍北侧; 底半径30m平底蓄水",
-         "center_x_m": 160, "center_y_m": 200, "radius_m": 60, "depth_m": 5, "bottom_radius_m": 30}
+        {"_note": "村落水塘: 中心(160,200)半径60m深5m底半径30m→田面0m-5m=-5m,水位-2m注入形成3m深120m直径水塘; 选址村落中部(0-300,0-300)内,4栋农舍北侧; 底半径30m平底蓄水", "center_x_m": 160, "center_y_m": 200, "radius_m": 60, "depth_m": 5, "bottom_radius_m": 30}
       ],
       "ridges": [],
       "water": {
@@ -105,20 +49,14 @@
         "material_path": "/Game/Modular_Rural_Cabin/Materials/Instances/Water_Lake"
       },
       "rivers": [
-        {"_note": "灌溉干渠(东西向): 沿y500横贯全图宽6m,8折点微弯增加自然感; C++自动冲刷U型河床(深1.5m,余弦横截面+河岸余弦衰减)+水面ribbon逐顶点采样地形沉入河床-30cm→连续水面; 渠底约-1.5m,水位-2m→渠内浅水(灌溉渠本就浅); 路径全在平坦田面,无穿越障碍",
-         "points": [[0,500],[150,502],[300,500],[450,503],[600,500],[750,502],[900,500],[1008,500]], "width_m": 6, "material_path": "/Game/Modular_Rural_Cabin/Materials/Instances/Water_Lake"},
-        {"_note": "引水支渠(水塘→干渠): 从水塘南沿(160,260)沿x160南北向至干渠(160,500),5折点宽4m; 连接水塘与灌溉干渠形成完整水系; C++河床冲刷+水面贴合",
-         "points": [[160,260],[160,320],[160,380],[160,440],[160,500]], "width_m": 4, "material_path": "/Game/Modular_Rural_Cabin/Materials/Instances/Water_Lake"}
+        {"_note": "灌溉干渠(东西向): 沿y500横贯全图宽6m,8折点微弯增加自然感; C++自动冲刷U型河床(深1.5m,余弦横截面+河岸余弦衰减)+水面ribbon逐顶点采样地形沉入河床-30cm→连续水面; 渠底约-1.5m,水位-2m→渠内浅水(灌溉渠本就浅); 路径全在平坦田面,无穿越障碍", "points": [[0, 500], [150, 502], [300, 500], [450, 503], [600, 500], [750, 502], [900, 500], [1008, 500]], "width_m": 6, "material_path": "/Game/Modular_Rural_Cabin/Materials/Instances/Water_Lake"},
+        {"_note": "引水支渠(水塘→干渠): 从水塘南沿(160,260)沿x160南北向至干渠(160,500),5折点宽4m; 连接水塘与灌溉干渠形成完整水系; C++河床冲刷+水面贴合", "points": [[160, 260], [160, 320], [160, 380], [160, 440], [160, 500]], "width_m": 4, "material_path": "/Game/Modular_Rural_Cabin/Materials/Instances/Water_Lake"}
       ],
       "roads": [
-        {"_note": "主干土路(东西向y300): 横贯全图宽5m,连接村落与田间; C++路基平整(余弦加权横截面)+路肩余弦缓过渡+道路ribbon逐顶点采样地形贴合高差+抬升20cm防Z-fighting→连续路面; 沿此路布设电线杆与南侧松树防风林",
-         "points": [[0,300],[200,300],[400,300],[600,300],[800,300],[1008,300]], "width_m": 5, "material_path": "/Game/MapForgeTest/M_Road_Dirt"},
-        {"_note": "田间土路(东西向y660): 南部第二横路宽4m,分隔W5/W6与W7/W8麦田; C++路基平整+贴合高差",
-         "points": [[0,660],[250,660],[500,660],[750,660],[1008,660]], "width_m": 4, "material_path": "/Game/MapForgeTest/M_Road_Dirt"},
-        {"_note": "南北土路(x500): 纵贯全图宽4m,分隔东西麦田(W1/W2等); C++路基平整+贴合高差",
-         "points": [[500,0],[500,250],[500,500],[500,750],[500,1008]], "width_m": 4, "material_path": "/Game/MapForgeTest/M_Road_Dirt"},
-        {"_note": "村道(x150): 从村落街道(150,80)向南至主干路(150,300),宽3m; 供村民下田的联络小路,全在平坦村落区无高差突变",
-         "points": [[150,80],[150,150],[150,220],[150,300]], "width_m": 3, "material_path": "/Game/MapForgeTest/M_Road_Dirt"}
+        {"_note": "主干土路(东西向y300): 横贯全图宽5m,连接村落与田间; C++路基平整(余弦加权横截面)+路肩余弦缓过渡+道路ribbon逐顶点采样地形贴合高差+抬升20cm防Z-fighting→连续路面; 沿此路布设电线杆与南侧松树防风林", "points": [[0, 300], [200, 300], [400, 300], [600, 300], [800, 300], [1008, 300]], "width_m": 5, "material_path": "/Game/MapForgeTest/M_Road_Dirt"},
+        {"_note": "田间土路(东西向y660): 南部第二横路宽4m,分隔W5/W6与W7/W8麦田; C++路基平整+贴合高差", "points": [[0, 660], [250, 660], [500, 660], [750, 660], [1008, 660]], "width_m": 4, "material_path": "/Game/MapForgeTest/M_Road_Dirt"},
+        {"_note": "南北土路(x500): 纵贯全图宽4m,分隔东西麦田(W1/W2等); C++路基平整+贴合高差", "points": [[500, 0], [500, 250], [500, 500], [500, 750], [500, 1008]], "width_m": 4, "material_path": "/Game/MapForgeTest/M_Road_Dirt"},
+        {"_note": "村道(x150): 从村落街道(150,80)向南至主干路(150,300),宽3m; 供村民下田的联络小路,全在平坦村落区无高差突变", "points": [[150, 80], [150, 150], [150, 220], [150, 300]], "width_m": 3, "material_path": "/Game/MapForgeTest/M_Road_Dirt"}
       ],
       "noise_overlay": {
         "_note": "极轻微起伏: amp0.3m freq0.02 oct3 seed77→在纯平地形上叠加30cm多倍频噪声,消除人工绝对平整感(30cm不影响树木z=0落地,可忽略浮沉)",
@@ -148,48 +86,33 @@
         {"mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Beach_01e", "density": 6, "scale_min": 0.8, "scale_max": 1.2, "jitter": 0.5, "random_rotation": true, "start_cull_dist": 2000, "end_cull_dist": 10000}
       ],
       "wheat_varieties": [
-        {"_note": "麦穗变体: 5种realistic_wheat网格,密度200/10㎡,scale0.028~0.055(网格原始大需缩小); C++自动bUseGrid=true田垄行播排列; 需先运行gen_2km_scene.py生成/Game/Generated/LGT_Wheat", "mesh_path": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_001_wheat_texture_0", "density": 200, "scale_min": 0.032, "scale_max": 0.040, "jitter": 0.2, "random_rotation": true, "start_cull_dist": 500, "end_cull_dist": 5000},
+        {"_note": "麦穗变体: 5种realistic_wheat网格,密度200/10㎡,scale0.028~0.055(网格原始大需缩小); C++自动bUseGrid=true田垄行播排列; 需先运行gen_2km_scene.py生成/Game/Generated/LGT_Wheat", "mesh_path": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_001_wheat_texture_0", "density": 200, "scale_min": 0.032, "scale_max": 0.04, "jitter": 0.2, "random_rotation": true, "start_cull_dist": 500, "end_cull_dist": 5000},
         {"mesh_path": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_002_wheat_texture_0", "density": 200, "scale_min": 0.042, "scale_max": 0.052, "jitter": 0.2, "random_rotation": true, "start_cull_dist": 500, "end_cull_dist": 5000},
         {"mesh_path": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_003_wheat_texture_0", "density": 200, "scale_min": 0.028, "scale_max": 0.034, "jitter": 0.2, "random_rotation": true, "start_cull_dist": 500, "end_cull_dist": 5000},
         {"mesh_path": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_004_wheat_texture_0", "density": 200, "scale_min": 0.045, "scale_max": 0.055, "jitter": 0.2, "random_rotation": true, "start_cull_dist": 500, "end_cull_dist": 5000},
-        {"mesh_path": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_wheat_texture_0", "density": 200, "scale_min": 0.032, "scale_max": 0.040, "jitter": 0.2, "random_rotation": true, "start_cull_dist": 500, "end_cull_dist": 5000}
+        {"mesh_path": "/Game/wheat/realistic_wheat/StaticMeshes/Plane_wheat_texture_0", "density": 200, "scale_min": 0.032, "scale_max": 0.04, "jitter": 0.2, "random_rotation": true, "start_cull_dist": 500, "end_cull_dist": 5000}
       ]
     }
   },
-
   "ground": {},
-
   "placements": [
     {"_note": "=== 村落(西北角0-300,0-300): 4栋BP_House_RuralBrickFarm砖瓦农舍沿村北街道(y50)东西排列,间距70m,交替朝向(yaw0/180)形成对街院落; spawn_blueprint自带Z自动修正,房屋落地不悬浮; 农舍为红砖坡顶北方农村典型民居 ==="},
-
     {"_note": "农舍1: 村西头(40,50)朝东yaw0", "type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_RuralBrickFarm", "location": [-46400, -45400, 0], "rotation": [0, 0, 0]},
     {"_note": "农舍2: (110,50)朝西yaw180", "type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_RuralBrickFarm", "location": [-39400, -45400, 0], "rotation": [0, 180, 0]},
     {"_note": "农舍3: (180,50)朝东yaw0", "type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_RuralBrickFarm", "location": [-32400, -45400, 0], "rotation": [0, 0, 0]},
     {"_note": "农舍4: (250,50)朝西yaw180", "type": "blueprint", "asset": "/Game/hourse/Blueprints/BP_House_RuralBrickFarm", "location": [-25400, -45400, 0], "rotation": [0, 180, 0]},
-
     {"_note": "=== 院落围栏: WireFence铁丝网沿村北街道南侧(y35)东西向,2m宽面板拼接,围合农舍前院; 面板dim=203.7×22.6×236.4cm(2m高2m宽) ==="},
-
     {"_note": "院落铁丝网围栏: 沿y35从x20到x280(260m),间距2000cm(2m),130块面板; HISM距离剔除省资源", "type": "instanced_grid", "asset": "/Game/WireFence/chainlink_fence_tileable/StaticMeshes/Plane_004_chainlink_fence_textures_0", "location": [0, 0, 0], "grid": {"rows": 1, "cols": 130, "origin": [-48400, -46900, 0], "spacing": [2000, 0, 0], "jitter": 0, "random_yaw": false, "scale_min": [1, 1, 1], "scale_max": [1, 1, 1], "cull_start": 15000, "cull_end": 30000}},
-
     {"_note": "=== 水塘香蒲: Cat_Tail香蒲绕水塘(160,200)边缘r55m圆环布置,40株; 香蒲dim=119×103×175cm,喜水边缘浅水生长 ==="},
-
     {"_note": "水塘香蒲圆环: 圆心世界(-34400,-30400,0)即水塘中心(160,200),半径5500cm(55m=水塘驳岸水际线),40株随机偏航; face_center=false随机朝向", "type": "instanced_grid", "asset": "/Game/Modular_Rural_Cabin/Meshes/Foliage/Cat_Tail", "location": [0, 0, 0], "grid": {"pattern": "circle", "count": 40, "radius": 5500, "center": [-34400, -30400, 0], "face_center": false, "yaw_offset": 0, "z_offset": 0, "scale_min": [0.9, 0.9, 0.9], "scale_max": [1.3, 1.3, 1.3], "cull_start": 15000, "cull_end": 30000}},
-
     {"_note": "=== 松树防风林: 3条SM_Pine_Tree沿道路布设(北方农村防风林典型); 松树dim=264~1757cm高(2.6~17.6m),原点居中Z+35~49; MI_Pine_Tree_Branches有WorldPositionOffset微风摆动(麦收场景中风过麦浪树影婆娑,反而真实) ==="},
-
-    {"_note": "防风林1(SM_Pine_Tree_04高17.6m): 沿主干土路(y300)南侧y310,从x320(村东)到x970,间距50m,14棵; 原点世界(-18400,-19400,0)=米(320,310); HISM距离剔除cull200~500m远处消失", "type": "instanced_grid", "asset": "/Game/Modular_Rural_Cabin/Meshes/Foliage/SM_Pine_Tree_04", "location": [0, 0, 0], "grid": {"rows": 1, "cols": 14, "origin": [-18400, -19400, 0], "spacing": [5000, 0, 0], "jitter": 300, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.3, 1.3, 1.3], "cull_start": 20000, "cull_end": 50000}},
-
-    {"_note": "防风林2(SM_Pine_Tree_01高13m): 沿南北路(x500)西侧x485,从y0到y950,间距50m,20棵; 原点世界(-1900,-50400,0)=米(485,0)", "type": "instanced_grid", "asset": "/Game/Modular_Rural_Cabin/Meshes/Foliage/SM_Pine_Tree_01", "location": [0, 0, 0], "grid": {"rows": 20, "cols": 1, "origin": [-1900, -50400, 0], "spacing": [0, 5000, 0], "jitter": 300, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.3, 1.3, 1.3], "cull_start": 20000, "cull_end": 50000}},
-
-    {"_note": "防风林3(SM_Pine_Tree_02高14m): 沿田间路(y660)北侧y645,从x0到x950,间距50m,20棵; 原点世界(-50400,14100,0)=米(0,645)", "type": "instanced_grid", "asset": "/Game/Modular_Rural_Cabin/Meshes/Foliage/SM_Pine_Tree_02", "location": [0, 0, 0], "grid": {"rows": 1, "cols": 20, "origin": [-50400, 14100, 0], "spacing": [5000, 0, 0], "jitter": 300, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.3, 1.3, 1.3], "cull_start": 20000, "cull_end": 50000}},
-
-    {"_note": "村落散生松树(SM_Pine_Tree_03高8.3m): 水塘南侧(160,260)3×3小簇,间距800cm,9棵; 原点世界(-34400,-24400,0)=米(160,260); 庭院树点缀", "type": "instanced_grid", "asset": "/Game/Modular_Rural_Cabin/Meshes/Foliage/SM_Pine_Tree_03", "location": [0, 0, 0], "grid": {"rows": 3, "cols": 3, "origin": [-34400, -24400, 0], "spacing": [800, 800, 0], "jitter": 150, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.4, 1.4, 1.4], "cull_start": 20000, "cull_end": 50000}},
-
+    {"_note": "防风林1(SM_Pine_Tree_04高17.6m): 沿主干土路(y300)南侧y310,从x320(村东)到x970,间距50m,14棵; 原点世界(-18400,-19400,0)=米(320,310); HISM距离剔除cull200~500m远处消失", "type": "static_grid", "asset": "/Game/Modular_Rural_Cabin/Meshes/Foliage/SM_Pine_Tree_04", "location": [0, 0, 0], "grid": {"rows": 1, "cols": 14, "origin": [-18400, -19400, 0], "spacing": [5000, 0, 0], "jitter": 300, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.3, 1.3, 1.3], "cull_start": 20000, "cull_end": 50000}},
+    {"_note": "防风林2(SM_Pine_Tree_01高13m): 沿南北路(x500)西侧x485,从y0到y950,间距50m,20棵; 原点世界(-1900,-50400,0)=米(485,0)", "type": "static_grid", "asset": "/Game/Modular_Rural_Cabin/Meshes/Foliage/SM_Pine_Tree_01", "location": [0, 0, 0], "grid": {"rows": 20, "cols": 1, "origin": [-1900, -50400, 0], "spacing": [0, 5000, 0], "jitter": 300, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.3, 1.3, 1.3], "cull_start": 20000, "cull_end": 50000}},
+    {"_note": "防风林3(SM_Pine_Tree_02高14m): 沿田间路(y660)北侧y645,从x0到x950,间距50m,20棵; 原点世界(-50400,14100,0)=米(0,645)", "type": "static_grid", "asset": "/Game/Modular_Rural_Cabin/Meshes/Foliage/SM_Pine_Tree_02", "location": [0, 0, 0], "grid": {"rows": 1, "cols": 20, "origin": [-50400, 14100, 0], "spacing": [5000, 0, 0], "jitter": 300, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.3, 1.3, 1.3], "cull_start": 20000, "cull_end": 50000}},
+    {"_note": "村落散生松树(SM_Pine_Tree_03高8.3m): 水塘南侧(160,260)3×3小簇,间距800cm,9棵; 原点世界(-34400,-24400,0)=米(160,260); 庭院树点缀", "type": "static_grid", "asset": "/Game/Modular_Rural_Cabin/Meshes/Foliage/SM_Pine_Tree_03", "location": [0, 0, 0], "grid": {"rows": 3, "cols": 3, "origin": [-34400, -24400, 0], "spacing": [800, 800, 0], "jitter": 150, "random_yaw": true, "scale_min": [0.8, 0.8, 0.8], "scale_max": [1.4, 1.4, 1.4], "cull_start": 20000, "cull_end": 50000}},
     {"_note": "=== 电线杆: SM_PowerPole_01(高13.2m)沿主干土路(y300)北侧y290,从x320到x960,间距80m,9根; 原点世界(-18400,-21400,0)=米(320,290); near_bottom原点zoff=1,落地z=0 ==="},
-
     {"_note": "电线杆一排: 沿y290从x320到x960,间距8000cm(80m),9根; 模拟农村架空电线", "type": "instanced_grid", "asset": "/Game/RuralHouse/Props/SM_PowerPole_01", "location": [0, 0, 0], "grid": {"rows": 1, "cols": 9, "origin": [-18400, -21400, 0], "spacing": [8000, 0, 0], "jitter": 0, "random_yaw": false, "scale_min": [1, 1, 1], "scale_max": [1, 1, 1], "cull_start": 30000, "cull_end": 60000}}
   ],
-
   "lighting": {
     "_note": "芒种麦收时节暖金色夕照: 太阳低斜(俯角25° yaw200°偏西)暖金色光拉长麦穗阴影增强金色麦浪质感 + 天空光冷蓝补色 + 大气层 + 轻暖雾营造空气透视与麦收尘霾",
     "directional_light": {
@@ -209,11 +132,10 @@
     },
     "height_fog": {
       "location": [0, 0, 0],
-      "density": 0.00008,
+      "density": 8e-05,
       "color": [0.85, 0.8, 0.6]
     }
   },
-
   "weather": {
     "_note": "体积云: UE5原生VolumetricCloud组件,麦收时节少量高云,光线穿透云隙打在麦田形成明暗斑块",
     "volumetric_clouds": {

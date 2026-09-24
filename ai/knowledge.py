@@ -214,10 +214,31 @@ class KnowledgePack:
                 f"{json_str}"
             )
 
-        # L3: 资产路径
+        # L3: 资产路径 + 缩放建议
+        # 兼容 list[str]（裸路径）和 list[AssetEntry]（含 recommended_scale 元数据）
         if asset_paths:
-            asset_text = "\n".join(asset_paths[:30])
-            parts.append(f"可用资产路径:\n{asset_text}")
+            path_list = []
+            scale_notes = []
+            for item in asset_paths[:30]:
+                if hasattr(item, "path"):
+                    # AssetEntry 对象 — 提取路径和缩放建议
+                    path_list.append(item.path)
+                    rs = getattr(item, "recommended_scale", 1.0)
+                    if rs != 1.0:
+                        note = getattr(item, "recommended_scale_note", "")
+                        scale_notes.append(
+                            f"  {item.path}: scale={rs}"
+                            + (f" ({note})" if note else "")
+                        )
+                else:
+                    # 裸路径字符串（validator.py 等调用方传 list[str]）
+                    path_list.append(str(item))
+            parts.append("可用资产路径:\n" + "\n".join(path_list))
+            if scale_notes:
+                parts.append(
+                    "⚠️ 以下资产需缩放（请在 JSON 的 scale 字段使用此值）:\n"
+                    + "\n".join(scale_notes)
+                )
 
         # L4: Few-shot 经验
         for i, exp in enumerate(few_shots):

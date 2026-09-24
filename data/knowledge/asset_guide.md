@@ -51,11 +51,11 @@
 | asset | placements[] | 任意静态网格/蓝图 |
 | material_override | ground / placements[] | 材质实例 |
 
-## 单位检测与缩放调整
+## 资产缩放
 
-清单中标注了每个网格的尺寸单位：
-- **米（m）**：网格尺寸已以米为单位
-- **厘米（cm）**：UE5 内部单位为厘米，清单标注厘米时网格在引擎中已正确显示
+资产搜索结果中的 `recommended_scale` 字段（默认 1.0）是人工标注的建议缩放值：
+- **1.0**：资产尺寸正常，无需缩放
+- **其他值**（如 0.001）：资产原始尺寸异常，需在 JSON 的 `scale` 字段使用此值
 
 注意 `scale_min`/`scale_max` 的两种不同格式：
 - **scatter / grass_varieties / wheat_varieties**：标量 `float`（如 `1.0`）
@@ -66,7 +66,7 @@
 1. 确定 JSON 中需要填写的资产路径字段
 2. 打开 `asset_catalog.md`，按类别检索合适的资产
 3. 复制资产路径填入 JSON
-4. 检查尺寸单位，必要时调整 scale 参数
+4. 参考搜索结果中的 recommended_scale（若≠1.0），填入 JSON 的 scale 字段
 5. 参考 Z 偏移建议，设置 placement 的 location 或 z_offset
 6. 按下方"路径转换规则"，将清单路径转换为 JSON 路径格式
 
