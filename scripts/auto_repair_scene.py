@@ -631,15 +631,33 @@ def ensure_critical_sections(scene):
             repairs.append(msg)
             _logger.warning("[L5-SAFETY] %s", msg)
 
-        # height_pattern: 缺失/null/空 → 注入最小可行高度模式 (防完全平坦)
+        # height_pattern: 缺失/null/空 → 注入含丘陵的高度模式 (防完全平坦)
+        # 质量修复: 原默认 hills/valleys/ridges 全空 → 完全平坦地形
+        # 现根据 landscape 尺寸计算合理丘陵位置, 注入 1 个中心丘陵 + 噪声叠加
         hp = ls.get("height_pattern")
         if hp is None or not isinstance(hp, dict) or not hp:
+            # 从 landscape 参数计算地形物理尺寸(米), 用于合理定位丘陵
+            _scale = ls.get("scale", [100, 100, 100])
+            _ccx = ls.get("component_count_x", 8)
+            _ccy = ls.get("component_count_y", 8)
+            _ssq = ls.get("section_size_quads", 63)
+            _nsub = ls.get("num_subsections", 1)
+            _sx = (_scale[0] if isinstance(_scale, list) and _scale else 100)
+            _sy = (_scale[1] if isinstance(_scale, list) and len(_scale) > 1 else 100)
+            _phys_x_m = _ssq * _nsub * _ccx * _sx / 100.0
+            _phys_y_m = _ssq * _nsub * _ccy * _sy / 100.0
+            _cx = _phys_x_m / 2.0
+            _cy = _phys_y_m / 2.0
+            _r = min(_phys_x_m, _phys_y_m) / 4.0
             ls["height_pattern"] = {
                 "type": "features",
                 "blend_mode": "additive",
-                "hills": [],
+                "hills": [
+                    {"center_x_m": _cx, "center_y_m": _cy, "radius_m": _r, "height_m": 40.0, "falloff": "cosine"},
+                ],
                 "valleys": [],
                 "ridges": [],
+                "noise_overlay": {"amplitude": 3.0, "frequency": 0.008, "seed": 42},
             }
             if hp is None:
                 _reason = "缺失或 null"

@@ -19,6 +19,10 @@ from scripts.validate_scene_quality import validate_scene_quality
 def _base_scene(hp_type="flat", **hp_extra):
     """构造最小合法场景, hp_extra 追加 height_pattern 字段"""
     hp = {"type": hp_type}
+    # 非 flat 类型默认添加 1 个丘陵, 满足内容丰富度检查 (hills 不可全空)
+    if hp_type != "flat" and "hills" not in hp_extra:
+        hp["hills"] = [{"center_x_m": 100, "center_y_m": 100,
+                        "radius_m": 50, "height_m": 80}]
     hp.update(hp_extra)
     return {
         "scene": {"name": "T", "target_level": "/Game/Maps/T"},
@@ -30,7 +34,17 @@ def _base_scene(hp_type="flat", **hp_extra):
             "component_count_y": 8,
             "scale": [100, 100, 100],
             "height_pattern": hp,
+            # 内容丰富度检查: layers 不可为空, 至少 2 个图层
+            "layers": [
+                {"info": "/Game/L_Grass", "weight": 0.7},
+                {"info": "/Game/L_Dirt", "weight": 0.3},
+            ],
         },
+        # 内容丰富度检查: placements 不可为空
+        "placements": [
+            {"type": "instances", "asset": "/Game/A",
+             "instances": [{"location": [0, 0, 0]}]},
+        ],
     }
 
 
@@ -479,16 +493,44 @@ class TestEdgeCases:
         assert any("landscape" in e for e in errors), "landscape=null 应报缺失错误"
 
     def test_no_height_pattern(self):
-        """landscape 无 height_pattern -> 无错误"""
-        scene = {"landscape": {"material": "/Game/M"}}
-        errors, _ = validate_scene_quality(scene)
+        """landscape 无 height_pattern -> 无错误 (有警告)"""
+        scene = {
+            "landscape": {
+                "material": "/Game/M",
+                "layers": [
+                    {"info": "/Game/L_Grass", "weight": 0.7},
+                    {"info": "/Game/L_Dirt", "weight": 0.3},
+                ],
+            },
+            "placements": [
+                {"type": "instances", "asset": "/Game/A",
+                 "instances": [{"location": [0, 0, 0]}]},
+            ],
+        }
+        errors, warnings = validate_scene_quality(scene)
         assert errors == []
+        # height_pattern 缺失应产生警告 (L5 兜底应已注入)
+        assert any("height_pattern" in w for w in warnings)
 
     def test_height_pattern_none(self):
-        """height_pattern=null -> 无错误不崩溃"""
-        scene = {"landscape": {"material": "/Game/M", "height_pattern": None}}
-        errors, _ = validate_scene_quality(scene)
+        """height_pattern=null -> 无错误不崩溃 (有警告)"""
+        scene = {
+            "landscape": {
+                "material": "/Game/M",
+                "height_pattern": None,
+                "layers": [
+                    {"info": "/Game/L_Grass", "weight": 0.7},
+                    {"info": "/Game/L_Dirt", "weight": 0.3},
+                ],
+            },
+            "placements": [
+                {"type": "instances", "asset": "/Game/A",
+                 "instances": [{"location": [0, 0, 0]}]},
+            ],
+        }
+        errors, warnings = validate_scene_quality(scene)
         assert errors == []
+        assert any("height_pattern" in w for w in warnings)
 
     def test_grass_none(self):
         """landscape.grass=null -> 无错误不崩溃"""

@@ -140,45 +140,24 @@ class SceneJSON(BaseModel):
                 "至少包含 material / component_count_x / component_count_y / "
                 "scale / height_pattern 等字段。"
             )
-        # grass 必填 — 缺失会导致 build_scene.py 无草地材质, 产出灰色方块地形
-        if self.landscape.grass is None:
-            raise ValueError(
-                "landscape.grass 是必填字段, 禁止输出 null 或省略。"
-                "请生成 grass 配置, 至少包含 grass_type/grass_mesh/layer_name/density。"
-                "缺失会导致地形无草地材质, 产出灰色方块。"
-            )
-        # height_pattern 必填 — 缺失会导致 build_scene.py 传空字符串给 C++, 产出完全平坦地形
-        if self.landscape.height_pattern is None:
-            raise ValueError(
-                "landscape.height_pattern 是必填字段, 禁止输出 null 或省略。"
-                "请根据蓝图 terrain_type 生成完整的高度模式配置。"
-                "缺失会导致 C++ 插件收到空字符串, 产出完全平坦地形。"
-            )
+        # grass/height_pattern 不在此硬拦截 — 改为软放行, 交给 Stage 3 处理:
+        #   L2 (validate_scene_json.py) 校验报 error 引导 QualityGuard LLM 修复
+        #   L5 (auto_repair_scene.ensure_critical_sections) 兜底注入默认值
+        # 原因: 硬拦截 raise ValueError 会触发 pydantic_ai 自动重试, LLM 在有限重试次数内
+        #   可能无法稳定生成 grass, 重试耗尽后抛出 Exceeded maximum output retries (3)
+        #   导致 Stage 2 整个崩溃, 连 Stage 3 的 L5 兜底都没机会执行 — 比原"静默跳过"更糟
         return self
 
     @model_validator(mode='after')
     def validate_lighting_weather_nonnull(self) -> "SceneJSON":
-        """校验 lighting/weather 非空 — 防止 LLM 生成 null 导致场景全黑无云。
+        """校验 lighting/weather — 防止 LLM 生成 null 导致场景全黑无云。
 
-        根因: lighting 和 weather 被声明为可选 (dict | None = None),
-        LLM 可能把它们设为 null。build_scene.py 用 if lighting:/if weather: 守卫,
-        None 时静默跳过, 导致场景全黑无光照、无体积云。
-
-        校验失败时 Pydantic 抛出 ValueError, pydantic_ai 自动重试 (retries=3),
-        强制 LLM 生成完整的 lighting/weather 分区。
+        不在此硬拦截 raise — 改为软放行, 交给 Stage 3 处理:
+          L2 (validate_scene_json.py) 校验报 error 引导 QualityGuard LLM 修复
+          L5 (auto_repair_scene.ensure_critical_sections) 兜底注入默认值
+        原因: 硬拦截触发 pydantic_ai 重试, LLM 在有限重试次数内可能无法稳定生成
+          lighting/weather, 重试耗尽后 Stage 2 整个崩溃 (Exceeded maximum output retries)。
         """
-        if self.lighting is None:
-            raise ValueError(
-                "lighting 分区是必填字段, 禁止输出 null 或省略。"
-                "请生成 lighting 配置, 至少包含 directional_light/sky_light/sky_atmosphere。"
-                "缺失会导致场景全黑无光照。"
-            )
-        if self.weather is None:
-            raise ValueError(
-                "weather 分区是必填字段, 禁止输出 null 或省略。"
-                "请生成 weather 配置, 至少包含 volumetric_clouds。"
-                "缺失会导致场景无体积云。"
-            )
         return self
 
 

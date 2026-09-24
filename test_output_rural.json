@@ -1,12 +1,12 @@
 {
   "scene": {
-    "_note": "场景元信息。name: 场景名称; target_level: UE5关卡路径,格式/Game/Maps/路径; description: 场景用途描述",
-    "name": "ChineseVillage_2km",
-    "target_level": "/Game/Maps/Generated/ChineseVillage_2km",
-    "description": "2km×2km 中国农村场景: 连绵山脉环绕, 蜿蜒河流穿过, 村落散布, 梯田与麦田交织, 茂密杉树林, 蜿蜒泥土道路, 地形起伏自然"
+    "_note": "场景元信息。name: 场景名称; target_level: UE5关卡路径; description: 场景用途描述",
+    "name": "ChineseVillage_Ridge_2km",
+    "target_level": "/Game/Maps/Generated/ChineseVillage_Ridge_2km",
+    "description": "2km×2km 中国农村场景: 连绵山脉环绕, 山脚蜿蜒河流, 梯田与麦田交织, 茂密杉树林, 农舍聚落, 蜿蜒泥土道路"
   },
   "landscape": {
-    "_note": "地形配置块。material: 地形材质路径; section_size_quads: 每section四边形数; num_subsections: 子section数; component_count_x/y: 组件网格数(16×16=约2km); location: 世界坐标[xyz]厘米; rotation: 旋转[pitch,yaw,roll]; scale: 缩放[xyz]; layers: 图层列表; grass: 草地配置; wheat: 麦田配置; height_pattern: 高度模式(C++解析)",
+    "_note": "地形配置块。material: 地形材质路径; section_size_quads: 每section四边形数; num_subsections: 子section数; component_count_x/y: 组件网格数(16×16=2km×2km); location: 世界坐标[xyz]厘米; rotation: 旋转[pitch,yaw,roll]; scale: 缩放[xyz]; layers: 图层列表; grass: 草地配置; wheat: 麦田配置; height_pattern: 高度模式(C++解析)",
     "material": "/Game/RuralHouse/Landscape/MI_Landscape",
     "section_size_quads": 127,
     "num_subsections": 1,
@@ -38,7 +38,7 @@
         }
       },
       {
-        "_note": "泥地/农田层。info: LayerInfo路径; weight: 基础权重0; weight_pattern: 多区域分布模式(覆盖村落和麦田区域)",
+        "_note": "泥地/农田层。info: LayerInfo路径; weight: 基础权重0; weight_pattern: 多区域分布模式",
         "info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer2_LayerInfo",
         "weight": 0.0,
         "weight_pattern": {
@@ -46,62 +46,55 @@
           "pattern": "multi_region",
           "regions": [
             {
-              "_note": "麦田区1(西南平原)",
-              "min_x": 300,
-              "min_y": 300,
-              "max_x": 700,
-              "max_y": 700
-            },
-            {
-              "_note": "麦田区2(东南平原)",
-              "min_x": 1300,
-              "min_y": 1200,
-              "max_x": 1700,
+              "_note": "村落区1周边农田",
+              "min_x": 700,
+              "min_y": 1300,
+              "max_x": 1100,
               "max_y": 1600
             },
             {
-              "_note": "村落区1周边",
-              "min_x": 800,
-              "min_y": 800,
-              "max_x": 1100,
-              "max_y": 1100
+              "_note": "村落区2周边农田",
+              "min_x": 1200,
+              "min_y": 600,
+              "max_x": 1600,
+              "max_y": 900
             }
           ]
         }
       },
       {
-        "_note": "草地层。info: LayerInfo路径; weight: 基础权重0.8; weight_pattern: 高度分布模式(低海拔草地多,高海拔渐少)",
+        "_note": "草地层。info: LayerInfo路径; weight: 基础权重0.8; weight_pattern: 高度分布模式",
         "info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer4_LayerInfo",
         "weight": 0.8,
         "weight_pattern": {
-          "_note": "高度模式。pattern: 模式名; height_min_m: 最低高度(米); height_max_m: 最高高度(米); fade_max_m: 衰减最大高度; fade_width_m: 衰减宽度; invert: 是否反转; exclude_regions: 矩形区域权重清零(麦田内无草); corridor_exclude: 河流/道路走廊内权重清零",
+          "_note": "高度模式。pattern: 模式名; height_min_m: 最低高度(米); height_max_m: 最高高度(米); fade_max_m: 衰减最大高度; fade_width_m: 衰减宽度; invert: 是否反转; exclude_regions: 矩形区域内权重清零; corridor_exclude: 河流/道路走廊内权重清零",
           "pattern": "height_based",
           "height_min_m": 0,
-          "height_max_m": 40,
+          "height_max_m": 30,
           "fade_max_m": 80,
           "fade_width_m": 20,
           "invert": false,
           "exclude_regions": [
             {
               "_note": "麦田1无草",
-              "min_x": 300,
-              "min_y": 300,
-              "max_x": 700,
-              "max_y": 700
+              "min_x": 700,
+              "min_y": 1300,
+              "max_x": 1100,
+              "max_y": 1600
             },
             {
               "_note": "麦田2无草",
-              "min_x": 1300,
-              "min_y": 1200,
-              "max_x": 1700,
-              "max_y": 1600
+              "min_x": 1200,
+              "min_y": 600,
+              "max_x": 1600,
+              "max_y": 900
             }
           ],
           "corridor_exclude": true
         }
       },
       {
-        "_note": "碎石/裸岩层。info: LayerInfo路径; weight: 基础权重0; weight_pattern: 坡度分布模式(陡坡出露碎石)",
+        "_note": "碎石/裸岩层。info: LayerInfo路径; weight: 基础权重0; weight_pattern: 坡度分布模式",
         "info": "/Game/RuralHouse/Landscape/LandscapeLayers/Layer5_LayerInfo",
         "weight": 0.0,
         "weight_pattern": {
@@ -126,162 +119,162 @@
       "layer_name": "Wheat"
     },
     "height_pattern": {
-      "_note": "高度模式(C++解析)。type: 模式类型(features=特征地形); hills: 山丘列表(构成连片山脉); valleys: 山谷列表; ridges: 山脊区域列表; water: 湖面配置; rivers: 河流列表; roads: 道路列表; scatter: 碎石散布; grass_varieties: 草网格变体; wheat_varieties: 麦网格变体; noise_overlay: 全局噪声叠加; perturbation_strength/scale/seed: 几何扰动参数",
+      "_note": "高度模式(C++解析)。type: 模式类型(features=特征地形); hills: 山丘列表(构成连片山脉); valleys: 山谷列表; ridges: 山脊列表; water: 水面配置; rivers: 河流列表; roads: 道路列表; scatter: 碎石散布; grass_varieties: 草网格变体; wheat_varieties: 麦网格变体; noise_overlay: 全局噪声叠加; perturbation_strength/scale/seed: 几何扰动参数",
       "type": "features",
       "hills": [
         {
           "_note": "西北主峰1。center_x_m/center_y_m: 中心坐标(米); radius_m: 半径(米); height_m: 高度(米)",
-          "center_x_m": 100,
-          "center_y_m": 100,
+          "center_x_m": 150,
+          "center_y_m": 150,
           "radius_m": 350,
-          "height_m": 140
+          "height_m": 160
         },
         {
           "_note": "西北副峰2。center_x_m/center_y_m: 中心坐标(米); radius_m: 半径(米); height_m: 高度(米)",
-          "center_x_m": 400,
-          "center_y_m": 300,
-          "radius_m": 300,
+          "center_x_m": 450,
+          "center_y_m": 250,
+          "radius_m": 280,
           "height_m": 110
         },
         {
           "_note": "北部主峰3。center_x_m/center_y_m: 中心坐标(米); radius_m: 半径(米); height_m: 高度(米)",
           "center_x_m": 800,
-          "center_y_m": 150,
+          "center_y_m": 100,
           "radius_m": 320,
-          "height_m": 130
+          "height_m": 140
         },
         {
-          "_note": "东北副峰4。center_x_m/center_y_m: 中心坐标(米); radius_m: 半径(米); height_m: 高度(米)",
-          "center_x_m": 1200,
-          "center_y_m": 200,
-          "radius_m": 280,
-          "height_m": 85
-        },
-        {
-          "_note": "东北主峰5。center_x_m/center_y_m: 中心坐标(米); radius_m: 半径(米); height_m: 高度(米)",
+          "_note": "东北主峰4。center_x_m/center_y_m: 中心坐标(米); radius_m: 半径(米); height_m: 高度(米)",
           "center_x_m": 1700,
+          "center_y_m": 200,
+          "radius_m": 300,
+          "height_m": 120
+        },
+        {
+          "_note": "东北副峰5。center_x_m/center_y_m: 中心坐标(米); radius_m: 半径(米); height_m: 高度(米)",
+          "center_x_m": 1450,
           "center_y_m": 350,
-          "radius_m": 320,
-          "height_m": 105
+          "radius_m": 250,
+          "height_m": 90
         },
         {
           "_note": "东南主峰6。center_x_m/center_y_m: 中心坐标(米); radius_m: 半径(米); height_m: 高度(米)",
           "center_x_m": 1850,
-          "center_y_m": 1400,
+          "center_y_m": 1600,
           "radius_m": 350,
-          "height_m": 125
+          "height_m": 135
         },
         {
           "_note": "东南副峰7。center_x_m/center_y_m: 中心坐标(米); radius_m: 半径(米); height_m: 高度(米)",
           "center_x_m": 1500,
-          "center_y_m": 1700,
-          "radius_m": 280,
-          "height_m": 90
+          "center_y_m": 1850,
+          "radius_m": 300,
+          "height_m": 100
         },
         {
           "_note": "南部主峰8。center_x_m/center_y_m: 中心坐标(米); radius_m: 半径(米); height_m: 高度(米)",
           "center_x_m": 500,
           "center_y_m": 1850,
           "radius_m": 320,
-          "height_m": 110
+          "height_m": 115
         },
         {
-          "_note": "西南副峰9。center_x_m/center_y_m: 中心坐标(米); radius_m: 半径(米); height_m: 高度(米)",
-          "center_x_m": 150,
+          "_note": "西南主峰9。center_x_m/center_y_m: 中心坐标(米); radius_m: 半径(米); height_m: 高度(米)",
+          "center_x_m": 100,
           "center_y_m": 1500,
-          "radius_m": 280,
-          "height_m": 90
+          "radius_m": 300,
+          "height_m": 105
         }
       ],
       "valleys": [
         {
-          "_note": "中央平原谷地。center_x_m/center_y_m: 中心坐标(米); radius_m: 半径(米); depth_m: 深度(米); bottom_radius_m: 谷底半径(米)",
-          "center_x_m": 1000,
-          "center_y_m": 1000,
-          "radius_m": 400,
-          "depth_m": 8,
-          "bottom_radius_m": 300
+          "_note": "中央平原谷地1。center_x_m/center_y_m: 中心坐标(米); radius_m: 半径(米); depth_m: 深度(米); bottom_radius_m: 底部半径",
+          "center_x_m": 900,
+          "center_y_m": 900,
+          "radius_m": 500,
+          "depth_m": 15,
+          "bottom_radius_m": 350
         }
       ],
       "ridges": [
         {
-          "_note": "北部连绵山脊。region_min_x_m/min_y_m/max_x_m/max_y_m: 区域边界(米); amplitude_m: 幅度(米); frequency: 频率; direction_deg: 方向角(0=东西向)",
+          "_note": "连绵山脊1(北侧)。region_min_x_m/min_y_m/max_x_m/max_y_m: 区域边界(米); amplitude_m: 幅度(米); frequency: 频率; direction_deg: 方向角",
           "region_min_x_m": 0,
           "region_min_y_m": 0,
           "region_max_x_m": 2000,
           "region_max_y_m": 400,
-          "amplitude_m": 25,
+          "amplitude_m": 35,
           "frequency": 0.005,
           "direction_deg": 0
         },
         {
-          "_note": "东部连绵山脊。region_min_x_m/min_y_m/max_x_m/max_y_m: 区域边界(米); amplitude_m: 幅度(米); frequency: 频率; direction_deg: 方向角(90=南北向)",
+          "_note": "连绵山脊2(东侧)。region_min_x_m/min_y_m/max_x_m/max_y_m: 区域边界(米); amplitude_m: 幅度(米); frequency: 频率; direction_deg: 方向角",
           "region_min_x_m": 1600,
           "region_min_y_m": 0,
           "region_max_x_m": 2000,
           "region_max_y_m": 2000,
-          "amplitude_m": 20,
+          "amplitude_m": 30,
           "frequency": 0.005,
           "direction_deg": 90
         },
         {
-          "_note": "南部连绵山脊。region_min_x_m/min_y_m/max_x_m/max_y_m: 区域边界(米); amplitude_m: 幅度(米); frequency: 频率; direction_deg: 方向角(0=东西向)",
+          "_note": "连绵山脊3(南侧)。region_min_x_m/min_y_m/max_x_m/max_y_m: 区域边界(米); amplitude_m: 幅度(米); frequency: 频率; direction_deg: 方向角",
           "region_min_x_m": 0,
           "region_min_y_m": 1600,
           "region_max_x_m": 2000,
           "region_max_y_m": 2000,
-          "amplitude_m": 25,
+          "amplitude_m": 35,
           "frequency": 0.005,
           "direction_deg": 0
         },
         {
-          "_note": "西部连绵山脊。region_min_x_m/min_y_m/max_x_m/max_y_m: 区域边界(米); amplitude_m: 幅度(米); frequency: 频率; direction_deg: 方向角(90=南北向)",
+          "_note": "连绵山脊4(西侧)。region_min_x_m/min_y_m/max_x_m/max_y_m: 区域边界(米); amplitude_m: 幅度(米); frequency: 频率; direction_deg: 方向角",
           "region_min_x_m": 0,
           "region_min_y_m": 0,
           "region_max_x_m": 400,
           "region_max_y_m": 2000,
-          "amplitude_m": 20,
+          "amplitude_m": 30,
           "frequency": 0.005,
           "direction_deg": 90
         }
       ],
       "water": {
-        "_note": "湖泊水面配置。level_m: 水面海拔高度(米); material_path: 水面材质路径; flow_speed: 流速倍数(湖面推荐0.3缓流)",
+        "_note": "湖泊水面配置。level_m: 水面海拔高度(米); material_path: 水面材质路径; flow_speed: 流速倍数(湖面缓流0.3)",
         "level_m": 22,
         "material_path": "/Game/Modular_Rural_Cabin/Materials/Instances/Water_Lake",
         "flow_speed": 0.3
       },
       "rivers": [
         {
-          "_note": "主干河流(从西北山发源,蜿蜒至东南)。points: 折点坐标列表(米); width_m: 起点河宽(米); width_end_m: 终点河宽(米,支持渐变); bed_depth_m: 河床冲刷深度(米); profile: 横截面形状(V/U); material_path: 水面材质路径; flow_speed: 流速倍数(河流推荐1.0~3.0)",
+          "_note": "主干河流(山脚蜿蜒)。points: 折点坐标列表(米); width_m: 起点河宽(米); width_end_m: 终点河宽(米); bed_depth_m: 河床深度(米); profile: 横截面形状(V/U); material_path: 水面材质路径; flow_speed: 流速倍数(河流急流2.0)",
           "points": [
             [
-              300,
-              300
+              400,
+              400
             ],
             [
-              500,
-              600
+              600,
+              700
             ],
             [
               700,
-              850
+              950
             ],
             [
               900,
-              1100
+              1150
             ],
             [
               1100,
-              1300
+              1350
             ],
             [
-              1400,
-              1500
+              1300,
+              1550
             ],
             [
-              1700,
-              1700
+              1600,
+              1750
             ]
           ],
           "width_m": 3,
@@ -294,73 +287,77 @@
       ],
       "roads": [
         {
-          "_note": "主干泥土道路(贯穿村落与麦田)。points: 道路折点坐标列表(米); width_m: 道路宽度(米); material_path: 道路材质路径",
+          "_note": "主干泥土道路。points: 道路折点坐标列表(米); width_m: 道路宽度(米); material_path: 道路材质路径",
           "points": [
             [
-              200,
+              250,
               500
             ],
             [
-              400,
-              700
+              450,
+              600
             ],
             [
               700,
               800
             ],
             [
-              1000,
+              900,
               1000
             ],
             [
+              1100,
+              1200
+            ],
+            [
               1300,
-              1100
+              1400
             ],
             [
               1500,
-              1300
+              1550
             ],
             [
-              1800,
-              1500
+              1700,
+              1300
             ]
           ],
           "width_m": 6,
           "material_path": "/Game/MapForgeTest/M_Road_Dirt"
         },
         {
-          "_note": "支线道路(连接西南麦田)。points: 道路折点坐标列表(米); width_m: 道路宽度(米); material_path: 道路材质路径",
+          "_note": "支线道路(连接麦田)。points: 道路折点坐标列表(米); width_m: 道路宽度(米); material_path: 道路材质路径",
           "points": [
             [
               700,
               800
             ],
             [
-              600,
-              600
+              800,
+              1100
             ],
             [
-              500,
-              400
+              900,
+              1300
             ]
           ],
           "width_m": 4,
           "material_path": "/Game/MapForgeTest/M_Road_Dirt"
         },
         {
-          "_note": "支线道路(连接东南麦田)。points: 道路折点坐标列表(米); width_m: 道路宽度(米); material_path: 道路材质路径",
+          "_note": "支线道路(连接村落2)。points: 道路折点坐标列表(米); width_m: 道路宽度(米); material_path: 道路材质路径",
           "points": [
             [
+              1100,
+              1200
+            ],
+            [
               1300,
-              1100
+              1000
             ],
             [
-              1500,
-              1300
-            ],
-            [
-              1600,
-              1500
+              1400,
+              800
             ]
           ],
           "width_m": 4,
@@ -369,7 +366,7 @@
       ],
       "scatter": [
         {
-          "_note": "山脚碎石散布。mesh_path: 网格路径; count: 实例数量; seed: 随机种子; scale_min/scale_max: 缩放范围(标量); random_rotation: 随机旋转",
+          "_note": "山脚碎石散布。mesh_path: 网格路径; count: 实例数量; seed: 随机种子; scale_min/scale_max: 缩放范围; random_rotation: 随机旋转",
           "mesh_path": "/Game/RuralHouse/Environment/Ground/SM_Rock_A_01",
           "count": 80,
           "seed": 42,
@@ -378,7 +375,7 @@
           "random_rotation": true
         },
         {
-          "_note": "河边苔藓岩石散布。mesh_path: 网格路径; count: 实例数量; seed: 随机种子; scale_min/scale_max: 缩放范围(标量); random_rotation: 随机旋转",
+          "_note": "河边苔藓岩石散布。mesh_path: 网格路径; count: 实例数量; seed: 随机种子; scale_min/scale_max: 缩放范围; random_rotation: 随机旋转",
           "mesh_path": "/Game/RuralHouse/Environment/Ground/SM_MossyRock_01",
           "count": 50,
           "seed": 17,
@@ -389,22 +386,22 @@
       ],
       "grass_varieties": [
         {
-          "_note": "高草变体1。mesh_path: 网格路径; density: 密度; scale_min/scale_max: 缩放范围(标量); jitter: 位置抖动; random_rotation: 随机旋转; start_cull_dist/end_cull_dist: LOD剔除距离(厘米)",
+          "_note": "高草变体1。mesh_path: 网格路径; density: 密度; scale_min/scale_max: 缩放范围; jitter: 位置抖动; random_rotation: 随机旋转; start_cull_dist/end_cull_dist: LOD剔除距离(厘米)",
           "mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Tall_Wild_01a",
           "density": 200,
-          "scale_min": 0.8,
-          "scale_max": 1.2,
+          "scale_min": 1.0,
+          "scale_max": 2.0,
           "jitter": 0.5,
           "random_rotation": true,
           "start_cull_dist": 3000,
           "end_cull_dist": 30000
         },
         {
-          "_note": "矮草变体1。mesh_path: 网格路径; density: 密度; scale_min/scale_max: 缩放范围(标量); jitter: 位置抖动; random_rotation: 随机旋转; start_cull_dist/end_cull_dist: LOD剔除距离(厘米)",
+          "_note": "矮草变体1。mesh_path: 网格路径; density: 密度; scale_min/scale_max: 缩放范围; jitter: 位置抖动; random_rotation: 随机旋转; start_cull_dist/end_cull_dist: LOD剔除距离(厘米)",
           "mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Beach_01a",
           "density": 150,
           "scale_min": 0.8,
-          "scale_max": 1.2,
+          "scale_max": 1.5,
           "jitter": 0.5,
           "random_rotation": true,
           "start_cull_dist": 3000,
@@ -413,11 +410,11 @@
       ],
       "wheat_varieties": [
         {
-          "_note": "成熟麦穗变体1(Fab Megascans)。mesh_path: 网格路径; density: 密度; scale_min/scale_max: 缩放范围(标量); jitter: 位置抖动; random_rotation: 随机旋转; start_cull_dist/end_cull_dist: LOD剔除距离(厘米)",
+          "_note": "成熟麦穗变体。mesh_path: 网格路径; density: 密度; scale_min/scale_max: 缩放范围; jitter: 位置抖动; random_rotation: 随机旋转; start_cull_dist/end_cull_dist: LOD剔除距离(厘米)",
           "mesh_path": "/Game/Foliage_Sets/VOL22_WildGrass/Meshes/SM_Grass_Tall_Wild_01a",
           "density": 150,
-          "scale_min": 0.8,
-          "scale_max": 1.2,
+          "scale_min": 1.0,
+          "scale_max": 2.0,
           "jitter": 0.3,
           "random_rotation": true,
           "start_cull_dist": 3000,
@@ -426,18 +423,18 @@
       ],
       "noise_overlay": {
         "_note": "全局噪声叠加。amplitude_m: 振幅(米); frequency: 频率; octaves: 八度数; seed: 随机种子",
-        "amplitude_m": 3,
+        "amplitude_m": 4,
         "frequency": 0.01,
         "octaves": 4,
         "seed": 42
       },
-      "perturbation_strength": 0.1,
+      "perturbation_strength": 0.12,
       "perturbation_scale": 0.05,
       "perturbation_seed": 1024
     }
   },
   "ground": {
-    "_note": "地面配置块(非地形)。asset: 地面资产路径(可为空); material_override: 材质覆盖(可为空)",
+    "_note": "地面配置块。asset: 地面资产路径(可为空); material_override: 材质覆盖(可为空)",
     "asset": "",
     "material_override": ""
   },
@@ -446,13 +443,13 @@
       "_note": "=== 村落与建筑区 ==="
     },
     {
-      "_note": "村落1(中央平原农舍)。type: 放置类型(group=组合资产); asset_prefix: 组合资产前缀; count: 组合部件数; location: 位置[xyz]厘米(注意-180补偿房屋原点); rotation: 旋转[pitch,yaw,roll]; scale: 缩放[xyz]; skip_z_fix: 跳过独立Z修正; snap_to_ground: 贴地开关",
+      "_note": "村落1(西北山脚农舍)。type: 放置类型(group=组合资产); asset_prefix: 组合资产前缀; count: 组合部件数; location: 位置[xyz]厘米; rotation: 旋转[pitch,yaw,roll]; scale: 缩放[xyz]; skip_z_fix: 跳过独立Z修正(多部件组合); snap_to_ground: 贴地开关",
       "type": "group",
       "asset_prefix": "/Game/hourse/Imported/rural_brick_house_with_barn_and_chicken_coop/rural_brick_house_with_barn_and_chicken_coop/StaticMeshes/Object_",
       "count": 149,
       "location": [
-        95000,
-        95000,
+        55000,
+        135000,
         -180
       ],
       "rotation": [
@@ -469,13 +466,13 @@
       "snap_to_ground": true
     },
     {
-      "_note": "村落2(东南麦田旁农舍)。type: 放置类型(group=组合资产); asset_prefix: 组合资产前缀; count: 组合部件数; location: 位置[xyz]厘米; rotation: 旋转[pitch,yaw,roll]; scale: 缩放[xyz]; skip_z_fix: 跳过独立Z修正; snap_to_ground: 贴地开关",
+      "_note": "村落2(东南平原农舍)。type: 放置类型(group=组合资产); asset_prefix: 组合资产前缀; count: 组合部件数; location: 位置[xyz]厘米; rotation: 旋转[pitch,yaw,roll]; scale: 缩放[xyz]; skip_z_fix: 跳过独立Z修正(多部件组合); snap_to_ground: 贴地开关",
       "type": "group",
       "asset_prefix": "/Game/hourse/Imported/rural_brick_house_with_barn_and_chicken_coop/rural_brick_house_with_barn_and_chicken_coop/StaticMeshes/Object_",
       "count": 149,
       "location": [
         145000,
-        130000,
+        45000,
         -180
       ],
       "rotation": [
@@ -492,10 +489,10 @@
       "snap_to_ground": true
     },
     {
-      "_note": "=== 森林与树木区(使用static_grid确保树木WPO风动正确) ==="
+      "_note": "=== 森林与树木区 ==="
     },
     {
-      "_note": "西北山脉森林(SM_FirTree_01)。type: static_grid=逐个StaticMeshActor(树木WPO风动正确); asset: 网格资产路径; location: 位置[xyz]厘米; grid: 网格配置; snap_to_ground: 贴地开关",
+      "_note": "村落1周边防风林(SM_FirTree_01)。type: static_grid=逐个StaticMeshActor(树木风动正确); asset: 网格资产路径; location: 位置[xyz]厘米; grid: 网格配置; rows/cols: 行列数; origin: 起点[xyz]厘米; spacing: 间距[xyz]厘米; jitter: 抖动; random_yaw: 随机偏航; scale_min/scale_max: 缩放范围; snap_to_ground: 贴地; cull_end: LOD剔除距离",
       "type": "static_grid",
       "asset": "/Game/RuralHouse/Environment/Trees/SM_FirTree_01",
       "location": [
@@ -504,20 +501,20 @@
         0
       ],
       "grid": {
-        "_note": "网格配置块。rows/cols: 行列数; origin: 起点[xyz]厘米; spacing: 间距[xyz]厘米; jitter: 抖动; random_yaw: 随机偏航; scale_min/scale_max: 缩放范围; cull_end: LOD剔除最大距离(仅static_grid生效); snap_to_ground: 贴地开关",
-        "rows": 6,
-        "cols": 6,
+        "_note": "网格配置块。rows/cols: 行列数; origin: 起点[xyz]厘米; spacing: 间距[xyz]厘米; jitter: 抖动; random_yaw: 随机偏航; scale_min/scale_max: 缩放范围; snap_to_ground: 贴地; cull_end: LOD剔除距离(StaticMeshActor仅cull_end生效)",
+        "rows": 4,
+        "cols": 4,
         "origin": [
-          5000,
-          5000,
+          45000,
+          110000,
           0
         ],
         "spacing": [
-          1500,
-          1500,
+          1200,
+          1200,
           0
         ],
-        "jitter": 400,
+        "jitter": 300,
         "random_yaw": true,
         "scale_min": [
           0.8,
@@ -529,12 +526,12 @@
           1.25,
           1.25
         ],
-        "cull_end": 50000,
-        "snap_to_ground": true
+        "snap_to_ground": true,
+        "cull_end": 50000
       }
     },
     {
-      "_note": "北部山脉森林(SM_FirTree_02)。type: static_grid=逐个StaticMeshActor; asset: 网格资产路径; location: 位置[xyz]厘米; grid: 网格配置; snap_to_ground: 贴地开关",
+      "_note": "村落2周边防风林(SM_FirTree_02)。type: static_grid=逐个StaticMeshActor(树木风动正确); asset: 网格资产路径; location: 位置[xyz]厘米; grid: 网格配置; rows/cols: 行列数; origin: 起点[xyz]厘米; spacing: 间距[xyz]厘米; jitter: 抖动; random_yaw: 随机偏航; scale_min/scale_max: 缩放范围; snap_to_ground: 贴地; cull_end: LOD剔除距离",
       "type": "static_grid",
       "asset": "/Game/RuralHouse/Environment/Trees/SM_FirTree_02",
       "location": [
@@ -543,20 +540,20 @@
         0
       ],
       "grid": {
-        "_note": "网格配置块。rows/cols: 行列数; origin: 起点[xyz]厘米; spacing: 间距[xyz]厘米; jitter: 抖动; random_yaw: 随机偏航; scale_min/scale_max: 缩放范围; cull_end: LOD剔除最大距离; snap_to_ground: 贴地开关",
-        "rows": 5,
-        "cols": 5,
+        "_note": "网格配置块。rows/cols: 行列数; origin: 起点[xyz]厘米; spacing: 间距[xyz]厘米; jitter: 抖动; random_yaw: 随机偏航; scale_min/scale_max: 缩放范围; snap_to_ground: 贴地; cull_end: LOD剔除距离(StaticMeshActor仅cull_end生效)",
+        "rows": 4,
+        "cols": 4,
         "origin": [
-          65000,
-          5000,
+          135000,
+          70000,
           0
         ],
         "spacing": [
-          1500,
-          1500,
+          1200,
+          1200,
           0
         ],
-        "jitter": 400,
+        "jitter": 300,
         "random_yaw": true,
         "scale_min": [
           0.8,
@@ -568,12 +565,12 @@
           1.25,
           1.25
         ],
-        "cull_end": 50000,
-        "snap_to_ground": true
+        "snap_to_ground": true,
+        "cull_end": 50000
       }
     },
     {
-      "_note": "东南山脉森林(SM_FirTree_03)。type: static_grid=逐个StaticMeshActor; asset: 网格资产路径; location: 位置[xyz]厘米; grid: 网格配置; snap_to_ground: 贴地开关",
+      "_note": "北部山脉森林(SM_FirTree_03)。type: static_grid=逐个StaticMeshActor(树木风动正确); asset: 网格资产路径; location: 位置[xyz]厘米; grid: 网格配置; rows/cols: 行列数; origin: 起点[xyz]厘米; spacing: 间距[xyz]厘米; jitter: 抖动; random_yaw: 随机偏航; scale_min/scale_max: 缩放范围; snap_to_ground: 贴地; cull_end: LOD剔除距离",
       "type": "static_grid",
       "asset": "/Game/RuralHouse/Environment/Trees/SM_FirTree_03",
       "location": [
@@ -582,12 +579,12 @@
         0
       ],
       "grid": {
-        "_note": "网格配置块。rows/cols: 行列数; origin: 起点[xyz]厘米; spacing: 间距[xyz]厘米; jitter: 抖动; random_yaw: 随机偏航; scale_min/scale_max: 缩放范围; cull_end: LOD剔除最大距离; snap_to_ground: 贴地开关",
-        "rows": 5,
-        "cols": 5,
+        "_note": "网格配置块。rows/cols: 行列数; origin: 起点[xyz]厘米; spacing: 间距[xyz]厘米; jitter: 抖动; random_yaw: 随机偏航; scale_min/scale_max: 缩放范围; snap_to_ground: 贴地; cull_end: LOD剔除距离(StaticMeshActor仅cull_end生效)",
+        "rows": 6,
+        "cols": 6,
         "origin": [
-          160000,
-          150000,
+          60000,
+          10000,
           0
         ],
         "spacing": [
@@ -595,7 +592,7 @@
           1500,
           0
         ],
-        "jitter": 400,
+        "jitter": 500,
         "random_yaw": true,
         "scale_min": [
           0.8,
@@ -607,12 +604,12 @@
           1.25,
           1.25
         ],
-        "cull_end": 50000,
-        "snap_to_ground": true
+        "snap_to_ground": true,
+        "cull_end": 50000
       }
     },
     {
-      "_note": "南部山脉森林(SM_FirTreeDead_01枯杉)。type: static_grid=逐个StaticMeshActor; asset: 网格资产路径; location: 位置[xyz]厘米; grid: 网格配置; snap_to_ground: 贴地开关",
+      "_note": "东南山脉森林(SM_FirTreeDead_01)。type: static_grid=逐个StaticMeshActor(树木风动正确); asset: 网格资产路径; location: 位置[xyz]厘米; grid: 网格配置; rows/cols: 行列数; origin: 起点[xyz]厘米; spacing: 间距[xyz]厘米; jitter: 抖动; random_yaw: 随机偏航; scale_min/scale_max: 缩放范围; snap_to_ground: 贴地; cull_end: LOD剔除距离",
       "type": "static_grid",
       "asset": "/Game/RuralHouse/Environment/Trees/SM_FirTreeDead_01",
       "location": [
@@ -621,12 +618,12 @@
         0
       ],
       "grid": {
-        "_note": "网格配置块。rows/cols: 行列数; origin: 起点[xyz]厘米; spacing: 间距[xyz]厘米; jitter: 抖动; random_yaw: 随机偏航; scale_min/scale_max: 缩放范围; cull_end: LOD剔除最大距离; snap_to_ground: 贴地开关",
+        "_note": "网格配置块。rows/cols: 行列数; origin: 起点[xyz]厘米; spacing: 间距[xyz]厘米; jitter: 抖动; random_yaw: 随机偏航; scale_min/scale_max: 缩放范围; snap_to_ground: 贴地; cull_end: LOD剔除距离(StaticMeshActor仅cull_end生效)",
         "rows": 5,
         "cols": 5,
         "origin": [
-          40000,
-          170000,
+          160000,
+          160000,
           0
         ],
         "spacing": [
@@ -646,12 +643,12 @@
           1.2,
           1.2
         ],
-        "cull_end": 50000,
-        "snap_to_ground": true
+        "snap_to_ground": true,
+        "cull_end": 50000
       }
     },
     {
-      "_note": "村落1周边防风林(SM_SmallFir_01)。type: static_grid=逐个StaticMeshActor; asset: 网格资产路径; location: 位置[xyz]厘米; grid: 网格配置; snap_to_ground: 贴地开关",
+      "_note": "南部山脉森林(SM_SmallFir_01)。type: static_grid=逐个StaticMeshActor(树木风动正确); asset: 网格资产路径; location: 位置[xyz]厘米; grid: 网格配置; rows/cols: 行列数; origin: 起点[xyz]厘米; spacing: 间距[xyz]厘米; jitter: 抖动; random_yaw: 随机偏航; scale_min/scale_max: 缩放范围; snap_to_ground: 贴地; cull_end: LOD剔除距离",
       "type": "static_grid",
       "asset": "/Game/RuralHouse/Environment/Trees/SM_SmallFir_01",
       "location": [
@@ -660,12 +657,12 @@
         0
       ],
       "grid": {
-        "_note": "网格配置块。rows/cols: 行列数; origin: 起点[xyz]厘米; spacing: 间距[xyz]厘米; jitter: 抖动; random_yaw: 随机偏航; scale_min/scale_max: 缩放范围; cull_end: LOD剔除最大距离; snap_to_ground: 贴地开关",
-        "rows": 5,
-        "cols": 5,
+        "_note": "网格配置块。rows/cols: 行列数; origin: 起点[xyz]厘米; spacing: 间距[xyz]厘米; jitter: 抖动; random_yaw: 随机偏航; scale_min/scale_max: 缩放范围; snap_to_ground: 贴地; cull_end: LOD剔除距离(StaticMeshActor仅cull_end生效)",
+        "rows": 6,
+        "cols": 6,
         "origin": [
-          75000,
-          75000,
+          40000,
+          160000,
           0
         ],
         "spacing": [
@@ -685,12 +682,12 @@
           1.3,
           1.3
         ],
-        "cull_end": 50000,
-        "snap_to_ground": true
+        "snap_to_ground": true,
+        "cull_end": 50000
       }
     },
     {
-      "_note": "村落2周边防风林(SM_SmallFir_02)。type: static_grid=逐个StaticMeshActor; asset: 网格资产路径; location: 位置[xyz]厘米; grid: 网格配置; snap_to_ground: 贴地开关",
+      "_note": "西部山脉下层林(SM_SmallFir_02)。type: static_grid=逐个StaticMeshActor(树木风动正确); asset: 网格资产路径; location: 位置[xyz]厘米; grid: 网格配置; rows/cols: 行列数; origin: 起点[xyz]厘米; spacing: 间距[xyz]厘米; jitter: 抖动; random_yaw: 随机偏航; scale_min/scale_max: 缩放范围; snap_to_ground: 贴地; cull_end: LOD剔除距离",
       "type": "static_grid",
       "asset": "/Game/RuralHouse/Environment/Trees/SM_SmallFir_02",
       "location": [
@@ -699,12 +696,12 @@
         0
       ],
       "grid": {
-        "_note": "网格配置块。rows/cols: 行列数; origin: 起点[xyz]厘米; spacing: 间距[xyz]厘米; jitter: 抖动; random_yaw: 随机偏航; scale_min/scale_max: 缩放范围; cull_end: LOD剔除最大距离; snap_to_ground: 贴地开关",
-        "rows": 5,
-        "cols": 5,
+        "_note": "网格配置块。rows/cols: 行列数; origin: 起点[xyz]厘米; spacing: 间距[xyz]厘米; jitter: 抖动; random_yaw: 随机偏航; scale_min/scale_max: 缩放范围; snap_to_ground: 贴地; cull_end: LOD剔除距离(StaticMeshActor仅cull_end生效)",
+        "rows": 6,
+        "cols": 6,
         "origin": [
-          130000,
-          115000,
+          10000,
+          60000,
           0
         ],
         "spacing": [
@@ -724,12 +721,12 @@
           1.3,
           1.3
         ],
-        "cull_end": 50000,
-        "snap_to_ground": true
+        "snap_to_ground": true,
+        "cull_end": 50000
       }
     },
     {
-      "_note": "河流沿线护岸林(SM_SmallFir_03)。type: static_grid=逐个StaticMeshActor; asset: 网格资产路径; location: 位置[xyz]厘米; grid: 网格配置; snap_to_ground: 贴地开关",
+      "_note": "河流沿线护岸林(SM_SmallFir_03)。type: static_grid=逐个StaticMeshActor(树木风动正确); asset: 网格资产路径; location: 位置[xyz]厘米; grid: 网格配置; rows/cols: 行列数; origin: 起点[xyz]厘米; spacing: 间距[xyz]厘米; jitter: 抖动; random_yaw: 随机偏航; scale_min/scale_max: 缩放范围; snap_to_ground: 贴地; cull_end: LOD剔除距离",
       "type": "static_grid",
       "asset": "/Game/RuralHouse/Environment/Trees/SM_SmallFir_03",
       "location": [
@@ -738,16 +735,16 @@
         0
       ],
       "grid": {
-        "_note": "网格配置块。rows/cols: 行列数; origin: 起点[xyz]厘米; spacing: 间距[xyz]厘米; jitter: 抖动; random_yaw: 随机偏航; scale_min/scale_max: 缩放范围; cull_end: LOD剔除最大距离; snap_to_ground: 贴地开关",
+        "_note": "网格配置块。rows/cols: 行列数; origin: 起点[xyz]厘米; spacing: 间距[xyz]厘米; jitter: 抖动; random_yaw: 随机偏航; scale_min/scale_max: 缩放范围; snap_to_ground: 贴地; cull_end: LOD剔除距离(StaticMeshActor仅cull_end生效)",
         "rows": 8,
         "cols": 4,
         "origin": [
-          30000,
-          30000,
+          60000,
+          40000,
           0
         ],
         "spacing": [
-          1200,
+          1000,
           1500,
           0
         ],
@@ -763,12 +760,12 @@
           1.2,
           1.2
         ],
-        "cull_end": 50000,
-        "snap_to_ground": true
+        "snap_to_ground": true,
+        "cull_end": 50000
       }
     },
     {
-      "_note": "田野边缘散生枯树(SM_SmallFirDead_01)。type: static_grid=逐个StaticMeshActor; asset: 网格资产路径; location: 位置[xyz]厘米; grid: 网格配置; snap_to_ground: 贴地开关",
+      "_note": "田野边缘散生树木(SM_SmallFirDead_01)。type: static_grid=逐个StaticMeshActor(树木风动正确); asset: 网格资产路径; location: 位置[xyz]厘米; grid: 网格配置; rows/cols: 行列数; origin: 起点[xyz]厘米; spacing: 间距[xyz]厘米; jitter: 抖动; random_yaw: 随机偏航; scale_min/scale_max: 缩放范围; snap_to_ground: 贴地; cull_end: LOD剔除距离",
       "type": "static_grid",
       "asset": "/Game/RuralHouse/Environment/Trees/SM_SmallFirDead_01",
       "location": [
@@ -777,12 +774,12 @@
         0
       ],
       "grid": {
-        "_note": "网格配置块。rows/cols: 行列数; origin: 起点[xyz]厘米; spacing: 间距[xyz]厘米; jitter: 抖动; random_yaw: 随机偏航; scale_min/scale_max: 缩放范围; cull_end: LOD剔除最大距离; snap_to_ground: 贴地开关",
+        "_note": "网格配置块。rows/cols: 行列数; origin: 起点[xyz]厘米; spacing: 间距[xyz]厘米; jitter: 抖动; random_yaw: 随机偏航; scale_min/scale_max: 缩放范围; snap_to_ground: 贴地; cull_end: LOD剔除距离(StaticMeshActor仅cull_end生效)",
         "rows": 3,
         "cols": 6,
         "origin": [
-          70000,
-          40000,
+          30000,
+          125000,
           0
         ],
         "spacing": [
@@ -802,8 +799,8 @@
           1.2,
           1.2
         ],
-        "cull_end": 50000,
-        "snap_to_ground": true
+        "snap_to_ground": true,
+        "cull_end": 50000
       }
     }
   ],
@@ -812,23 +809,23 @@
     "directional_light": {
       "_note": "主平行光(太阳)。rotation: [pitch,yaw,roll]旋转角度; intensity: 亮度(lux); color: 光色RGB[0~1]; cast_shadows: 是否投射阴影",
       "rotation": [
-        -50,
-        120,
+        -55,
+        110,
         0
       ],
-      "intensity": 11.0,
+      "intensity": 12.0,
       "color": [
         1.0,
-        0.93,
-        0.76
+        0.92,
+        0.75
       ],
       "cast_shadows": true
     },
     "sky_light": {
       "_note": "天空环境光。intensity: 亮度倍数; color: 光色RGB[0~1]",
-      "intensity": 1.2,
+      "intensity": 1.5,
       "color": [
-        0.76,
+        0.75,
         0.85,
         1.0
       ]
@@ -856,7 +853,7 @@
   "weather": {
     "_note": "天气效果块。volumetric_clouds: 体积云配置; post_process: 后期处理配置",
     "volumetric_clouds": {
-      "_note": "体积云。location: 云层位置[xyz](厘米,通常z=3000=高度30米)",
+      "_note": "体积云。location: 云层位置[xyz](厘米,通常z=2000=高度20米)",
       "location": [
         0,
         0,

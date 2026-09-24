@@ -414,6 +414,26 @@ def validate_scene_quality(scene):
         )
         return errors, warnings
 
+    # ---- 内容丰富度检查: 防止空壳场景 ----
+    # 根因4: 旧版只校验数值范围/几何边界, 不检查数组是否为空,
+    #         导致 LLM 输出 placements:[] / layers:[] 时管线报成功但场景空白
+
+    # placements 空检查: 场景无任何放置物 = 空壳
+    placements = scene.get("placements")
+    if not placements or not isinstance(placements, list) or len(placements) == 0:
+        errors.append(
+            "placements: 放置物列表为空 — 场景无任何建筑/植被/物体, "
+            "请根据蓝图 placements 列表逐一生成对应条目"
+        )
+
+    # layers 空检查: 地形无纹理层 = 白板地形
+    layers = ls.get("layers")
+    if not layers or not isinstance(layers, list) or len(layers) == 0:
+        errors.append(
+            "landscape.layers: 图层数组为空 — 地形将无任何纹理, "
+            "至少需要 2 个图层(如 Grass + Dirt)"
+        )
+
     # ---- landscape.grass 下的 grass_varieties ----
     g = ls.get("grass")
     if g and isinstance(g, dict):
@@ -426,9 +446,32 @@ def validate_scene_quality(scene):
     # ---- height_pattern 下的全部检查 ----
     hp = ls.get("height_pattern")
     if not hp or not isinstance(hp, dict):
+        # height_pattern 缺失: L5 auto_repair 应已注入默认值, 若仍缺失说明 L5 未生效
+        warnings.append(
+            "landscape.height_pattern: 缺失或为 null — "
+            "L5 兜底应已注入默认丘陵, 若仍缺失请检查 auto_repair_scene.py"
+        )
         return errors, warnings
 
     hp_path = "landscape.height_pattern"
+
+    # ---- height_pattern 内容丰富度检查 ----
+    # 根因4: hills/valleys/ridges 全空 = 完全平坦(无远景山脉),
+    #         旧版不检查导致 LLM 输出空数组时管线静默通过
+    hp_type = hp.get("type", "features")
+    if hp_type != "flat":
+        hills = hp.get("hills", [])
+        valleys = hp.get("valleys", [])
+        ridges = hp.get("ridges", [])
+        _h_cnt = len(hills) if isinstance(hills, list) else 0
+        _v_cnt = len(valleys) if isinstance(valleys, list) else 0
+        _r_cnt = len(ridges) if isinstance(ridges, list) else 0
+        if _h_cnt == 0 and _v_cnt == 0 and _r_cnt == 0:
+            errors.append(
+                "landscape.height_pattern: hills/valleys/ridges 全为空 — "
+                "terrain_type=%s 需要至少 1 个非空地形特征数组, "
+                "全空将导致完全平坦无远景" % hp_type
+            )
 
     # === 第一梯队 ===
     # 1) 数值范围
